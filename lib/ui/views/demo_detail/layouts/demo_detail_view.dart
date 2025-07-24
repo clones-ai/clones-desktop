@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:ui';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/assets.dart';
@@ -29,6 +31,7 @@ class DemoDetailView extends ConsumerStatefulWidget {
 
 class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
   String platformOpenFileExplorerName = '';
+  bool _editorFullscreen = false;
 
   @override
   void initState() {
@@ -130,54 +133,197 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
     final submission =
         ref.watch(demoDetailNotifierProvider).recording?.submission;
 
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                if (constraints.maxWidth > Breakpoints.desktop) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 9,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const DemoDetailInfos(),
-                            const SizedBox(height: 20),
-                            Expanded(
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Expanded(
-                                    flex: 5,
-                                    child: DemoDetailVideoPreview(),
-                                  ),
-                                  const SizedBox(width: 20),
-                                  Expanded(
-                                    flex: 4,
-                                    child: SingleChildScrollView(
-                                      child: Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (constraints.maxWidth > Breakpoints.desktop) {
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 9,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const DemoDetailInfos(),
+                                    const SizedBox(height: 20),
+                                    Expanded(
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          const DemoDetailSubmissionResult(),
-                                          const SizedBox(height: 20),
-                                          if (submission != null) ...[
-                                            const DemoDetailSteps(),
-                                            const SizedBox(height: 20),
-                                          ],
-                                          if (submission != null) ...[
-                                            const DemoDetailRewards(),
-                                            const SizedBox(height: 20),
-                                          ],
+                                          Expanded(
+                                            flex: 5,
+                                            child: DemoDetailVideoPreview(
+                                              onExpand: () => setState(
+                                                () => _editorFullscreen = true,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 20),
+                                          Expanded(
+                                            flex: 4,
+                                            child: SingleChildScrollView(
+                                              child: Column(
+                                                children: [
+                                                  const DemoDetailSubmissionResult(),
+                                                  const SizedBox(height: 20),
+                                                  if (submission != null) ...[
+                                                    const DemoDetailSteps(),
+                                                    const SizedBox(height: 20),
+                                                  ],
+                                                  if (submission != null) ...[
+                                                    const DemoDetailRewards(),
+                                                    const SizedBox(height: 20),
+                                                  ],
+                                                ],
+                                              ),
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                flex: 3,
+                                child: _buildEditorTabs(),
+                              ),
+                            ],
+                          );
+                        }
+                        return SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              const DemoDetailInfos(),
+                              const SizedBox(height: 20),
+                              DemoDetailVideoPreview(
+                                onExpand: () =>
+                                    setState(() => _editorFullscreen = true),
+                              ),
+                              const SizedBox(height: 20),
+                              const DemoDetailSteps(),
+                              const SizedBox(height: 20),
+                              const DemoDetailSubmissionResult(),
+                              const SizedBox(height: 20),
+                              const DemoDetailRewards(),
+                              const SizedBox(height: 20),
+                              _buildEditorTabs(),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildFooter(context, ref),
+                ],
+              ),
+            ),
+            _buildFullscreenOverlay(constraints),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildEditorTabs() {
+    return CardWidget(
+      child: DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            TabBar(
+              labelColor: ClonesColors.secondary,
+              unselectedLabelColor: ClonesColors.secondaryText,
+              dividerColor: ClonesColors.secondary,
+              tabs: const [
+                Tab(text: 'Editor'),
+                Tab(text: 'Events'),
+              ],
+            ),
+            const Expanded(
+              child: IntrinsicHeight(
+                child: SizedBox(
+                  child: TabBarView(
+                    children: [
+                      DemoDetailEditor(),
+                      DemoDetailEvents(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFullscreenOverlay(BoxConstraints constraints) {
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOutCubic,
+      top: 0,
+      left: _editorFullscreen ? 0 : constraints.maxWidth,
+      width: constraints.maxWidth,
+      height: constraints.maxHeight,
+      child: IgnorePointer(
+        ignoring: !_editorFullscreen,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 300),
+          opacity: _editorFullscreen ? 1.0 : 0.0,
+          child: Material(
+            color: Colors.transparent,
+            child: Stack(
+              children: [
+                BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.3),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.close_fullscreen,
+                              color: ClonesColors.secondary,
+                              size: 32,
+                            ),
+                            tooltip: 'Close',
+                            onPressed: () =>
+                                setState(() => _editorFullscreen = false),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Expanded(
+                              flex: 2,
+                              child: DemoDetailVideoPreview(),
+                            ),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: _buildEditorTabs(),
                             ),
                           ],
                         ),
@@ -214,59 +360,12 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
                         ),
                       ),
                     ],
-                  );
-                }
-                return SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      const DemoDetailInfos(),
-                      const SizedBox(height: 20),
-                      const DemoDetailVideoPreview(),
-                      const SizedBox(height: 20),
-                      const DemoDetailSteps(),
-                      const SizedBox(height: 20),
-                      const DemoDetailSubmissionResult(),
-                      const SizedBox(height: 20),
-                      const DemoDetailRewards(),
-                      const SizedBox(height: 20),
-                      CardWidget(
-                        child: DefaultTabController(
-                          length: 2,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              TabBar(
-                                labelColor: ClonesColors.secondary,
-                                unselectedLabelColor:
-                                    ClonesColors.secondaryText,
-                                dividerColor: ClonesColors.secondary,
-                                tabs: const [
-                                  Tab(text: 'Editor'),
-                                  Tab(text: 'Events'),
-                                ],
-                              ),
-                              const SizedBox(
-                                height: 400,
-                                child: TabBarView(
-                                  children: [
-                                    DemoDetailEditor(),
-                                    DemoDetailEvents(),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
-                );
-              },
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 10),
-          _buildFooter(context, ref),
-        ],
+        ),
       ),
     );
   }
