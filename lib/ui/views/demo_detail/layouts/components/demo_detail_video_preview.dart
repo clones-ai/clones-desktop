@@ -10,7 +10,8 @@ import 'package:video_player/video_player.dart';
 enum _DragHandle { start, end, none }
 
 class DemoDetailVideoPreview extends ConsumerStatefulWidget {
-  const DemoDetailVideoPreview({super.key});
+  const DemoDetailVideoPreview({super.key, this.onExpand});
+  final VoidCallback? onExpand;
 
   @override
   ConsumerState<DemoDetailVideoPreview> createState() =>
@@ -34,6 +35,7 @@ class _DemoDetailVideoPreviewState
         videoController != null && videoController.value.isInitialized;
 
     final theme = Theme.of(context);
+
     return IntrinsicHeight(
       child: CardWidget(
         child: Column(
@@ -242,7 +244,10 @@ class _DemoDetailVideoPreviewState
                   trimOverlay(context, ref, controller, timelineWidth),
                   draggableHandles(context, ref, controller, timelineWidth),
                   hoverPositionLineAndTimeLabel(
-                      context, controller, timelineWidth),
+                    context,
+                    controller,
+                    timelineWidth,
+                  ),
                 ],
               ),
             ),
