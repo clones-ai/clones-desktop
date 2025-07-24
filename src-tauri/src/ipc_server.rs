@@ -86,6 +86,12 @@ pub struct StopRecordingPayload {
     status: String,
 }
 
+#[derive(Deserialize)]
+pub struct TrimPayload {
+    start_time: f64,
+    end_time: f64,
+}
+
 // Structure for the `set_upload_data_allowed` payload
 #[derive(Deserialize)]
 pub struct SetUploadAllowedPayload {
@@ -232,6 +238,8 @@ pub async fn init(app_handle: AppHandle) {
         .route("/window/resizable", post(set_window_resizable_handler))
         // GET /displays/size: Get the size of all displays.
         .route("/displays/size", get(get_all_displays_size_handler))
+        // POST /recordings/:id/trim: Trim a specific recording.
+        .route("/recordings/:id/trim", post(trim_recording_handler))
         // Transaction endpoints
         // GET /transaction/session: Generate a new session token
         .route("/transaction/session", get(generate_session_token_handler))
@@ -542,6 +550,17 @@ async fn export_recordings_handler(
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     match export_recordings(state.app_handle).await {
         Ok(path) => Ok((StatusCode::OK, path)),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+async fn trim_recording_handler(
+    State(state): State<AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(payload): Json<TrimPayload>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    match record::trim_recording(state.app_handle, id, payload.start_time, payload.end_time).await {
+        Ok(_) => Ok(StatusCode::OK),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
