@@ -26,10 +26,14 @@ mixin _$DemoDetailState {
   int get startTime => throw _privateConstructorUsedError;
   @JsonKey(includeIfNull: false)
   VideoPlayerController? get videoController =>
+      throw _privateConstructorUsedError;
+  @JsonKey(includeIfNull: false)
+  RangeValues? get trimRange =>
       throw _privateConstructorUsedError; // New states for button handling
   bool get isProcessing => throw _privateConstructorUsedError;
   bool get isExporting => throw _privateConstructorUsedError;
   bool get isUploading => throw _privateConstructorUsedError;
+  bool get isTrimming => throw _privateConstructorUsedError;
   String? get exportPath => throw _privateConstructorUsedError;
   String? get exportError => throw _privateConstructorUsedError;
   String? get uploadError => throw _privateConstructorUsedError;
@@ -57,9 +61,11 @@ abstract class $DemoDetailStateCopyWith<$Res> {
       Set<String> enabledEventTypes,
       int startTime,
       @JsonKey(includeIfNull: false) VideoPlayerController? videoController,
+      @JsonKey(includeIfNull: false) RangeValues? trimRange,
       bool isProcessing,
       bool isExporting,
       bool isUploading,
+      bool isTrimming,
       String? exportPath,
       String? exportError,
       String? uploadError});
@@ -91,9 +97,11 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
     Object? enabledEventTypes = null,
     Object? startTime = null,
     Object? videoController = freezed,
+    Object? trimRange = freezed,
     Object? isProcessing = null,
     Object? isExporting = null,
     Object? isUploading = null,
+    Object? isTrimming = null,
     Object? exportPath = freezed,
     Object? exportError = freezed,
     Object? uploadError = freezed,
@@ -135,6 +143,10 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
           ? _value.videoController
           : videoController // ignore: cast_nullable_to_non_nullable
               as VideoPlayerController?,
+      trimRange: freezed == trimRange
+          ? _value.trimRange
+          : trimRange // ignore: cast_nullable_to_non_nullable
+              as RangeValues?,
       isProcessing: null == isProcessing
           ? _value.isProcessing
           : isProcessing // ignore: cast_nullable_to_non_nullable
@@ -146,6 +158,10 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
       isUploading: null == isUploading
           ? _value.isUploading
           : isUploading // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isTrimming: null == isTrimming
+          ? _value.isTrimming
+          : isTrimming // ignore: cast_nullable_to_non_nullable
               as bool,
       exportPath: freezed == exportPath
           ? _value.exportPath
@@ -195,9 +211,11 @@ abstract class _$$DemoDetailStateImplCopyWith<$Res>
       Set<String> enabledEventTypes,
       int startTime,
       @JsonKey(includeIfNull: false) VideoPlayerController? videoController,
+      @JsonKey(includeIfNull: false) RangeValues? trimRange,
       bool isProcessing,
       bool isExporting,
       bool isUploading,
+      bool isTrimming,
       String? exportPath,
       String? exportError,
       String? uploadError});
@@ -228,9 +246,11 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
     Object? enabledEventTypes = null,
     Object? startTime = null,
     Object? videoController = freezed,
+    Object? trimRange = freezed,
     Object? isProcessing = null,
     Object? isExporting = null,
     Object? isUploading = null,
+    Object? isTrimming = null,
     Object? exportPath = freezed,
     Object? exportError = freezed,
     Object? uploadError = freezed,
@@ -272,6 +292,10 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
           ? _value.videoController
           : videoController // ignore: cast_nullable_to_non_nullable
               as VideoPlayerController?,
+      trimRange: freezed == trimRange
+          ? _value.trimRange
+          : trimRange // ignore: cast_nullable_to_non_nullable
+              as RangeValues?,
       isProcessing: null == isProcessing
           ? _value.isProcessing
           : isProcessing // ignore: cast_nullable_to_non_nullable
@@ -283,6 +307,10 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
       isUploading: null == isUploading
           ? _value.isUploading
           : isUploading // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isTrimming: null == isTrimming
+          ? _value.isTrimming
+          : isTrimming // ignore: cast_nullable_to_non_nullable
               as bool,
       exportPath: freezed == exportPath
           ? _value.exportPath
@@ -313,9 +341,11 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
       final Set<String> enabledEventTypes = const {},
       this.startTime = 0,
       @JsonKey(includeIfNull: false) this.videoController,
+      @JsonKey(includeIfNull: false) this.trimRange,
       this.isProcessing = false,
       this.isExporting = false,
       this.isUploading = false,
+      this.isTrimming = false,
       this.exportPath,
       this.exportError,
       this.uploadError})
@@ -383,6 +413,9 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
   @override
   @JsonKey(includeIfNull: false)
   final VideoPlayerController? videoController;
+  @override
+  @JsonKey(includeIfNull: false)
+  final RangeValues? trimRange;
 // New states for button handling
   @override
   @JsonKey()
@@ -394,6 +427,9 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
   @JsonKey()
   final bool isUploading;
   @override
+  @JsonKey()
+  final bool isTrimming;
+  @override
   final String? exportPath;
   @override
   final String? exportError;
@@ -402,7 +438,7 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
 
   @override
   String toString() {
-    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, privateRanges: $privateRanges, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoController: $videoController, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError)';
+    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, privateRanges: $privateRanges, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoController: $videoController, trimRange: $trimRange, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, isTrimming: $isTrimming, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError)';
   }
 
   @override
@@ -427,12 +463,16 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
                 other.startTime == startTime) &&
             (identical(other.videoController, videoController) ||
                 other.videoController == videoController) &&
+            (identical(other.trimRange, trimRange) ||
+                other.trimRange == trimRange) &&
             (identical(other.isProcessing, isProcessing) ||
                 other.isProcessing == isProcessing) &&
             (identical(other.isExporting, isExporting) ||
                 other.isExporting == isExporting) &&
             (identical(other.isUploading, isUploading) ||
                 other.isUploading == isUploading) &&
+            (identical(other.isTrimming, isTrimming) ||
+                other.isTrimming == isTrimming) &&
             (identical(other.exportPath, exportPath) ||
                 other.exportPath == exportPath) &&
             (identical(other.exportError, exportError) ||
@@ -453,9 +493,11 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
       const DeepCollectionEquality().hash(_enabledEventTypes),
       startTime,
       videoController,
+      trimRange,
       isProcessing,
       isExporting,
       isUploading,
+      isTrimming,
       exportPath,
       exportError,
       uploadError);
@@ -482,9 +524,11 @@ abstract class _DemoDetailState extends DemoDetailState {
       final int startTime,
       @JsonKey(includeIfNull: false)
       final VideoPlayerController? videoController,
+      @JsonKey(includeIfNull: false) final RangeValues? trimRange,
       final bool isProcessing,
       final bool isExporting,
       final bool isUploading,
+      final bool isTrimming,
       final String? exportPath,
       final String? exportError,
       final String? uploadError}) = _$DemoDetailStateImpl;
@@ -508,13 +552,18 @@ abstract class _DemoDetailState extends DemoDetailState {
   int get startTime;
   @override
   @JsonKey(includeIfNull: false)
-  VideoPlayerController? get videoController; // New states for button handling
+  VideoPlayerController? get videoController;
+  @override
+  @JsonKey(includeIfNull: false)
+  RangeValues? get trimRange; // New states for button handling
   @override
   bool get isProcessing;
   @override
   bool get isExporting;
   @override
   bool get isUploading;
+  @override
+  bool get isTrimming;
   @override
   String? get exportPath;
   @override

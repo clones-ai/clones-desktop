@@ -22,7 +22,7 @@ use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
 use zip::{write::FileOptions, ZipWriter};
 
-/// Metadata for a recording session, including demonstration, platform, and monitor info.
+/// Metadata for a recording session, including quest, platform, and monitor info.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RecordingMeta {
     id: String,
@@ -1288,4 +1288,55 @@ pub async fn get_current_demonstration(
         .lock()
         .map_err(|e| e.to_string())?;
     Ok(current_demonstration.clone())
+}
+
+pub async fn trim_recording(
+    app: tauri::AppHandle,
+    recording_id: String,
+    start_time: f64,
+    end_time: f64,
+) -> Result<(), String> {
+    let recordings_dir = get_custom_app_local_data_dir(&app)?
+        .join("recordings")
+        .join(&recording_id);
+    let video_path = recordings_dir.join("recording.mp4");
+    let temp_output_path = recordings_dir.join("recording_trimmed.mp4");
+
+    if !video_path.exists() {
+        return Err("Original video file not found.".to_string());
+    }
+
+    let ffmpeg_path = FFMPEG_PATH
+        .get()
+        .ok_or_else(|| "FFmpeg path not initialized.".to_string())?;
+
+    let mut command = Command::new(ffmpeg_path);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+
+    let output = command
+        .arg("-i")
+        .arg(&video_path)
+        .arg("-ss")
+        .arg(start_time.to_string())
+        .arg("-to")
+        .arg(end_time.to_string())
+        .arg(&temp_output_path)
+        .arg("-y") // Overwrite output file if it exists
+        .output()
+        .map_err(|e| format!("Failed to execute FFmpeg command: {}", e))?;
+
+    if !output.status.success() {
+        let error_message = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("FFmpeg command failed: {}", error_message));
+    }
+
+    // Replace the original file with the trimmed one
+    fs::rename(&temp_output_path, &video_path)
+        .map_err(|e| format!("Failed to replace original video file: {}", e))?;
+
+    Ok(())
 }
