@@ -63,7 +63,7 @@ jobs:
       - name: Configure Tauri for Flutter build
         run: |
           $json = Get-Content -Raw -Path native/src-tauri/tauri.conf.json | ConvertFrom-Json
-          $json.app | Add-Member -NotePropertyName "frontendDist" -NotePropertyValue "../build/web"
+          $json.app | Add-Member -NotePropertyName "frontendDist" -NotePropertyValue "../build/web" -Force
           ConvertTo-Json $json -Depth 99 | Set-Content -Path native/src-tauri/tauri.conf.json
         shell: pwsh
         if: matrix.platform == 'windows-latest'
