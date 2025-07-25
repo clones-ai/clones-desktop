@@ -54,6 +54,17 @@ jobs:
       - name: Build Flutter web app
         run: flutter build web --release
 
+      - name: Verify Flutter web build
+        run: |
+          if [ -d "build/web" ]; then
+            echo "✅ Flutter web build successful - build/web directory found"
+            ls -la build/web
+          else
+            echo "❌ Flutter web build failed - build/web directory not found"
+            exit 1
+          fi
+        shell: bash
+
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -71,4 +82,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          projectPath: './native'
           args: ${{ matrix.args }}
