@@ -70,7 +70,7 @@ class _DemoDetailVideoPreviewState
                         child: VideoPlayer(videoController),
                       ),
                     ),
-                  if (videoLoaded)
+                  if (videoLoaded && _draggedHandle == _DragHandle.none)
                     ValueListenableBuilder<VideoPlayerValue>(
                       valueListenable: videoController,
                       builder: (context, value, child) {
@@ -192,11 +192,13 @@ class _DemoDetailVideoPreviewState
                           (details.delta.dx / timelineWidth) * durationMs)
                       .clamp(0.0, _localDragRange!.end);
                   _localDragRange = RangeValues(newStart, _localDragRange!.end);
+                  controller.seekTo(Duration(milliseconds: newStart.round()));
                 } else if (_draggedHandle == _DragHandle.end) {
                   final newEnd = (_localDragRange!.end +
                           (details.delta.dx / timelineWidth) * durationMs)
                       .clamp(_localDragRange!.start, durationMs);
                   _localDragRange = RangeValues(_localDragRange!.start, newEnd);
+                  controller.seekTo(Duration(milliseconds: newEnd.round()));
                 }
               });
             },
