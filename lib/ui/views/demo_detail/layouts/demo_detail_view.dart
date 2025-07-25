@@ -252,16 +252,13 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
                 Tab(text: 'Events'),
               ],
             ),
-            const Expanded(
-              child: IntrinsicHeight(
-                child: SizedBox(
-                  child: TabBarView(
-                    children: [
-                      DemoDetailEditor(),
-                      DemoDetailEvents(),
-                    ],
-                  ),
-                ),
+            const SizedBox(
+              height: 400,
+              child: TabBarView(
+                children: [
+                  DemoDetailEditor(),
+                  DemoDetailEvents(),
+                ],
               ),
             ),
           ],
