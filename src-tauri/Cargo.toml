@@ -6,7 +6,6 @@ authors = ["you"]
 license = ""
 repository = ""
 edition = "2021"
-default-run = "clones_desktop"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -88,3 +87,4 @@ tempfile = "3.10.1"
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
+ipc-server-only = []
