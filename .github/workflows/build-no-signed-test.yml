@@ -62,18 +62,10 @@ jobs:
 
       - name: Configure Tauri for Flutter build
         run: |
-          $json = Get-Content -Raw -Path native/src-tauri/tauri.conf.json | ConvertFrom-Json
-          $json.app | Add-Member -NotePropertyName "frontendDist" -NotePropertyValue "../build/web" -Force
-          ConvertTo-Json $json -Depth 99 | Set-Content -Path native/src-tauri/tauri.conf.json
-        shell: pwsh
-        if: matrix.platform == 'windows-latest'
-
-      - name: Configure Tauri for Flutter build (macOS)
-        run: |
           config_path="native/src-tauri/tauri.conf.json"
           temp_config=$(mktemp)
-          jq '.app.frontendDist = "../build/web"' "$config_path" > "$temp_config" && mv "$temp_config" "$config_path"
-        if: matrix.platform == 'macos-latest'
+          jq '.build.frontendDist = "../build/web"' "$config_path" > "$temp_config" && mv "$temp_config" "$config_path"
+        shell: bash
 
       - name: install Windows dependencies
         if: matrix.platform == 'windows-latest'
