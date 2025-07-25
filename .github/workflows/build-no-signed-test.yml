@@ -1,0 +1,89 @@
+name: 'Build (Test, No-Signed)'
+
+# Trigger on pull requests to the main branch
+on:
+  pull_request:
+    branches:
+      - main
+      - 6-create-github-action-workflow-to-package-and-sign-flutter-app-for-macos-linux-and-windows
+
+jobs:
+  build-flutter-tauri:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest' # for Arm based macs (M1 and above).
+            args: '--target aarch64-apple-darwin'
+          - platform: 'macos-latest' # for Intel based macs.
+            args: '--target x86_64-apple-darwin'
+          - platform: 'windows-latest'
+            args: ''
+          - platform: 'windows-latest'
+            args: '--target aarch64-pc-windows-msvc'
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: echo "${{ secrets.ENV_FILE_TEST }}" > .env
+        shell: bash
+
+      - name: cache Cargo artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            native/src-tauri/target/
+          key: ${{ runner.os }}-${{ matrix.args }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.3'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Build Flutter web app
+        run: flutter build web --release
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Configure Tauri for Flutter build
+        run: |
+          $json = Get-Content -Raw -Path native/src-tauri/tauri.conf.json | ConvertFrom-Json
+          $json.app | Add-Member -NotePropertyName "frontendDist" -NotePropertyValue "../build/web"
+          ConvertTo-Json $json -Depth 99 | Set-Content -Path native/src-tauri/tauri.conf.json
+        shell: pwsh
+        if: matrix.platform == 'windows-latest'
+
+      - name: Configure Tauri for Flutter build (macOS)
+        run: |
+          config_path="native/src-tauri/tauri.conf.json"
+          temp_config=$(mktemp)
+          jq '.app.frontendDist = "../build/web"' "$config_path" > "$temp_config" && mv "$temp_config" "$config_path"
+        if: matrix.platform == 'macos-latest'
+
+      - name: install Windows dependencies
+        if: matrix.platform == 'windows-latest'
+        run: |
+          cargo install trusted-signing-cli
+          rustup target add aarch64-pc-windows-msvc
+
+      - name: build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: ${{ matrix.args }}
