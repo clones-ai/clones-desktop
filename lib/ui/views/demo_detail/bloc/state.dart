@@ -20,13 +20,15 @@ class DemoDetailState with _$DemoDetailState {
     @Default({}) Set<String> enabledEventTypes,
     @Default(0) int startTime,
     @JsonKey(includeIfNull: false) VideoPlayerController? videoController,
-    @JsonKey(includeIfNull: false) RangeValues? trimRange,
+
+    // Video editing
+    @Default([]) List<RangeValues> deletedSegments,
+    @Default(false) bool isApplyingEdits,
 
     // New states for button handling
     @Default(false) bool isProcessing,
     @Default(false) bool isExporting,
     @Default(false) bool isUploading,
-    @Default(false) bool isTrimming,
     String? exportPath,
     String? exportError,
     String? uploadError,

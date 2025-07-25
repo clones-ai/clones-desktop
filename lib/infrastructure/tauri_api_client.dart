@@ -264,18 +264,15 @@ class TauriApiClient {
     throw Exception('Failed to export recordings: ${response.body}');
   }
 
-  Future<void> trimRecording(
-      String recordingId, double startTime, double endTime) async {
+  Future<void> applyEdits(
+      String recordingId, List<Map<String, double>> segments) async {
     final response = await _client.post(
-      Uri.parse('$_baseUrl/recordings/$recordingId/trim'),
+      Uri.parse('$_baseUrl/recordings/$recordingId/apply-edits'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'start_time': startTime,
-        'end_time': endTime,
-      }),
+      body: json.encode({'segments': segments}),
     );
     if (response.statusCode != 200) {
-      throw Exception('Failed to trim recording: ${response.body}');
+      throw Exception('Failed to apply edits: ${response.body}');
     }
   }
 

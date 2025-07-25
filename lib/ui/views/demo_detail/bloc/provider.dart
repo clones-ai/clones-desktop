@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:clones_desktop/application/recording.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
@@ -7,6 +8,7 @@ import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/recording/recording_event.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:video_player/video_player.dart';
 
@@ -48,12 +50,14 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
 
   Future<void> initializeVideoPlayer(String recordingId) async {
     try {
+      // 1. Fetch the video as a Base64 string
       final videoData = await ref.read(tauriApiClientProvider).getRecordingFile(
             recordingId: recordingId,
             filename: 'recording.mp4',
             asBase64: true,
           );
 
+      // 2. Decode the Base64 string
       // The string is a data URI: "data:video/mp4;base64,...."
       final parts = videoData.split(',');
       if (parts.length != 2) {
@@ -62,19 +66,29 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       final base64String = parts[1];
       final videoBytes = base64Decode(base64String);
 
-      final videoUri = Uri.dataFromBytes(
-        videoBytes,
-        mimeType: 'video/mp4',
-      );
-      final controller = VideoPlayerController.networkUrl(videoUri);
+      // 3. Save to a temporary file
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/$recordingId.mp4');
+      await tempFile.writeAsBytes(videoBytes);
+
+      // 4. Use the temporary file with the VideoPlayerController
+      final controller = VideoPlayerController.file(tempFile);
       await controller.initialize();
 
+      // Clean up the old controller if it exists
       await state.videoController?.dispose();
 
-      final newRange =
-          RangeValues(0, controller.value.duration.inMilliseconds.toDouble());
+      state = state.copyWith(videoController: controller);
 
-      state = state.copyWith(videoController: controller, trimRange: newRange);
+      // Optional: Delete the file when the controller is disposed
+      controller.addListener(() {
+        if (controller.value.isInitialized == false) {
+          final exists = tempFile.existsSync();
+          if (exists) {
+            tempFile.deleteSync();
+          }
+        }
+      });
     } catch (e, s) {
       debugPrint('Failed to initialize video player: $e');
       debugPrint(s.toString());
@@ -180,8 +194,88 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     state = state.copyWith(enabledEventTypes: newEnabledTypes);
   }
 
-  void setTrimRange(RangeValues range) {
-    state = state.copyWith(trimRange: range);
+  // --- Video Editing Logic ---
+  void addDeletedSegment(RangeValues segment) {
+    final newSegments = [...state.deletedSegments, segment];
+    _updateDeletedSegments(newSegments);
+  }
+
+  void updateDeletedSegment(int index, RangeValues segment) {
+    final newSegments = [...state.deletedSegments];
+    newSegments[index] = segment;
+    _updateDeletedSegments(newSegments);
+  }
+
+  void removeDeletedSegment(int index) {
+    final newSegments = [...state.deletedSegments]..removeAt(index);
+    state = state.copyWith(deletedSegments: newSegments);
+  }
+
+  void _updateDeletedSegments(List<RangeValues> segments) {
+    // Sort by start time
+    segments.sort((a, b) => a.start.compareTo(b.start));
+
+    // Merge overlapping segments
+    if (segments.isEmpty) {
+      state = state.copyWith(deletedSegments: []);
+      return;
+    }
+
+    final merged = <RangeValues>[segments.first];
+    for (var i = 1; i < segments.length; i++) {
+      final last = merged.last;
+      final current = segments[i];
+      if (current.start < last.end) {
+        final newEnd = last.end > current.end ? last.end : current.end;
+        merged[merged.length - 1] = RangeValues(last.start, newEnd);
+      } else {
+        merged.add(current);
+      }
+    }
+    state = state.copyWith(deletedSegments: merged);
+  }
+
+  Future<void> applyEdits() async {
+    final recordingId = state.recording?.id;
+    if (recordingId == null || state.videoController == null) return;
+
+    state = state.copyWith(isApplyingEdits: true);
+
+    final duration =
+        state.videoController!.value.duration.inMilliseconds.toDouble();
+    final segmentsToKeep = <Map<String, double>>[];
+    double lastEndTime = 0;
+
+    for (final deletedSegment in state.deletedSegments) {
+      if (deletedSegment.start > lastEndTime) {
+        segmentsToKeep.add({
+          'start': lastEndTime / 1000.0,
+          'end': deletedSegment.start / 1000.0,
+        });
+      }
+      lastEndTime = deletedSegment.end;
+    }
+
+    if (lastEndTime < duration) {
+      segmentsToKeep.add({
+        'start': lastEndTime / 1000.0,
+        'end': duration / 1000.0,
+      });
+    }
+
+    try {
+      await ref
+          .read(tauriApiClientProvider)
+          .applyEdits(recordingId, segmentsToKeep);
+      await initializeVideoPlayer(recordingId);
+      state = state.copyWith(
+        isApplyingEdits: false,
+        deletedSegments: [],
+      );
+    } catch (e) {
+      // TODO(reddwarf03): handle error
+      state = state.copyWith(isApplyingEdits: false);
+    }
   }
 
   // --- SFT Editor Logic ---
@@ -239,24 +333,6 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
           );
     } catch (e) {
       // TODO(reddwarf03): handle error
-    }
-  }
-
-  Future<void> trimRecording(double startTime, double endTime) async {
-    final recordingId = state.recording?.id;
-    if (recordingId == null) return;
-    state = state.copyWith(isTrimming: true);
-    try {
-      await ref.read(tauriApiClientProvider).trimRecording(
-            recordingId,
-            startTime,
-            endTime,
-          );
-      await initializeVideoPlayer(recordingId);
-      state = state.copyWith(isTrimming: false);
-    } catch (e) {
-      // TODO(reddwarf03): handle error
-      state = state.copyWith(isTrimming: false);
     }
   }
 
