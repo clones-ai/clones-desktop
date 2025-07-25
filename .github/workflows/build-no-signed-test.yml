@@ -65,6 +65,13 @@ jobs:
           fi
         shell: bash
 
+      - name: Disable updater artifact creation for test builds
+        run: |
+          config_path="native/src-tauri/tauri.conf.json"
+          temp_config=$(mktemp)
+          jq '.bundle.createUpdaterArtifacts = false' "$config_path" > "$temp_config" && mv "$temp_config" "$config_path"
+        shell: bash
+
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
