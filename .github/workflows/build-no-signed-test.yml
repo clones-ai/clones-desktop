@@ -14,13 +14,13 @@ jobs:
       matrix:
         include:
           - platform: 'macos-latest' # for Arm based macs (M1 and above).
-            args: '--target aarch64-apple-darwin'
+            target: 'aarch64-apple-darwin'
           - platform: 'macos-latest' # for Intel based macs.
-            args: '--target x86_64-apple-darwin'
-          - platform: 'windows-latest'
-            args: ''
-          - platform: 'windows-latest'
-            args: '--target aarch64-pc-windows-msvc'
+            target: 'x86_64-apple-darwin'
+          - platform: 'windows-latest' # for x86_64 based windows.
+            target: 'x86_64-pc-windows-msvc'
+          - platform: 'windows-latest' # for Arm based windows.
+            target: 'aarch64-pc-windows-msvc'
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -88,11 +88,11 @@ jobs:
         run: npm install -g @tauri-apps/cli
 
       - name: Build Tauri app
-        run: tauri build ${{ matrix.args }}
+        run: tauri build --target ${{ matrix.target }}
         working-directory: native
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tauri-build-${{ matrix.platform }}-${{ matrix.args }}
-          path: native/src-tauri/target/release/bundle/
+          name: tauri-build-${{ matrix.platform }}-${{ matrix.target }}
+          path: native/src-tauri/target/${{ matrix.target }}/release/bundle/
