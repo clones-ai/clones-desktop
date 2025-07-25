@@ -84,10 +84,15 @@ jobs:
           cargo install trusted-signing-cli
           rustup target add aarch64-pc-windows-msvc
 
-      - name: build Tauri app
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli
+
+      - name: Build Tauri app
+        run: tauri build ${{ matrix.args }}
+        working-directory: native
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          projectPath: './native'
-          args: ${{ matrix.args }}
+          name: tauri-build-${{ matrix.platform }}-${{ matrix.args }}
+          path: native/src-tauri/target/release/bundle/
