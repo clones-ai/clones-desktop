@@ -60,13 +60,6 @@ jobs:
           # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
-      - name: Configure Tauri for Flutter build
-        run: |
-          config_path="native/src-tauri/tauri.conf.json"
-          temp_config=$(mktemp)
-          jq '.build.frontendDist = "../build/web"' "$config_path" > "$temp_config" && mv "$temp_config" "$config_path"
-        shell: bash
-
       - name: install Windows dependencies
         if: matrix.platform == 'windows-latest'
         run: |
