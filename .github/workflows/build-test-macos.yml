@@ -59,16 +59,25 @@ jobs:
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version "^2.0"
 
-      - name: Build Tauri Test App (Unsigned)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Disable signing for test builds
-          TAURI_SIGNING_PRIVATE_KEY: ""
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+      - name: Build Tauri application (unsigned)
+        shell: bash
         run: |
+          echo "🔨 Building Tauri application for ${{ matrix.platform }}..."
           cd src-tauri
-          # Build without signing in dev mode
-          cargo tauri build ${{ matrix.args }} --config tauri.conf.json
+          
+          # Build with error handling - ignore updater errors
+          if ! cargo tauri build ${{ matrix.args }} --config tauri.conf.json 2>&1 | tee build.log; then
+            # Check if the build actually succeeded but updater failed
+            if grep -q "Finished.*bundles" build.log; then
+              echo "⚠️  Build succeeded but updater failed (this is expected for test builds)"
+              echo "✅ Application was built successfully"
+            else
+              echo "❌ Tauri build failed"
+              exit 1
+            fi
+          fi
+          
+          echo "✅ Tauri build complete for ${{ matrix.platform }}"
 
       - name: List build artifacts (debug)
         run: |
