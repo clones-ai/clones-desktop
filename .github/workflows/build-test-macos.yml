@@ -48,13 +48,13 @@ jobs:
       - name: Install Flutter dependencies
         run: flutter pub get
 
-      - name: Build Flutter Web
-        run: flutter build web --base-href /
-
       - name: Create development environment files
         run: |
           # Create .env.local from GitHub secret
-          echo "${{ secrets.ENV_FILE_TEST }}" > .env.local
+          echo "${{ secrets.ENV_FILE_TEST }}" > .env
+
+      - name: Build Flutter Web
+        run: flutter build web --base-href /
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version "^2.0"
