@@ -50,7 +50,7 @@ jobs:
 
       - name: Create development environment files
         run: |
-          # Create .env.local from GitHub secret
+          # Create .env from GitHub secret
           echo "${{ secrets.ENV_FILE_TEST }}" > .env
 
       - name: Build Flutter Web
