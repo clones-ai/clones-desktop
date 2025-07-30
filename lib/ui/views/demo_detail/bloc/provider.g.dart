@@ -9,6 +9,7 @@ part of 'provider.dart';
 String _$demoDetailNotifierHash() =>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     r'1de6fe5034214a2bc1b810133a9faec130064088';
 =======
 =======
@@ -25,6 +26,9 @@ String _$demoDetailNotifierHash() =>
     r'a6805916bc1b960637fbd1543399b3716cb07a4b';
 >>>>>>> 7747ac2 (feat: WIP: Refactor recording editing functionality to support multiple segments, update API integration, and enhance UI for video preview and editing controls.)
 >>>>>>> 9ed984a (feat: WIP: Refactor recording editing functionality to support multiple segments, update API integration, and enhance UI for video preview and editing controls.)
+=======
+    r'cc159c26c7297c6f2457dc046401862a625fa6b0';
+>>>>>>> 2b959bb (Rebase fixes)
 
 /// See also [DemoDetailNotifier].
 @ProviderFor(DemoDetailNotifier)
