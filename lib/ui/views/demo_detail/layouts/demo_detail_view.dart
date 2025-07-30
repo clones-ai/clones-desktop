@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:ui';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
