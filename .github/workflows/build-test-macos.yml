@@ -52,44 +52,62 @@ jobs:
         run: |
           # Create .env from GitHub secret
           echo "${{ secrets.ENV_FILE_TEST }}" > .env
-
       - name: Build Flutter Web
         run: flutter build web --base-href /
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version "^2.0"
 
-      - name: Build Tauri application (unsigned)
-        shell: bash
+      - name: Build Tauri Test App (Unsigned)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Disable signing for test builds
+          TAURI_SIGNING_PRIVATE_KEY: ""
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
-          echo "🔨 Building Tauri application for ${{ matrix.platform }}..."
           cd src-tauri
-          
-          # Build with error handling - ignore updater errors
-          if ! cargo tauri build ${{ matrix.args }} --config tauri.conf.json 2>&1 | tee build.log; then
-            # Check if the build actually succeeded but updater failed
-            if grep -q "Finished.*bundles" build.log; then
-              echo "⚠️  Build succeeded but updater failed (this is expected for test builds)"
-              echo "✅ Application was built successfully"
-            else
-              echo "❌ Tauri build failed"
-              exit 1
-            fi
-          fi
-          
-          echo "✅ Tauri build complete for ${{ matrix.platform }}"
+          # Build without signing in dev mode
+          cargo tauri build ${{ matrix.args }} --config tauri.conf.json
 
       - name: List build artifacts (debug)
         run: |
           echo "=== Build artifacts ==="
-          find src-tauri/target/${{ matrix.target }}/release/bundle -type f -name "*.app" -o -name "*.dmg" || true
-          ls -la src-tauri/target/${{ matrix.target }}/release/bundle/ || true
+          # Check both possible locations
+          find src-tauri/target/${{ matrix.target }}/release/bundle -type f -name "*.app" -o -name "*.dmg" 2>/dev/null || true
+          find src-tauri/\$TEMP/cargo-target/${{ matrix.target }}/release/bundle -type f -name "*.app" -o -name "*.dmg" 2>/dev/null || true
+          
+          # List directories to see actual structure
+          echo "--- Target directory structure ---"
+          ls -la src-tauri/target/${{ matrix.target }}/release/ 2>/dev/null || echo "Standard target dir not found"
+          
+          echo "--- Temp directory structure ---"
+          find src-tauri -name "bundle" -type d 2>/dev/null || echo "No bundle directories found"
 
       - name: Create ZIP of .app for easy download
         run: |
-          cd src-tauri/target/${{ matrix.target }}/release/bundle/macos
-          if [ -d "clones-desktop.app" ]; then
-            zip -r "clones-desktop-${{ matrix.target }}-test.zip" "clones-desktop.app"
+          # Find the actual bundle location
+          BUNDLE_DIR=""
+          
+          # Check standard location first
+          if [ -d "src-tauri/target/${{ matrix.target }}/release/bundle/macos" ]; then
+            BUNDLE_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/macos"
+          else
+            # Find bundle directory wherever it is
+            BUNDLE_DIR=$(find src-tauri -name "macos" -path "*/bundle/macos" -type d | head -1)
+          fi
+          
+          if [ -n "$BUNDLE_DIR" ] && [ -d "$BUNDLE_DIR" ]; then
+            echo "Found bundle directory: $BUNDLE_DIR"
+            cd "$BUNDLE_DIR"
+            if [ -d "clones-desktop.app" ]; then
+              zip -r "clones-desktop-${{ matrix.target }}-test.zip" "clones-desktop.app"
+              echo "Created ZIP file successfully"
+            else
+              echo "No .app file found in $BUNDLE_DIR"
+              ls -la
+            fi
+          else
+            echo "No bundle directory found"
           fi
 
       - name: Upload test artifacts
@@ -97,6 +115,7 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.zip
-            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+            src-tauri/**/bundle/macos/*.zip
+            src-tauri/**/bundle/dmg/*.dmg
+            src-tauri/**/bundle/macos/*.app
           if-no-files-found: warn
