@@ -1,4 +1,4 @@
-name: Build Test Application
+name: Build Test Application - macOS
 
 on:
   push:
@@ -13,7 +13,7 @@ env:
   TAURI_CLI_VERSION: '2.1.0'
 
 jobs:
-  build-test:
+  build-test-macos:
     strategy:
       fail-fast: false
       matrix:
@@ -26,14 +26,6 @@ jobs:
             args: '--target x86_64-apple-darwin'
             artifact_name: 'desktop-app-macos-x64'
             target: 'x86_64-apple-darwin'
-          - platform: 'windows-latest'
-            args: ''
-            artifact_name: 'desktop-app-windows-x64'
-            target: 'x86_64-pc-windows-msvc'
-          - platform: 'windows-latest'
-            args: '--target aarch64-pc-windows-msvc'
-            artifact_name: 'desktop-app-windows-arm64'
-            target: 'aarch64-pc-windows-msvc'
 
     runs-on: ${{ matrix.platform }}
 
@@ -121,6 +113,25 @@ jobs:
           
           echo "✅ All dependencies installed"
 
+      - name: Setup macOS build tools
+        shell: bash
+        run: |
+          echo "🔧 Setting up macOS build tools..."
+          
+          # Check if create-dmg is available
+          if ! command -v create-dmg &> /dev/null; then
+            echo "📦 Installing create-dmg..."
+            brew install create-dmg || echo "create-dmg not available via brew, continuing..."
+          fi
+          
+          # Check if hdiutil is available (should be built-in)
+          if ! command -v hdiutil &> /dev/null; then
+            echo "❌ hdiutil not found - this is required for DMG creation"
+            exit 1
+          fi
+          
+          echo "✅ macOS build tools ready"
+
       - name: Build Flutter Web
         shell: bash
         run: |
@@ -168,38 +179,59 @@ jobs:
           
           echo "✅ Tauri build complete for ${{ matrix.platform }}"
 
+      - name: Debug build output
+        shell: bash
+        run: |
+          echo "🔍 Debug: Checking build output..."
+          
+          # Show the target directory structure
+          if [[ "${{ matrix.args }}" == *"aarch64"* ]]; then
+            TARGET_DIR="src-tauri/target/aarch64-apple-darwin/release"
+          else
+            TARGET_DIR="src-tauri/target/x86_64-apple-darwin/release"
+          fi
+          
+          echo "📁 Target directory: $TARGET_DIR"
+          if [ -d "$TARGET_DIR" ]; then
+            echo "📁 Contents of target directory:"
+            ls -la "$TARGET_DIR"
+            
+            if [ -d "$TARGET_DIR/bundle" ]; then
+              echo "📁 Contents of bundle directory:"
+              ls -la "$TARGET_DIR/bundle"
+              
+              # Show contents of each subdirectory
+              for subdir in "$TARGET_DIR/bundle"/*; do
+                if [ -d "$subdir" ]; then
+                  echo "📁 Contents of $(basename "$subdir"):"
+                  ls -la "$subdir"
+                fi
+              done
+            fi
+          else
+            echo "❌ Target directory not found"
+          fi
+
       - name: Find built application
         id: find-app
         shell: bash
         run: |
           echo "🔍 Searching for built applications..."
           
-          # Define the search directory based on platform and target
-          if [[ "${{ runner.os }}" == "macOS" ]]; then
-            if [[ "${{ matrix.args }}" == *"aarch64"* ]]; then
-              BUNDLE_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle"
-            else
-              BUNDLE_DIR="src-tauri/target/x86_64-apple-darwin/release/bundle"
-            fi
-            
-            # Search for .app first, then .dmg
+          # Define the search directory based on target
+          if [[ "${{ matrix.args }}" == *"aarch64"* ]]; then
+            BUNDLE_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle"
+          else
+            BUNDLE_DIR="src-tauri/target/x86_64-apple-darwin/release/bundle"
+          fi
+          
+          # Search for .dmg first (preferred), then .app, then .zip
+          APP_PATH=$(find "$BUNDLE_DIR" -name "*.dmg" | head -1)
+          if [ -z "$APP_PATH" ]; then
             APP_PATH=$(find "$BUNDLE_DIR" -name "*.app" -type d | head -1)
-            if [ -z "$APP_PATH" ]; then
-              APP_PATH=$(find "$BUNDLE_DIR" -name "*.dmg" | head -1)
-            fi
-            
-          elif [[ "${{ runner.os }}" == "Windows" ]]; then
-            if [[ "${{ matrix.args }}" == *"aarch64"* ]]; then
-              BUNDLE_DIR="src-tauri/target/aarch64-pc-windows-msvc/release/bundle"
-            else
-              BUNDLE_DIR="src-tauri/target/release/bundle"
-            fi
-            
-            # Search for .exe or .msi
-            APP_PATH=$(find "$BUNDLE_DIR" -name "*.exe" | head -1)
-            if [ -z "$APP_PATH" ]; then
-              APP_PATH=$(find "$BUNDLE_DIR" -name "*.msi" | head -1)
-            fi
+          fi
+          if [ -z "$APP_PATH" ]; then
+            APP_PATH=$(find "$BUNDLE_DIR" -name "*.zip" | head -1)
           fi
           
           # Verify that we found something
@@ -207,16 +239,27 @@ jobs:
             echo "app_path=$APP_PATH" >> $GITHUB_OUTPUT
             echo "✅ Found application at: $APP_PATH"
             
-            # Display the file info
-            if [[ "${{ runner.os }}" == "Windows" ]]; then
-              ls -la "$APP_PATH"
-            else
-              ls -la "$APP_PATH"
+            # Display the file info and size
+            echo "📁 File details:"
+            ls -la "$APP_PATH"
+            
+            echo "📏 File size:"
+            du -h "$APP_PATH"
+            
+            # For macOS, also check if it's a DMG and show its contents
+            if [[ "$APP_PATH" == *.dmg ]]; then
+              echo "🔍 DMG contents preview:"
+              hdiutil info "$APP_PATH" 2>/dev/null || echo "Could not read DMG info"
             fi
+            
           else
             echo "❌ No application found"
             echo "🔍 Debug: Available files in bundle directories:"
-            find src-tauri/target -name "bundle" -type d -exec find {} -name "*.app" -o -name "*.exe" -o -name "*.dmg" -o -name "*.msi" \; 2>/dev/null || echo "No applications found"
+            find src-tauri/target -name "bundle" -type d -exec find {} -name "*.app" -o -name "*.dmg" -o -name "*.zip" \; 2>/dev/null || echo "No applications found"
+            
+            # Show all files in bundle directories for debugging
+            echo "🔍 All files in bundle directories:"
+            find src-tauri/target -name "bundle" -type d -exec ls -la {} \; 2>/dev/null || echo "No bundle directories found"
             exit 1
           fi
 
@@ -233,7 +276,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: web-build-${{ matrix.platform }}-${{ matrix.target }}
+          name: web-build-macos-${{ matrix.target }}
           path: build/web/
           retention-days: 7
           compression-level: 6
@@ -246,50 +289,14 @@ jobs:
           echo "Platform: ${{ matrix.platform }}"
           echo "Target: ${{ matrix.target }}"
           echo "Artifact: ${{ matrix.artifact_name }}"
-          echo "Web build: web-build-${{ matrix.platform }}-${{ matrix.target }}"
+          echo "Web build: web-build-macos-${{ matrix.target }}"
           
           if [ -n "${{ steps.find-app.outputs.app_path }}" ]; then
             echo "App location: ${{ steps.find-app.outputs.app_path }}"
             
             # Display the file size
-            if [[ "${{ runner.os }}" == "Windows" ]]; then
-              powershell -Command "Get-Item '${{ steps.find-app.outputs.app_path }}' | Select-Object Name, Length | Format-Table -AutoSize"
-            else
-              du -h "${{ steps.find-app.outputs.app_path }}"
-            fi
+            du -h "${{ steps.find-app.outputs.app_path }}"
           fi
           
           echo "=========================="
-          echo ""
-
-  # Job to create a test release (optional)
-  create-test-release:
-    needs: build-test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
-    
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        
-      - name: Display structure of downloaded files
-        run: ls -la
-        
-      - name: Create test release info
-        run: |
-          echo "# Test Build - $(date)" > release-notes.md
-          echo "" >> release-notes.md
-          echo "This is an automated test build." >> release-notes.md
-          echo "" >> release-notes.md
-          echo "## Built applications:" >> release-notes.md
-          echo "- macOS ARM64: desktop-app-macos-arm64" >> release-notes.md
-          echo "- macOS x64: desktop-app-macos-x64" >> release-notes.md
-          echo "- Windows ARM64: desktop-app-windows-arm64" >> release-notes.md
-          echo "- Windows x64: desktop-app-windows-x64" >> release-notes.md
-          
-      - name: Upload release summary
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-release-summary
-          path: release-notes.md
-          retention-days: 7
+          echo "" 
