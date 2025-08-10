@@ -65,7 +65,8 @@ jobs:
         run: |
           cd src-tauri
           # Build without signing - Tauri will automatically build Flutter web first via beforeBuildCommand
-          cargo tauri build ${{ matrix.args }} --config tauri.test.conf.json
+          # Disable Windows signing command for test builds
+          cargo tauri build ${{ matrix.args }} --config tauri.test.conf.json --bundles msi,nsis
         shell: bash
 
       - name: List build artifacts (debug)

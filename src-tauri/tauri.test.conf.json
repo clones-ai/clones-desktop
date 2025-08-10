@@ -53,6 +53,7 @@
         "createUpdaterArtifacts": false,
         "active": true,
         "targets": "all",
+        "windows": {},
         "macOS": {
             "dmg": {
                 "appPosition": {
