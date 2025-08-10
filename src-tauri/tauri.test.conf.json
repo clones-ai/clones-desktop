@@ -6,7 +6,7 @@
     "build": {
         "frontendDist": "../build/web",
         "devUrl": "http://localhost:3000",
-        "beforeBuildCommand": "flutter build web --release --base-href /"
+        "beforeBuildCommand": "flutter build web --release --base-href / --web-renderer html --no-web-resources-cdn"
     },
     "plugins": {
         "deep-link": {
