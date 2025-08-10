@@ -4,8 +4,9 @@
     "version": "0.1.4",
     "identifier": "ai.clones.desktop.test",
     "build": {
-        "frontendDist": "../build/macos/Build/Products/Release/Runner.app/Contents/Frameworks/App.framework/Resources/flutter_assets",
-        "devUrl": "http://localhost:3000"
+        "frontendDist": "../build/web",
+        "devUrl": "http://localhost:3000",
+        "beforeBuildCommand": "flutter build web --release --base-href /"
     },
     "plugins": {
         "deep-link": {
