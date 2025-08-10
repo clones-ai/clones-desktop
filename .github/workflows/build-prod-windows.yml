@@ -1,0 +1,259 @@
+name: Build Windows Production App (Signed)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  build-windows-production:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'windows-latest'
+            args: '--target x86_64-pc-windows-msvc'
+            artifact_name: 'desktop-app-windows-x64-production'
+            target: 'x86_64-pc-windows-msvc'
+
+    runs-on: ${{ matrix.platform }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.3'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Create production environment files
+        run: |
+          # Create .env from GitHub production secret
+          echo "${{ secrets.ENV_FILE_PRODUCTION }}" > .env
+          echo "✅ Production environment configured"
+        shell: bash
+
+      - name: Enable Flutter Web support
+        run: flutter config --enable-web
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2.0"
+
+      - name: Setup Windows signing
+        run: |
+          # Setup Windows code signing if certificate is provided
+          if ($env:WINDOWS_CERTIFICATE) {
+            Write-Host "Setting up Windows code signing..."
+            
+            # Decode and save certificate
+            $bytes = [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE)
+            [IO.File]::WriteAllBytes("certificate.pfx", $bytes)
+            
+            # Import certificate to certificate store
+            $cert = Import-PfxCertificate -FilePath "certificate.pfx" -CertStoreLocation "Cert:\CurrentUser\My" -Password (ConvertTo-SecureString $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force)
+            Write-Host "✅ Certificate imported: $($cert.Thumbprint)"
+            
+            # Set environment variable for Tauri
+            echo "WINDOWS_CERTIFICATE_THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
+            
+            Write-Host "✅ Code signing configured"
+          } else {
+            Write-Host "⚠️ No signing certificate provided - building unsigned"
+          }
+        shell: powershell
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+
+      - name: Build Tauri Production App (Signed)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Signing configuration
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # Windows specific signing
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          # Azure Code Signing (if using Azure)
+          AZURE_KEY_VAULT_URI: ${{ secrets.AZURE_KEY_VAULT_URI }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CERT_NAME: ${{ secrets.AZURE_CERT_NAME }}
+        run: |
+          cd src-tauri
+          Write-Host "🚀 Building production app with signing..."
+          
+          # Use production config (same as test but with different env)
+          cargo tauri build ${{ matrix.args }} --config tauri.conf.json
+          
+          Write-Host "✅ Production build completed"
+        shell: powershell
+
+      - name: Verify Windows signing
+        run: |
+          # Verify that the executables are signed
+          $BUNDLE_BASE = "src-tauri/target/${{ matrix.target }}/release/bundle"
+          
+          # Check NSIS installer
+          if (Test-Path "$BUNDLE_BASE/nsis") {
+            $EXE_FILE = Get-ChildItem -Path "$BUNDLE_BASE/nsis" -Filter "*.exe" | Select-Object -First 1
+            if ($EXE_FILE) {
+              Write-Host "🔍 Verifying NSIS installer signature..."
+              $signature = Get-AuthenticodeSignature $EXE_FILE.FullName
+              if ($signature.Status -eq "Valid") {
+                Write-Host "✅ NSIS installer is properly signed"
+                Write-Host "   Signer: $($signature.SignerCertificate.Subject)"
+              } else {
+                Write-Host "⚠️ NSIS installer signature status: $($signature.Status)"
+              }
+            }
+          }
+          
+          # Check MSI installer
+          if (Test-Path "$BUNDLE_BASE/msi") {
+            $MSI_FILE = Get-ChildItem -Path "$BUNDLE_BASE/msi" -Filter "*.msi" | Select-Object -First 1
+            if ($MSI_FILE) {
+              Write-Host "🔍 Verifying MSI installer signature..."
+              $signature = Get-AuthenticodeSignature $MSI_FILE.FullName
+              if ($signature.Status -eq "Valid") {
+                Write-Host "✅ MSI installer is properly signed"
+                Write-Host "   Signer: $($signature.SignerCertificate.Subject)"
+              } else {
+                Write-Host "⚠️ MSI installer signature status: $($signature.Status)"
+              }
+            }
+          }
+        shell: powershell
+
+      - name: Create production app package
+        run: |
+          # Find the actual bundle location for Windows
+          $BUNDLE_BASE = "src-tauri/target/${{ matrix.target }}/release/bundle"
+          $APP_FOUND = $false
+          
+          Write-Host "=== Production Windows app verification ==="
+          
+          # Handle NSIS installer (.exe)
+          if (Test-Path "$BUNDLE_BASE/nsis") {
+            $EXE_FILE = Get-ChildItem -Path "$BUNDLE_BASE/nsis" -Filter "*.exe" | Select-Object -First 1
+            if ($EXE_FILE) {
+              Write-Host "✅ Found NSIS installer: $($EXE_FILE.FullName)"
+              $APP_FOUND = $true
+              
+              # Create production copy
+              $PROD_NAME = $EXE_FILE.BaseName + "-${{ matrix.target }}-production.exe"
+              Copy-Item $EXE_FILE.FullName "$BUNDLE_BASE/nsis/$PROD_NAME"
+              Write-Host "✅ Created production installer: $PROD_NAME"
+              
+              # Show file size
+              $SIZE = [math]::Round((Get-Item "$BUNDLE_BASE/nsis/$PROD_NAME").Length / 1MB, 2)
+              Write-Host "✅ Production installer size: ${SIZE} MB"
+            }
+          }
+          
+          # Handle MSI installer
+          if (Test-Path "$BUNDLE_BASE/msi") {
+            $MSI_FILE = Get-ChildItem -Path "$BUNDLE_BASE/msi" -Filter "*.msi" | Select-Object -First 1
+            if ($MSI_FILE) {
+              Write-Host "✅ Found MSI installer: $($MSI_FILE.FullName)"
+              $APP_FOUND = $true
+              
+              # Create production copy
+              $PROD_NAME = $MSI_FILE.BaseName + "-${{ matrix.target }}-production.msi"
+              Copy-Item $MSI_FILE.FullName "$BUNDLE_BASE/msi/$PROD_NAME"
+              Write-Host "✅ Created production MSI: $PROD_NAME"
+              
+              # Show file size
+              $SIZE = [math]::Round((Get-Item "$BUNDLE_BASE/msi/$PROD_NAME").Length / 1MB, 2)
+              Write-Host "✅ Production MSI size: ${SIZE} MB"
+            }
+          }
+          
+          if (-not $APP_FOUND) {
+            Write-Host "❌ No Windows installer found!"
+            Write-Host "Searching entire target directory:"
+            Get-ChildItem -Path "src-tauri/target" -Recurse -Include "*.exe", "*.msi" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
+            exit 1
+          }
+        shell: powershell
+
+      - name: Generate production build summary
+        run: |
+          echo "## 🚀 Production Build Summary for ${{ matrix.target }}" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $env:GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $env:GITHUB_STEP_SUMMARY
+          echo "| Target | ${{ matrix.target }} |" >> $env:GITHUB_STEP_SUMMARY
+          echo "| Flutter Version | 3.29.3 |" >> $env:GITHUB_STEP_SUMMARY
+          echo "| Tauri Version | 2.0+ |" >> $env:GITHUB_STEP_SUMMARY
+          echo "| Build Type | **Production (Signed)** |" >> $env:GITHUB_STEP_SUMMARY
+          echo "| Environment | Production |" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          
+          $NSIS_FILE = Get-ChildItem -Path "src-tauri/target/${{ matrix.target }}/release/bundle/nsis" -Filter "*production.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $MSI_FILE = Get-ChildItem -Path "src-tauri/target/${{ matrix.target }}/release/bundle/msi" -Filter "*production.msi" -ErrorAction SilentlyContinue | Select-Object -First 1
+          
+          if ($NSIS_FILE -or $MSI_FILE) {
+            echo "✅ **Production app successfully built and signed!**" >> $env:GITHUB_STEP_SUMMARY
+            echo "" >> $env:GITHUB_STEP_SUMMARY
+            if ($NSIS_FILE) {
+              $SIZE = [math]::Round($NSIS_FILE.Length / 1MB, 2)
+              echo "- 📁 NSIS Installer size: ${SIZE} MB" >> $env:GITHUB_STEP_SUMMARY
+            }
+            if ($MSI_FILE) {
+              $SIZE = [math]::Round($MSI_FILE.Length / 1MB, 2)
+              echo "- 📁 MSI Installer size: ${SIZE} MB" >> $env:GITHUB_STEP_SUMMARY
+            }
+            echo "- 🎯 Target architecture: ${{ matrix.target }}" >> $env:GITHUB_STEP_SUMMARY
+            echo "- 🔐 Code signed for Windows" >> $env:GITHUB_STEP_SUMMARY
+            echo "- 💻 Ready for Windows distribution" >> $env:GITHUB_STEP_SUMMARY
+          } else {
+            echo "❌ **Production build failed - no artifacts generated**" >> $env:GITHUB_STEP_SUMMARY
+          }
+        shell: powershell
+
+      - name: Upload production artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*production.exe
+            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*production.msi
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Create GitHub Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*production.exe
+            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*production.msi
+          draft: true
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
