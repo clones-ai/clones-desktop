@@ -53,25 +53,8 @@ jobs:
           # Create .env from GitHub secret
           echo "${{ secrets.ENV_FILE_TEST }}" > .env
 
-      - name: Enable macOS desktop support
-        run: flutter config --enable-macos-desktop
-
-      - name: Build Flutter for macOS Desktop
-        run: |
-          # Build Flutter for macOS desktop (not web)
-          flutter build macos --release --verbose
-
-      - name: Verify Flutter build output
-        run: |
-          echo "=== Flutter build verification ==="
-          ls -la build/macos/Build/Products/Release/ || echo "Release directory not found"
-          if [ -d "build/macos/Build/Products/Release/Runner.app" ]; then
-            echo "✅ Flutter macOS app built successfully"
-            ls -la build/macos/Build/Products/Release/Runner.app/Contents/Frameworks/App.framework/Resources/
-          else
-            echo "❌ Flutter macOS app not found"
-            find build -name "*.app" -type d || echo "No .app found in build directory"
-          fi
+      - name: Enable Flutter Web support
+        run: flutter config --enable-web
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version "^2.0"
@@ -84,7 +67,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
           cd src-tauri
-          # Build without signing for standalone app using test config
+          # Build without signing - Tauri will automatically build Flutter web first via beforeBuildCommand
           cargo tauri build ${{ matrix.args }} --config tauri.test.conf.json
 
       - name: List build artifacts (debug)
