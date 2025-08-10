@@ -2,7 +2,7 @@ name: Build macOS Dev/Test App (Unsigned)
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, 6-create-github-action-workflow-to-package-and-sign-flutter-app-for-macos-linux-and-windows ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -52,8 +52,26 @@ jobs:
         run: |
           # Create .env from GitHub secret
           echo "${{ secrets.ENV_FILE_TEST }}" > .env
-      - name: Build Flutter Web
-        run: flutter build web --base-href /
+
+      - name: Enable macOS desktop support
+        run: flutter config --enable-macos-desktop
+
+      - name: Build Flutter for macOS Desktop
+        run: |
+          # Build Flutter for macOS desktop (not web)
+          flutter build macos --release --verbose
+
+      - name: Verify Flutter build output
+        run: |
+          echo "=== Flutter build verification ==="
+          ls -la build/macos/Build/Products/Release/ || echo "Release directory not found"
+          if [ -d "build/macos/Build/Products/Release/Runner.app" ]; then
+            echo "✅ Flutter macOS app built successfully"
+            ls -la build/macos/Build/Products/Release/Runner.app/Contents/Frameworks/App.framework/Resources/
+          else
+            echo "❌ Flutter macOS app not found"
+            find build -name "*.app" -type d || echo "No .app found in build directory"
+          fi
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version "^2.0"
@@ -66,48 +84,95 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         run: |
           cd src-tauri
-          # Build without signing in dev mode
-          cargo tauri build ${{ matrix.args }} --config tauri.conf.json
+          # Build without signing for standalone app using test config
+          cargo tauri build ${{ matrix.args }} --config tauri.test.conf.json
 
       - name: List build artifacts (debug)
         run: |
           echo "=== Build artifacts ==="
-          # Check both possible locations
-          find src-tauri/target/${{ matrix.target }}/release/bundle -type f -name "*.app" -o -name "*.dmg" 2>/dev/null || true
-          find src-tauri/\$TEMP/cargo-target/${{ matrix.target }}/release/bundle -type f -name "*.app" -o -name "*.dmg" 2>/dev/null || true
+          echo "Looking for build artifacts in target directory..."
+          find src-tauri/target -name "*.app" -type d 2>/dev/null || true
+          find src-tauri/target -name "*.dmg" -type f 2>/dev/null || true
           
-          # List directories to see actual structure
-          echo "--- Target directory structure ---"
+          echo "--- Full target structure ---"
           ls -la src-tauri/target/${{ matrix.target }}/release/ 2>/dev/null || echo "Standard target dir not found"
           
-          echo "--- Temp directory structure ---"
-          find src-tauri -name "bundle" -type d 2>/dev/null || echo "No bundle directories found"
+          echo "--- Bundle directories ---"
+          find src-tauri/target -name "bundle" -type d 2>/dev/null || echo "No bundle directories found"
+          
+          echo "--- macOS bundle contents ---"
+          find src-tauri/target -path "*/bundle/macos" -type d -exec ls -la {} \; 2>/dev/null || echo "No macOS bundle found"
 
-      - name: Create ZIP of .app for easy download
+      - name: Create standalone app package
         run: |
           # Find the actual bundle location
-          BUNDLE_DIR=""
+          APP_PATH=""
           
-          # Check standard location first
-          if [ -d "src-tauri/target/${{ matrix.target }}/release/bundle/macos" ]; then
-            BUNDLE_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/macos"
-          else
-            # Find bundle directory wherever it is
-            BUNDLE_DIR=$(find src-tauri -name "macos" -path "*/bundle/macos" -type d | head -1)
-          fi
+          # Look for the .app bundle in target directory
+          APP_PATH=$(find src-tauri/target/${{ matrix.target }}/release/bundle -name "*.app" -type d | head -1)
           
-          if [ -n "$BUNDLE_DIR" ] && [ -d "$BUNDLE_DIR" ]; then
-            echo "Found bundle directory: $BUNDLE_DIR"
-            cd "$BUNDLE_DIR"
-            if [ -d "clones-desktop.app" ]; then
-              zip -r "clones-desktop-${{ matrix.target }}-test.zip" "clones-desktop.app"
-              echo "Created ZIP file successfully"
+          if [ -n "$APP_PATH" ] && [ -d "$APP_PATH" ]; then
+            echo "✅ Found app bundle: $APP_PATH"
+            APP_NAME=$(basename "$APP_PATH")
+            BUNDLE_DIR=$(dirname "$APP_PATH")
+            
+            # Verify app structure
+            echo "=== App bundle verification ==="
+            if [ -f "$APP_PATH/Contents/MacOS/clones-desktop-test" ]; then
+              echo "✅ Main executable found"
             else
-              echo "No .app file found in $BUNDLE_DIR"
-              ls -la
+              echo "❌ Main executable not found"
+              ls -la "$APP_PATH/Contents/MacOS/"
+            fi
+            
+            # Check if app is properly self-contained
+            echo "=== Checking app dependencies ==="
+            otool -L "$APP_PATH/Contents/MacOS/"* 2>/dev/null || echo "Could not check dependencies"
+            
+            cd "$BUNDLE_DIR"
+            # Create a ZIP archive for easy distribution
+            zip -r "${APP_NAME%%.app}-${{ matrix.target }}-test.zip" "$APP_NAME"
+            echo "✅ Created ZIP: ${APP_NAME%%.app}-${{ matrix.target }}-test.zip"
+            
+            # Verify ZIP was created
+            if [ -f "${APP_NAME%%.app}-${{ matrix.target }}-test.zip" ]; then
+              echo "✅ ZIP file size: $(du -h ${APP_NAME%%.app}-${{ matrix.target }}-test.zip)"
+            fi
+            
+            # Also check for DMG if it exists
+            if [ -d "../dmg" ]; then
+              echo "📀 DMG directory found"
+              ls -la ../dmg/
             fi
           else
-            echo "No bundle directory found"
+            echo "❌ No .app bundle found!"
+            echo "Searching entire target directory:"
+            find src-tauri/target -name "*.app" -type d 2>/dev/null || echo "No .app found anywhere"
+            exit 1
+          fi
+
+      - name: Generate build summary
+        run: |
+          echo "## 📦 Build Summary for ${{ matrix.target }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Target | ${{ matrix.target }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Flutter Version | 3.29.3 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tauri Version | 2.0+ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Type | Unsigned Test Build |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if find src-tauri/target/${{ matrix.target }}/release/bundle/macos -name "*.zip" 2>/dev/null | head -1; then
+            ZIP_FILE=$(find src-tauri/target/${{ matrix.target }}/release/bundle/macos -name "*.zip" | head -1)
+            ZIP_SIZE=$(du -h "$ZIP_FILE" | cut -f1)
+            echo "✅ **App successfully built and packaged!**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- 📁 Package size: $ZIP_SIZE" >> $GITHUB_STEP_SUMMARY
+            echo "- 🎯 Target architecture: ${{ matrix.target }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 📱 Ready for testing on macOS devices" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Build failed - no artifacts generated**" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Upload test artifacts
@@ -115,7 +180,7 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: |
-            src-tauri/**/bundle/macos/*.zip
-            src-tauri/**/bundle/dmg/*.dmg
-            src-tauri/**/bundle/macos/*.app
-          if-no-files-found: warn
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.zip
+            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+          retention-days: 30
