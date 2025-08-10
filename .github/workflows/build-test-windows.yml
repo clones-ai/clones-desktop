@@ -1,0 +1,192 @@
+name: Build Windows Dev/Test App (Unsigned)
+
+on:
+  push:
+    branches: [ main, develop, 6-create-github-action-workflow-to-package-and-sign-flutter-app-for-macos-linux-and-windows ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-windows-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'windows-latest'
+            args: '--target x86_64-pc-windows-msvc'
+            artifact_name: 'desktop-app-windows-x64-test'
+            target: 'x86_64-pc-windows-msvc'
+
+    runs-on: ${{ matrix.platform }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.3'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Create development environment files
+        run: |
+          # Create .env from GitHub secret
+          echo "${{ secrets.ENV_FILE_TEST }}" > .env
+        shell: bash
+
+      - name: Enable Flutter Web support
+        run: flutter config --enable-web
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2.0"
+
+      - name: Build Tauri Test App (Unsigned)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Disable signing for test builds
+          TAURI_SIGNING_PRIVATE_KEY: ""
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+        run: |
+          cd src-tauri
+          # Build without signing - Tauri will automatically build Flutter web first via beforeBuildCommand
+          cargo tauri build ${{ matrix.args }} --config tauri.test.conf.json
+        shell: bash
+
+      - name: List build artifacts (debug)
+        run: |
+          echo "=== Build artifacts ==="
+          echo "Looking for build artifacts in target directory..."
+          
+          if (Test-Path "src-tauri/target/${{ matrix.target }}/release/bundle") {
+            Get-ChildItem -Path "src-tauri/target/${{ matrix.target }}/release/bundle" -Recurse -Include "*.exe", "*.msi" | ForEach-Object { Write-Host $_.FullName }
+          } else {
+            Write-Host "Bundle directory not found"
+          }
+          
+          echo "--- Full target structure ---"
+          if (Test-Path "src-tauri/target/${{ matrix.target }}/release/") {
+            Get-ChildItem -Path "src-tauri/target/${{ matrix.target }}/release/" | Format-Table -AutoSize
+          } else {
+            Write-Host "Standard target dir not found"
+          }
+          
+          echo "--- Bundle directories ---"
+          Get-ChildItem -Path "src-tauri/target" -Recurse -Directory -Name "bundle" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_ }
+          
+          echo "--- Windows bundle contents ---"
+          if (Test-Path "src-tauri/target/${{ matrix.target }}/release/bundle/nsis") {
+            Get-ChildItem -Path "src-tauri/target/${{ matrix.target }}/release/bundle/nsis" | Format-Table -AutoSize
+          }
+          if (Test-Path "src-tauri/target/${{ matrix.target }}/release/bundle/msi") {
+            Get-ChildItem -Path "src-tauri/target/${{ matrix.target }}/release/bundle/msi" | Format-Table -AutoSize
+          }
+        shell: powershell
+
+      - name: Create standalone app package
+        run: |
+          # Find the actual bundle location for Windows
+          $BUNDLE_BASE = "src-tauri/target/${{ matrix.target }}/release/bundle"
+          $APP_FOUND = $false
+          
+          # Look for NSIS installer (.exe)
+          if (Test-Path "$BUNDLE_BASE/nsis") {
+            $EXE_FILE = Get-ChildItem -Path "$BUNDLE_BASE/nsis" -Filter "*.exe" | Select-Object -First 1
+            if ($EXE_FILE) {
+              Write-Host "✅ Found NSIS installer: $($EXE_FILE.FullName)"
+              $APP_FOUND = $true
+              
+              # Create a copy with test suffix
+              $TEST_NAME = $EXE_FILE.BaseName + "-${{ matrix.target }}-test.exe"
+              Copy-Item $EXE_FILE.FullName "$BUNDLE_BASE/nsis/$TEST_NAME"
+              Write-Host "✅ Created test installer: $TEST_NAME"
+              
+              # Show file size
+              $SIZE = [math]::Round((Get-Item "$BUNDLE_BASE/nsis/$TEST_NAME").Length / 1MB, 2)
+              Write-Host "✅ Installer size: ${SIZE} MB"
+            }
+          }
+          
+          # Look for MSI installer
+          if (Test-Path "$BUNDLE_BASE/msi") {
+            $MSI_FILE = Get-ChildItem -Path "$BUNDLE_BASE/msi" -Filter "*.msi" | Select-Object -First 1
+            if ($MSI_FILE) {
+              Write-Host "✅ Found MSI installer: $($MSI_FILE.FullName)"
+              $APP_FOUND = $true
+              
+              # Create a copy with test suffix
+              $TEST_NAME = $MSI_FILE.BaseName + "-${{ matrix.target }}-test.msi"
+              Copy-Item $MSI_FILE.FullName "$BUNDLE_BASE/msi/$TEST_NAME"
+              Write-Host "✅ Created test MSI: $TEST_NAME"
+              
+              # Show file size
+              $SIZE = [math]::Round((Get-Item "$BUNDLE_BASE/msi/$TEST_NAME").Length / 1MB, 2)
+              Write-Host "✅ MSI size: ${SIZE} MB"
+            }
+          }
+          
+          if (-not $APP_FOUND) {
+            Write-Host "❌ No Windows installer found!"
+            Write-Host "Searching entire target directory:"
+            Get-ChildItem -Path "src-tauri/target" -Recurse -Include "*.exe", "*.msi" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
+            exit 1
+          }
+        shell: powershell
+
+      - name: Generate build summary
+        run: |
+          echo "## 📦 Build Summary for ${{ matrix.target }}" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $env:GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $env:GITHUB_STEP_SUMMARY
+          echo "| Target | ${{ matrix.target }} |" >> $env:GITHUB_STEP_SUMMARY
+          echo "| Flutter Version | 3.29.3 |" >> $env:GITHUB_STEP_SUMMARY
+          echo "| Tauri Version | 2.0+ |" >> $env:GITHUB_STEP_SUMMARY
+          echo "| Build Type | Unsigned Test Build |" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          
+          $NSIS_FILE = Get-ChildItem -Path "src-tauri/target/${{ matrix.target }}/release/bundle/nsis" -Filter "*test.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $MSI_FILE = Get-ChildItem -Path "src-tauri/target/${{ matrix.target }}/release/bundle/msi" -Filter "*test.msi" -ErrorAction SilentlyContinue | Select-Object -First 1
+          
+          if ($NSIS_FILE -or $MSI_FILE) {
+            echo "✅ **App successfully built and packaged!**" >> $env:GITHUB_STEP_SUMMARY
+            echo "" >> $env:GITHUB_STEP_SUMMARY
+            if ($NSIS_FILE) {
+              $SIZE = [math]::Round($NSIS_FILE.Length / 1MB, 2)
+              echo "- 📁 NSIS Installer size: ${SIZE} MB" >> $env:GITHUB_STEP_SUMMARY
+            }
+            if ($MSI_FILE) {
+              $SIZE = [math]::Round($MSI_FILE.Length / 1MB, 2)
+              echo "- 📁 MSI Installer size: ${SIZE} MB" >> $env:GITHUB_STEP_SUMMARY
+            }
+            echo "- 🎯 Target architecture: ${{ matrix.target }}" >> $env:GITHUB_STEP_SUMMARY
+            echo "- 💻 Ready for testing on Windows devices" >> $env:GITHUB_STEP_SUMMARY
+          } else {
+            echo "❌ **Build failed - no artifacts generated**" >> $env:GITHUB_STEP_SUMMARY
+          }
+        shell: powershell
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*test.exe
+            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*test.msi
+          if-no-files-found: error
+          retention-days: 30
