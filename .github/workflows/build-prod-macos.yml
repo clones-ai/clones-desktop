@@ -1,0 +1,243 @@
+name: Build macOS Production App (Signed)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  build-macos-production:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin'
+            artifact_name: 'desktop-app-macos-arm64-production'
+            target: 'aarch64-apple-darwin'
+          - platform: 'macos-latest'
+            args: '--target x86_64-apple-darwin'
+            artifact_name: 'desktop-app-macos-x64-production'
+            target: 'x86_64-apple-darwin'
+
+    runs-on: ${{ matrix.platform }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.3'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Create production environment files
+        run: |
+          # Create .env from GitHub production secret
+          echo "${{ secrets.ENV_FILE_PRODUCTION }}" > .env
+          echo "✅ Production environment configured"
+
+      - name: Enable Flutter Web support
+        run: flutter config --enable-web
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2.0"
+
+      - name: Setup macOS signing
+        run: |
+          # Import signing certificates (if provided)
+          if [ -n "${{ secrets.MACOS_CERTIFICATE }}" ]; then
+            echo "Setting up macOS code signing..."
+            
+            # Create keychain
+            security create-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+            security default-keychain -s build.keychain
+            security unlock-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+            
+            # Import certificate
+            echo "${{ secrets.MACOS_CERTIFICATE }}" | base64 --decode > certificate.p12
+            security import certificate.p12 -k build.keychain -P "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+            
+            # Allow codesign to access keychain
+            security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+            
+            echo "✅ Code signing configured"
+          else
+            echo "⚠️ No signing certificate provided - building unsigned"
+          fi
+
+      - name: Build Tauri Production App (Signed)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Signing configuration
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # macOS specific signing
+          APPLE_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          cd src-tauri
+          echo "🚀 Building production app with signing..."
+          
+          # Use production config (same as test but with different env)
+          cargo tauri build ${{ matrix.args }} --config tauri.conf.json
+          
+          echo "✅ Production build completed"
+
+      - name: Notarize macOS app (if signed)
+        if: ${{ env.APPLE_ID != '' }}
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+        run: |
+          echo "🍎 Starting notarization process..."
+          
+          # Find the app bundle
+          APP_PATH=$(find src-tauri/target/${{ matrix.target }}/release/bundle -name "*.app" -type d | head -1)
+          
+          if [ -n "$APP_PATH" ] && [ -d "$APP_PATH" ]; then
+            echo "Found app for notarization: $APP_PATH"
+            
+            # Create ZIP for notarization
+            cd "$(dirname "$APP_PATH")"
+            APP_NAME=$(basename "$APP_PATH")
+            zip -r "${APP_NAME%%.app}-notarization.zip" "$APP_NAME"
+            
+            # Submit for notarization
+            xcrun notarytool submit "${APP_NAME%%.app}-notarization.zip" \
+              --apple-id "${{ secrets.APPLE_ID }}" \
+              --password "${{ secrets.APPLE_PASSWORD }}" \
+              --team-id "${{ secrets.APPLE_TEAM_ID }}" \
+              --wait
+            
+            # Staple the notarization
+            xcrun stapler staple "$APP_NAME"
+            
+            echo "✅ Notarization completed"
+          else
+            echo "⚠️ No app bundle found for notarization"
+          fi
+
+      - name: Create production app package
+        run: |
+          # Find the actual bundle location
+          APP_PATH=""
+          
+          # Look for the .app bundle in target directory
+          APP_PATH=$(find src-tauri/target/${{ matrix.target }}/release/bundle -name "*.app" -type d | head -1)
+          
+          if [ -n "$APP_PATH" ] && [ -d "$APP_PATH" ]; then
+            echo "✅ Found app bundle: $APP_PATH"
+            APP_NAME=$(basename "$APP_PATH")
+            BUNDLE_DIR=$(dirname "$APP_PATH")
+            
+            # Verify app structure and signing
+            echo "=== Production app verification ==="
+            if [ -f "$APP_PATH/Contents/MacOS/clones-desktop" ]; then
+              echo "✅ Main executable found"
+              
+              # Check code signing
+              codesign -v --verbose "$APP_PATH" || echo "⚠️ App not signed or signature invalid"
+              
+              # Check notarization
+              spctl -a -v "$APP_PATH" || echo "⚠️ App not notarized or notarization invalid"
+              
+            else
+              echo "❌ Main executable not found"
+              ls -la "$APP_PATH/Contents/MacOS/"
+            fi
+            
+            cd "$BUNDLE_DIR"
+            # Create production ZIP archive
+            zip -r "${APP_NAME%%.app}-${{ matrix.target }}-production.zip" "$APP_NAME"
+            echo "✅ Created production ZIP: ${APP_NAME%%.app}-${{ matrix.target }}-production.zip"
+            
+            # Verify ZIP was created
+            if [ -f "${APP_NAME%%.app}-${{ matrix.target }}-production.zip" ]; then
+              echo "✅ Production ZIP size: $(du -h ${APP_NAME%%.app}-${{ matrix.target }}-production.zip)"
+            fi
+            
+            # Check for DMG
+            if [ -d "../dmg" ]; then
+              echo "📀 DMG directory found"
+              ls -la ../dmg/
+            fi
+          else
+            echo "❌ No .app bundle found!"
+            echo "Searching entire target directory:"
+            find src-tauri/target -name "*.app" -type d 2>/dev/null || echo "No .app found anywhere"
+            exit 1
+          fi
+
+      - name: Generate production build summary
+        run: |
+          echo "## 🚀 Production Build Summary for ${{ matrix.target }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Target | ${{ matrix.target }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Flutter Version | 3.29.3 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tauri Version | 2.0+ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Type | **Production (Signed)** |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | Production |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if find src-tauri/target/${{ matrix.target }}/release/bundle/macos -name "*production.zip" 2>/dev/null | head -1; then
+            ZIP_FILE=$(find src-tauri/target/${{ matrix.target }}/release/bundle/macos -name "*production.zip" | head -1)
+            ZIP_SIZE=$(du -h "$ZIP_FILE" | cut -f1)
+            echo "✅ **Production app successfully built and signed!**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- 📁 Package size: $ZIP_SIZE" >> $GITHUB_STEP_SUMMARY
+            echo "- 🎯 Target architecture: ${{ matrix.target }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔐 Code signed and notarized" >> $GITHUB_STEP_SUMMARY
+            echo "- 🍎 Ready for macOS distribution" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Production build failed - no artifacts generated**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload production artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*production.zip
+            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Create GitHub Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*production.zip
+            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+          draft: true
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

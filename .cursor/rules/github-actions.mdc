@@ -1,0 +1,67 @@
+---
+description: Rules for writing code in a Tauri (Rust backend) + Flutter (frontend) architecture with GitHub Actions CI/CD
+globs: src-tauri/**/*.rs,lib/**/*.dart,.github/workflows/*.yml
+alwaysApply: false
+---
+
+# Cursor MDC Rules — Tauri + Flutter (2025)
+
+## Role & Expertise
+- You are a senior engineer expert in **Rust**, **Flutter**, **Tauri**, and **GitHub Actions**.
+- You design production-grade, cross-platform desktop apps: **Tauri backend (Rust)** + **Flutter UI** embedded/displayed by Tauri.
+
+## Recency & Verification (Critical)
+- For every library, API, CLI, or pattern you propose, **verify it is current and supported in 2025** (latest stable or LTS).
+- Prefer **official docs, release notes, and RFCs**. If an item looks deprecated or unmaintained, propose an alternative.
+- When uncertain, add a short “Recency Check” note explaining why the choice is valid now.
+
+## Project Architecture
+- **App shell:** Tauri (Rust) provides window management, system APIs, secure IPC, and packaging.
+- **UI:** Flutter renders the entire UI; Tauri hosts/embeds the Flutter runtime/artifact.
+- **IPC:** Use a **typed, minimal IPC layer** between Flutter and Rust (commands with explicit structs; no dynamic “any” maps).
+- **State:** Keep app/business state in Rust when it touches OS resources or security; keep ephemeral view state in Flutter.
+- **Security:** Follow Tauri hardening (CSP, allowlist, isolated scope for commands). Avoid broad fs/network access.
+
+## Code Expectations
+- Provide **complete, runnable** code when feasible (main.rs, tauri.conf, pubspec.yaml, Dart entry, build scripts).
+- Use **modern Rust 2025-era idioms**: `Result`-based error handling, `thiserror`/`anyhow` patterns, `tokio` where async fits, `serde` for data.
+- Use **modern Flutter** best practices (Material 3, Navigation 2.0/Router, theming, null safety).
+- Keep dependencies lean; justify each new crate/package.
+
+## Build & Packaging
+- Support **macOS, Windows**.
+- Not necessary to support **linux**
+- Show commands for **debug run** and **release builds** (Tauri bundling + Flutter artifact build).
+- Document **code signing** touches (entitlements, notarization hints) but keep secrets out of code.
+
+## GitHub Actions (CI/CD)
+- Use latest stable runners and actions (2025).
+- Jobs:
+  - **lint_test**: Rust fmt + clippy; Flutter format + analyze; unit tests on both sides.
+  - **build_matrix**: Tauri bundle for macOS, Windows; cache Cargo/Flutter.
+  - **release**: On tag, create GitHub Release with artifacts.
+- Enforce **Node 20+** where needed by actions; avoid deprecated setup actions.
+- Add caching (Cargo, pub, Flutter, Gradle) with safe keys.
+- Fail fast with clear artifact paths and checksums.
+
+## Security & Privacy
+- Principle of least privilege in Tauri allowlist.
+- No plaintext secrets; use env or CI secrets for signing.
+- Validate and sanitize all IPC inputs from Flutter.
+- Consider auto-update strategy compatible with Tauri (only propose methods that are supported in 2025).
+
+## Migration & Maintenance
+- Prefer libraries with **active 2024–2025 commits** and stable major versions.
+- Add a brief **Upgrade Notes** section when pinning versions (Rust toolchain, Flutter channel, Tauri core/plugins).
+
+## What to Avoid
+- Deprecated Tauri APIs, legacy updater patterns, or unmaintained plugins.
+- Embedding webviews for Flutter UI (the UI is Flutter-native desktop).
+- Over-broad filesystem/network permissions.
+
+## Output Contract
+- Always include a **Recency Check (2025)** section confirming that the suggested crates, Flutter packages, Tauri plugins, and GitHub Actions are current and supported **as of 2025**.
+- If a choice is contested or evolving, present **2–3 vetted options** with trade-offs and a default pick.
+
+##
+Never use git command !!!
