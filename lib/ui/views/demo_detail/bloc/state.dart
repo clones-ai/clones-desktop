@@ -23,6 +23,9 @@ class DemoDetailState with _$DemoDetailState {
 
     // Video editing
     @Default([]) List<RangeValues> deletedSegments,
+    @Default([]) List<RangeValues> clipSegments,
+    @Default({}) Set<int> selectedClipIndexes,
+    @JsonKey(includeIfNull: false) RangeValues? clipboardClip,
     @Default(false) bool isApplyingEdits,
 
     // New states for button handling
