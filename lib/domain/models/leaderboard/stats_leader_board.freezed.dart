@@ -24,6 +24,7 @@ mixin _$LeaderboardStats {
   int get tasksCompleted => throw _privateConstructorUsedError;
   double get totalRewards => throw _privateConstructorUsedError;
   int get activeForges => throw _privateConstructorUsedError;
+  double get totalUSDPayout => throw _privateConstructorUsedError;
 
   /// Serializes this LeaderboardStats to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -45,7 +46,8 @@ abstract class $LeaderboardStatsCopyWith<$Res> {
       {int totalWorkers,
       int tasksCompleted,
       double totalRewards,
-      int activeForges});
+      int activeForges,
+      double totalUSDPayout});
 }
 
 /// @nodoc
@@ -67,6 +69,7 @@ class _$LeaderboardStatsCopyWithImpl<$Res, $Val extends LeaderboardStats>
     Object? tasksCompleted = null,
     Object? totalRewards = null,
     Object? activeForges = null,
+    Object? totalUSDPayout = null,
   }) {
     return _then(_value.copyWith(
       totalWorkers: null == totalWorkers
@@ -85,6 +88,10 @@ class _$LeaderboardStatsCopyWithImpl<$Res, $Val extends LeaderboardStats>
           ? _value.activeForges
           : activeForges // ignore: cast_nullable_to_non_nullable
               as int,
+      totalUSDPayout: null == totalUSDPayout
+          ? _value.totalUSDPayout
+          : totalUSDPayout // ignore: cast_nullable_to_non_nullable
+              as double,
     ) as $Val);
   }
 }
@@ -101,7 +108,8 @@ abstract class _$$LeaderboardStatsImplCopyWith<$Res>
       {int totalWorkers,
       int tasksCompleted,
       double totalRewards,
-      int activeForges});
+      int activeForges,
+      double totalUSDPayout});
 }
 
 /// @nodoc
@@ -121,6 +129,7 @@ class __$$LeaderboardStatsImplCopyWithImpl<$Res>
     Object? tasksCompleted = null,
     Object? totalRewards = null,
     Object? activeForges = null,
+    Object? totalUSDPayout = null,
   }) {
     return _then(_$LeaderboardStatsImpl(
       totalWorkers: null == totalWorkers
@@ -139,6 +148,10 @@ class __$$LeaderboardStatsImplCopyWithImpl<$Res>
           ? _value.activeForges
           : activeForges // ignore: cast_nullable_to_non_nullable
               as int,
+      totalUSDPayout: null == totalUSDPayout
+          ? _value.totalUSDPayout
+          : totalUSDPayout // ignore: cast_nullable_to_non_nullable
+              as double,
     ));
   }
 }
@@ -150,7 +163,8 @@ class _$LeaderboardStatsImpl implements _LeaderboardStats {
       {required this.totalWorkers,
       required this.tasksCompleted,
       required this.totalRewards,
-      required this.activeForges});
+      required this.activeForges,
+      this.totalUSDPayout = 0.0});
 
   factory _$LeaderboardStatsImpl.fromJson(Map<String, dynamic> json) =>
       _$$LeaderboardStatsImplFromJson(json);
@@ -163,10 +177,13 @@ class _$LeaderboardStatsImpl implements _LeaderboardStats {
   final double totalRewards;
   @override
   final int activeForges;
+  @override
+  @JsonKey()
+  final double totalUSDPayout;
 
   @override
   String toString() {
-    return 'LeaderboardStats(totalWorkers: $totalWorkers, tasksCompleted: $tasksCompleted, totalRewards: $totalRewards, activeForges: $activeForges)';
+    return 'LeaderboardStats(totalWorkers: $totalWorkers, tasksCompleted: $tasksCompleted, totalRewards: $totalRewards, activeForges: $activeForges, totalUSDPayout: $totalUSDPayout)';
   }
 
   @override
@@ -181,13 +198,15 @@ class _$LeaderboardStatsImpl implements _LeaderboardStats {
             (identical(other.totalRewards, totalRewards) ||
                 other.totalRewards == totalRewards) &&
             (identical(other.activeForges, activeForges) ||
-                other.activeForges == activeForges));
+                other.activeForges == activeForges) &&
+            (identical(other.totalUSDPayout, totalUSDPayout) ||
+                other.totalUSDPayout == totalUSDPayout));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, totalWorkers, tasksCompleted, totalRewards, activeForges);
+  int get hashCode => Object.hash(runtimeType, totalWorkers, tasksCompleted,
+      totalRewards, activeForges, totalUSDPayout);
 
   /// Create a copy of LeaderboardStats
   /// with the given fields replaced by the non-null parameter values.
@@ -211,7 +230,8 @@ abstract class _LeaderboardStats implements LeaderboardStats {
       {required final int totalWorkers,
       required final int tasksCompleted,
       required final double totalRewards,
-      required final int activeForges}) = _$LeaderboardStatsImpl;
+      required final int activeForges,
+      final double totalUSDPayout}) = _$LeaderboardStatsImpl;
 
   factory _LeaderboardStats.fromJson(Map<String, dynamic> json) =
       _$LeaderboardStatsImpl.fromJson;
@@ -224,6 +244,8 @@ abstract class _LeaderboardStats implements LeaderboardStats {
   double get totalRewards;
   @override
   int get activeForges;
+  @override
+  double get totalUSDPayout;
 
   /// Create a copy of LeaderboardStats
   /// with the given fields replaced by the non-null parameter values.

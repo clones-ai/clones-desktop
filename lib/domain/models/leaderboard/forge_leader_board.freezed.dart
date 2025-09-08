@@ -24,6 +24,8 @@ mixin _$ForgeLeaderboard {
   String get name => throw _privateConstructorUsedError;
   int get tasks => throw _privateConstructorUsedError;
   double get payout => throw _privateConstructorUsedError;
+  FactoryToken? get token => throw _privateConstructorUsedError;
+  double get payoutUSD => throw _privateConstructorUsedError;
 
   /// Serializes this ForgeLeaderboard to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -41,7 +43,15 @@ abstract class $ForgeLeaderboardCopyWith<$Res> {
           ForgeLeaderboard value, $Res Function(ForgeLeaderboard) then) =
       _$ForgeLeaderboardCopyWithImpl<$Res, ForgeLeaderboard>;
   @useResult
-  $Res call({int rank, String name, int tasks, double payout});
+  $Res call(
+      {int rank,
+      String name,
+      int tasks,
+      double payout,
+      FactoryToken? token,
+      double payoutUSD});
+
+  $FactoryTokenCopyWith<$Res>? get token;
 }
 
 /// @nodoc
@@ -63,6 +73,8 @@ class _$ForgeLeaderboardCopyWithImpl<$Res, $Val extends ForgeLeaderboard>
     Object? name = null,
     Object? tasks = null,
     Object? payout = null,
+    Object? token = freezed,
+    Object? payoutUSD = null,
   }) {
     return _then(_value.copyWith(
       rank: null == rank
@@ -81,7 +93,29 @@ class _$ForgeLeaderboardCopyWithImpl<$Res, $Val extends ForgeLeaderboard>
           ? _value.payout
           : payout // ignore: cast_nullable_to_non_nullable
               as double,
+      token: freezed == token
+          ? _value.token
+          : token // ignore: cast_nullable_to_non_nullable
+              as FactoryToken?,
+      payoutUSD: null == payoutUSD
+          ? _value.payoutUSD
+          : payoutUSD // ignore: cast_nullable_to_non_nullable
+              as double,
     ) as $Val);
+  }
+
+  /// Create a copy of ForgeLeaderboard
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $FactoryTokenCopyWith<$Res>? get token {
+    if (_value.token == null) {
+      return null;
+    }
+
+    return $FactoryTokenCopyWith<$Res>(_value.token!, (value) {
+      return _then(_value.copyWith(token: value) as $Val);
+    });
   }
 }
 
@@ -93,7 +127,16 @@ abstract class _$$ForgeLeaderboardImplCopyWith<$Res>
       __$$ForgeLeaderboardImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int rank, String name, int tasks, double payout});
+  $Res call(
+      {int rank,
+      String name,
+      int tasks,
+      double payout,
+      FactoryToken? token,
+      double payoutUSD});
+
+  @override
+  $FactoryTokenCopyWith<$Res>? get token;
 }
 
 /// @nodoc
@@ -113,6 +156,8 @@ class __$$ForgeLeaderboardImplCopyWithImpl<$Res>
     Object? name = null,
     Object? tasks = null,
     Object? payout = null,
+    Object? token = freezed,
+    Object? payoutUSD = null,
   }) {
     return _then(_$ForgeLeaderboardImpl(
       rank: null == rank
@@ -131,6 +176,14 @@ class __$$ForgeLeaderboardImplCopyWithImpl<$Res>
           ? _value.payout
           : payout // ignore: cast_nullable_to_non_nullable
               as double,
+      token: freezed == token
+          ? _value.token
+          : token // ignore: cast_nullable_to_non_nullable
+              as FactoryToken?,
+      payoutUSD: null == payoutUSD
+          ? _value.payoutUSD
+          : payoutUSD // ignore: cast_nullable_to_non_nullable
+              as double,
     ));
   }
 }
@@ -142,7 +195,9 @@ class _$ForgeLeaderboardImpl implements _ForgeLeaderboard {
       {required this.rank,
       required this.name,
       required this.tasks,
-      required this.payout});
+      required this.payout,
+      this.token,
+      this.payoutUSD = 0.0});
 
   factory _$ForgeLeaderboardImpl.fromJson(Map<String, dynamic> json) =>
       _$$ForgeLeaderboardImplFromJson(json);
@@ -155,10 +210,15 @@ class _$ForgeLeaderboardImpl implements _ForgeLeaderboard {
   final int tasks;
   @override
   final double payout;
+  @override
+  final FactoryToken? token;
+  @override
+  @JsonKey()
+  final double payoutUSD;
 
   @override
   String toString() {
-    return 'ForgeLeaderboard(rank: $rank, name: $name, tasks: $tasks, payout: $payout)';
+    return 'ForgeLeaderboard(rank: $rank, name: $name, tasks: $tasks, payout: $payout, token: $token, payoutUSD: $payoutUSD)';
   }
 
   @override
@@ -169,12 +229,16 @@ class _$ForgeLeaderboardImpl implements _ForgeLeaderboard {
             (identical(other.rank, rank) || other.rank == rank) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.tasks, tasks) || other.tasks == tasks) &&
-            (identical(other.payout, payout) || other.payout == payout));
+            (identical(other.payout, payout) || other.payout == payout) &&
+            (identical(other.token, token) || other.token == token) &&
+            (identical(other.payoutUSD, payoutUSD) ||
+                other.payoutUSD == payoutUSD));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, rank, name, tasks, payout);
+  int get hashCode =>
+      Object.hash(runtimeType, rank, name, tasks, payout, token, payoutUSD);
 
   /// Create a copy of ForgeLeaderboard
   /// with the given fields replaced by the non-null parameter values.
@@ -198,7 +262,9 @@ abstract class _ForgeLeaderboard implements ForgeLeaderboard {
       {required final int rank,
       required final String name,
       required final int tasks,
-      required final double payout}) = _$ForgeLeaderboardImpl;
+      required final double payout,
+      final FactoryToken? token,
+      final double payoutUSD}) = _$ForgeLeaderboardImpl;
 
   factory _ForgeLeaderboard.fromJson(Map<String, dynamic> json) =
       _$ForgeLeaderboardImpl.fromJson;
@@ -211,6 +277,10 @@ abstract class _ForgeLeaderboard implements ForgeLeaderboard {
   int get tasks;
   @override
   double get payout;
+  @override
+  FactoryToken? get token;
+  @override
+  double get payoutUSD;
 
   /// Create a copy of ForgeLeaderboard
   /// with the given fields replaced by the non-null parameter values.

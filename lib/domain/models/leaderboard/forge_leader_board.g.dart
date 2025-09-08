@@ -13,6 +13,10 @@ _$ForgeLeaderboardImpl _$$ForgeLeaderboardImplFromJson(
       name: json['name'] as String,
       tasks: (json['tasks'] as num).toInt(),
       payout: (json['payout'] as num).toDouble(),
+      token: json['token'] == null
+          ? null
+          : FactoryToken.fromJson(json['token'] as Map<String, dynamic>),
+      payoutUSD: (json['payoutUSD'] as num?)?.toDouble() ?? 0.0,
     );
 
 Map<String, dynamic> _$$ForgeLeaderboardImplToJson(
@@ -22,4 +26,6 @@ Map<String, dynamic> _$$ForgeLeaderboardImplToJson(
       'name': instance.name,
       'tasks': instance.tasks,
       'payout': instance.payout,
+      'token': instance.token,
+      'payoutUSD': instance.payoutUSD,
     };

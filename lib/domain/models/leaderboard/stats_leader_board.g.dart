@@ -13,6 +13,7 @@ _$LeaderboardStatsImpl _$$LeaderboardStatsImplFromJson(
       tasksCompleted: (json['tasksCompleted'] as num).toInt(),
       totalRewards: (json['totalRewards'] as num).toDouble(),
       activeForges: (json['activeForges'] as num).toInt(),
+      totalUSDPayout: (json['totalUSDPayout'] as num?)?.toDouble() ?? 0.0,
     );
 
 Map<String, dynamic> _$$LeaderboardStatsImplToJson(
@@ -22,4 +23,5 @@ Map<String, dynamic> _$$LeaderboardStatsImplToJson(
       'tasksCompleted': instance.tasksCompleted,
       'totalRewards': instance.totalRewards,
       'activeForges': instance.activeForges,
+      'totalUSDPayout': instance.totalUSDPayout,
     };

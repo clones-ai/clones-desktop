@@ -6,6 +6,20 @@ part of 'worker_leader_board.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+_$WorkerTokenRewardImpl _$$WorkerTokenRewardImplFromJson(
+        Map<String, dynamic> json) =>
+    _$WorkerTokenRewardImpl(
+      token: FactoryToken.fromJson(json['token'] as Map<String, dynamic>),
+      totalReward: (json['totalReward'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$$WorkerTokenRewardImplToJson(
+        _$WorkerTokenRewardImpl instance) =>
+    <String, dynamic>{
+      'token': instance.token,
+      'totalReward': instance.totalReward,
+    };
+
 _$WorkerLeaderboardImpl _$$WorkerLeaderboardImplFromJson(
         Map<String, dynamic> json) =>
     _$WorkerLeaderboardImpl(
@@ -14,6 +28,12 @@ _$WorkerLeaderboardImpl _$$WorkerLeaderboardImplFromJson(
       tasks: (json['tasks'] as num).toInt(),
       rewards: (json['rewards'] as num).toDouble(),
       avgScore: (json['avgScore'] as num).toDouble(),
+      tokens: (json['tokens'] as List<dynamic>?)
+              ?.map(
+                  (e) => WorkerTokenReward.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      totalUSD: (json['totalUSD'] as num?)?.toDouble() ?? 0.0,
     );
 
 Map<String, dynamic> _$$WorkerLeaderboardImplToJson(
@@ -24,4 +44,6 @@ Map<String, dynamic> _$$WorkerLeaderboardImplToJson(
       'tasks': instance.tasks,
       'rewards': instance.rewards,
       'avgScore': instance.avgScore,
+      'tokens': instance.tokens,
+      'totalUSD': instance.totalUSD,
     };

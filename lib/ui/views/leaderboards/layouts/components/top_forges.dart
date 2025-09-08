@@ -143,7 +143,7 @@ class _TopForgesState extends ConsumerState<TopForges> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  'Tokens Paid',
+                  'Paid Out',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: ClonesColors.primaryText,
@@ -187,7 +187,9 @@ class _TopForgesState extends ConsumerState<TopForges> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        '${forge.tasks} Tasks',
+                        forge.tasks > 1
+                            ? '${forge.tasks} Tasks'
+                            : '${forge.tasks} Task',
                         style: TextStyle(
                           color: ClonesColors.secondaryText,
                         ),
@@ -200,15 +202,9 @@ class _TopForgesState extends ConsumerState<TopForges> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        formatNumberWithSeparator(forge.payout),
+                        _formatForgePayout(forge),
                         style: TextStyle(
                           color: ClonesColors.secondaryText,
-                        ),
-                      ),
-                      const Text(
-                        ' Tokens',
-                        style: TextStyle(
-                          color: ClonesColors.secondary,
                         ),
                       ),
                     ],
@@ -237,6 +233,17 @@ class _TopForgesState extends ConsumerState<TopForges> {
         },
       ),
     );
+  }
+
+  String _formatForgePayout(ForgeLeaderboard forge) {
+    if (forge.payoutUSD > 0) {
+      return '\$${formatNumberWithSeparator(forge.payoutUSD)}';
+    }
+
+    if (forge.token != null) {
+      return '${formatNumberWithSeparator(forge.payout)} ${forge.token!.symbol}';
+    }
+    return '${formatNumberWithSeparator(forge.payout)} Tokens';
   }
 }
 

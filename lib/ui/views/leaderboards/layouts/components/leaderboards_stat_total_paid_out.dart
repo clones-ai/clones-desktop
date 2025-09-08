@@ -32,8 +32,9 @@ class LeaderboardsStatTotalPaidOut extends ConsumerWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              // TODO(reddwarf03): add token symbol
-              '${formatNumberWithSeparator(stat.totalRewards)} Token',
+              stat.totalUSDPayout > 0 
+                ? '\$${formatNumberWithSeparator(stat.totalUSDPayout)}'
+                : '${formatNumberWithSeparator(stat.totalRewards)} Total',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
