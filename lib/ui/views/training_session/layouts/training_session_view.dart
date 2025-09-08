@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:clones_desktop/application/factory.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/message/message.dart';
@@ -13,7 +14,6 @@ import 'package:clones_desktop/ui/components/design_widget/message_box/message_b
 import 'package:clones_desktop/ui/components/pfp.dart';
 import 'package:clones_desktop/ui/components/recording_panel.dart';
 import 'package:clones_desktop/ui/views/factory/layouts/factory_view.dart';
-import 'package:clones_desktop/ui/views/record_overlay/layouts/record_overlay_view.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/training_session/layouts/components/base64_image_message.dart';
 import 'package:clones_desktop/ui/views/training_session/layouts/components/record_panel.dart';
@@ -71,9 +71,9 @@ class _TrainingSessionViewState extends ConsumerState<TrainingSessionView> {
         }
       }
       if (widget.poolId != null) {
-        ref
-            .read(trainingSessionNotifierProvider.notifier)
-            .setPoolId(widget.poolId);
+        final factory = await ref
+            .read(getFactoryProvider(factoryId: widget.poolId!).future);
+        ref.read(trainingSessionNotifierProvider.notifier).setFactory(factory);
       }
       if (widget.prompt != null) {
         ref
@@ -305,41 +305,9 @@ class _TrainingSessionViewState extends ConsumerState<TrainingSessionView> {
                               constraints: BoxConstraints(
                                 maxWidth: mediaQuery.size.width * 0.7,
                               ),
-                              child: MessageBox(
+                              child: const MessageBox(
                                 messageBoxType: MessageBoxType.talkLeft,
-                                content: RecordPanel(
-                                  title: trainingSession
-                                      .recordingDemonstration!.title,
-                                  reward: trainingSession
-                                      .recordingDemonstration!.reward,
-                                  objectives: trainingSession
-                                      .recordingDemonstration!.objectives,
-                                  onStartRecording: () async {
-                                    unawaited(
-                                      ref
-                                          .read(
-                                            trainingSessionNotifierProvider
-                                                .notifier,
-                                          )
-                                          .startRecording(),
-                                    );
-                                    await context.push(
-                                      RecordOverlayView.routeName,
-                                    );
-                                  },
-                                  onComplete: () => ref
-                                      .read(
-                                        trainingSessionNotifierProvider
-                                            .notifier,
-                                      )
-                                      .recordingComplete(),
-                                  onGiveUp: () => ref
-                                      .read(
-                                        trainingSessionNotifierProvider
-                                            .notifier,
-                                      )
-                                      .giveUp(),
-                                ),
+                                content: RecordPanel(),
                               ),
                             ),
                           ),

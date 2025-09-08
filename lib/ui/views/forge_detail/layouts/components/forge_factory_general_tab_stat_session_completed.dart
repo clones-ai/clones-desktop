@@ -64,55 +64,62 @@ class ForgeFactoryGeneralTabStatSessionCompleted extends ConsumerWidget {
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 10),
-            Stack(
-              children: [
-                Container(
-                  height: 4,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        ClonesColors.primary.withValues(alpha: 0.3),
-                        ClonesColors.secondary.withValues(alpha: 0.3),
-                        ClonesColors.tertiary.withValues(alpha: 0.3),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-                if (forgeDetail.factory!.demonstrations >= possibleDemos)
-                  FractionallySizedBox(
-                    widthFactor: demoPercentage / 100,
-                    child: Container(
-                      height: 5,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            ClonesColors.rewardInfo.withValues(alpha: 0.3),
-                            ClonesColors.rewardInfo,
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(3),
+            if (possibleDemos == 0)
+              Text(
+                'You need to fund your factory',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: ClonesColors.error),
+              )
+            else
+              Stack(
+                children: [
+                  Container(
+                    height: 4,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          ClonesColors.primary.withValues(alpha: 0.3),
+                          ClonesColors.secondary.withValues(alpha: 0.3),
+                          ClonesColors.tertiary.withValues(alpha: 0.3),
+                        ],
                       ),
-                    ),
-                  )
-                else
-                  FractionallySizedBox(
-                    widthFactor: demoPercentage / 100,
-                    child: Container(
-                      height: 5,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            ClonesColors.secondary.withValues(alpha: 0.3),
-                            ClonesColors.secondary,
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
+                      borderRadius: BorderRadius.circular(3),
                     ),
                   ),
-              ],
-            ),
+                  if (forgeDetail.factory!.demonstrations >= possibleDemos)
+                    FractionallySizedBox(
+                      widthFactor: demoPercentage / 100,
+                      child: Container(
+                        height: 5,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              ClonesColors.rewardInfo.withValues(alpha: 0.3),
+                              ClonesColors.rewardInfo,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    )
+                  else
+                    FractionallySizedBox(
+                      widthFactor: demoPercentage / 100,
+                      child: Container(
+                        height: 5,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              ClonesColors.secondary.withValues(alpha: 0.3),
+                              ClonesColors.secondary,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
           ],
         ),
       ),

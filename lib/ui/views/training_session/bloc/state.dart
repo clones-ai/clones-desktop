@@ -1,6 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
+import 'package:clones_desktop/domain/models/factory/factory.dart';
 import 'package:clones_desktop/domain/models/message/deleted_range.dart';
 import 'package:clones_desktop/domain/models/message/message.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
@@ -16,7 +17,7 @@ enum RecordingState { off, starting, recording, stopping, saved }
 class TrainingSessionState with _$TrainingSessionState {
   const factory TrainingSessionState({
     String? prompt,
-    String? poolId,
+    Factory? factory,
     Demonstration? recordedDemonstration,
     Demonstration? recordingDemonstration,
     @Default(false) bool recordingLoading,

@@ -43,10 +43,6 @@ class ForgeDetailNotifier extends _$ForgeDetailNotifier
 
           // Update factory balance in state
           updateFactoryBalance(newBalance);
-
-          debugPrint(
-            'Factory balance refreshed: $newBalance ${factory.token.symbol}',
-          );
         }
       }
 
@@ -61,13 +57,16 @@ class ForgeDetailNotifier extends _$ForgeDetailNotifier
     setIsUpdateFactoryStatusSuccess(false);
 
     try {
-      final updatedFactory = await ref.read(
+      var updatedFactory = await ref.read(
         updateFactoryProvider(
           factoryId: state.factory?.id ?? '',
           walletAddress: state.factory?.ownerAddress ?? '',
           status: state.factoryStatus,
         ).future,
       );
+      updatedFactory =
+          updatedFactory.copyWith(balance: state.factory?.balance ?? 0);
+
       setFactory(updatedFactory);
       setIsUpdateFactoryStatusSuccess(true);
     } catch (e) {
@@ -78,7 +77,7 @@ class ForgeDetailNotifier extends _$ForgeDetailNotifier
   Future<void> updateFactory() async {
     setIsUpdatePoolSuccess(false);
     try {
-      final updatedFactory = await ref.read(
+      var updatedFactory = await ref.read(
         updateFactoryProvider(
           factoryId: state.factory?.id ?? '',
           walletAddress: state.factory?.ownerAddress ?? '',
@@ -89,6 +88,9 @@ class ForgeDetailNotifier extends _$ForgeDetailNotifier
           pricePerDemo: state.pricePerDemo,
         ).future,
       );
+      updatedFactory =
+          updatedFactory.copyWith(balance: state.factory?.balance ?? 0);
+
       setFactory(updatedFactory);
       setIsUpdateFactoryStatusSuccess(true);
     } catch (e) {
@@ -161,13 +163,14 @@ class ForgeDetailNotifier extends _$ForgeDetailNotifier
     }
 
     try {
-      final updatedFactory = await ref.read(
+      var updatedFactory = await ref.read(
         UpdateFactoryAppsProvider(
           factoryId: factory.id,
           apps: state.apps,
           walletAddress: factory.ownerAddress,
         ).future,
       );
+      updatedFactory = updatedFactory.copyWith(balance: factory.balance);
 
       // Update the factory without marking as having unsaved changes since we just saved
       state = state.copyWith(
