@@ -1,6 +1,7 @@
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/leaderboard/worker_leader_board.dart';
 import 'package:clones_desktop/ui/components/card.dart';
+import 'package:clones_desktop/utils/format_num.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -153,7 +154,7 @@ class _TopWorkersState extends ConsumerState<TopWorkers> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  'Tokens Rewards',
+                  'Rewards',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: ClonesColors.primaryText,
@@ -226,7 +227,9 @@ class _TopWorkersState extends ConsumerState<TopWorkers> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        '${worker.tasks} Tasks',
+                        worker.tasks > 1
+                            ? '${worker.tasks} Tasks'
+                            : '${worker.tasks} Task',
                         style: TextStyle(
                           color: ClonesColors.secondaryText,
                         ),
@@ -239,7 +242,7 @@ class _TopWorkersState extends ConsumerState<TopWorkers> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        '${worker.rewards} Tokens',
+                        _formatWorkerRewards(worker),
                         style: TextStyle(
                           color: ClonesColors.secondaryText,
                         ),
@@ -275,5 +278,23 @@ class _TopWorkersState extends ConsumerState<TopWorkers> {
   String _truncateAddress(String address) {
     if (address.isEmpty) return '';
     return '${address.substring(0, 6)}...${address.substring(address.length - 6)}';
+  }
+
+  String _formatWorkerRewards(WorkerLeaderboard worker) {
+    if (worker.totalUSD > 0) {
+      return '\$${formatNumberWithSeparator(worker.totalUSD)}';
+    }
+
+    if (worker.tokens.isEmpty) {
+      return '${formatNumberWithSeparator(worker.rewards)} Tokens';
+    }
+
+    if (worker.tokens.length == 1) {
+      final token = worker.tokens.first.token;
+      return '${formatNumberWithSeparator(worker.rewards)} ${token.symbol}';
+    }
+
+    // Multiple tokens - show total with "Mixed" indicator
+    return '${formatNumberWithSeparator(worker.rewards)} Mixed';
   }
 }

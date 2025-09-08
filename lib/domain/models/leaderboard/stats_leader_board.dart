@@ -10,6 +10,7 @@ class LeaderboardStats with _$LeaderboardStats {
     required int tasksCompleted,
     required double totalRewards,
     required int activeForges,
+    @Default(0.0) double totalUSDPayout,
   }) = _LeaderboardStats;
 
   factory LeaderboardStats.fromJson(Map<String, dynamic> json) =>
