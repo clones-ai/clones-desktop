@@ -47,4 +47,18 @@ class WalletRepositoryImpl {
       throw Exception('Failed to check connection: $e');
     }
   }
+
+  Future<double> getTokenPriceUSD({
+    required String symbol,
+  }) async {
+    try {
+      final data = await _client.get<Map<String, dynamic>>(
+        '/wallet/price',
+        params: {'symbol': symbol},
+      );
+      return data['priceUSD']?.toDouble() ?? 0;
+    } catch (e) {
+      throw Exception('Failed to get token price: $e');
+    }
+  }
 }

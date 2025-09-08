@@ -205,15 +205,16 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
         iconUrl: demonstration.iconUrl,
         objectives: demonstration.objectives,
         content: demonstration.content,
-        poolId: state.poolId,
+        poolId: state.factory?.id,
         reward: DemonstrationReward(
-          time: demonstration.reward?.time ?? 0,
-          maxReward: demonstration.reward?.maxReward ?? 0,
+          time: 0,
+          maxReward: state.factory?.pricePerDemo ?? 0,
+          token: state.factory?.token,
         ),
         taskId: state.app?.taskId,
       );
 
-      if (state.poolId != null) {
+      if (state.factory?.id != null) {
         try {
           // TODO: `getRewardProvider` is deprecated. The new on-chain system does not have a
           // direct equivalent for pre-calculating rewards. The backend now generates
@@ -713,6 +714,7 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
 
   Future<void> uploadRecording(String recordingId) async {
     setIsUploading(true);
+    setShowUploadBlock(false);
 
     try {
       final demonstrationTitle = state.recordingDemonstration?.title ??

@@ -17,7 +17,7 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$TrainingSessionState {
   String? get prompt => throw _privateConstructorUsedError;
-  String? get poolId => throw _privateConstructorUsedError;
+  Factory? get factory => throw _privateConstructorUsedError;
   Demonstration? get recordedDemonstration =>
       throw _privateConstructorUsedError;
   Demonstration? get recordingDemonstration =>
@@ -57,7 +57,7 @@ abstract class $TrainingSessionStateCopyWith<$Res> {
   @useResult
   $Res call(
       {String? prompt,
-      String? poolId,
+      Factory? factory,
       Demonstration? recordedDemonstration,
       Demonstration? recordingDemonstration,
       bool recordingLoading,
@@ -80,6 +80,7 @@ abstract class $TrainingSessionStateCopyWith<$Res> {
       AudioPlayer? toneAudio,
       AudioPlayer? blipAudio});
 
+  $FactoryCopyWith<$Res>? get factory;
   $DemonstrationCopyWith<$Res>? get recordedDemonstration;
   $DemonstrationCopyWith<$Res>? get recordingDemonstration;
   $TypingMessageCopyWith<$Res>? get typingMessage;
@@ -103,7 +104,7 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
   @override
   $Res call({
     Object? prompt = freezed,
-    Object? poolId = freezed,
+    Object? factory = freezed,
     Object? recordedDemonstration = freezed,
     Object? recordingDemonstration = freezed,
     Object? recordingLoading = null,
@@ -131,10 +132,10 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
           ? _value.prompt
           : prompt // ignore: cast_nullable_to_non_nullable
               as String?,
-      poolId: freezed == poolId
-          ? _value.poolId
-          : poolId // ignore: cast_nullable_to_non_nullable
-              as String?,
+      factory: freezed == factory
+          ? _value.factory
+          : factory // ignore: cast_nullable_to_non_nullable
+              as Factory?,
       recordedDemonstration: freezed == recordedDemonstration
           ? _value.recordedDemonstration
           : recordedDemonstration // ignore: cast_nullable_to_non_nullable
@@ -226,6 +227,20 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
+  $FactoryCopyWith<$Res>? get factory {
+    if (_value.factory == null) {
+      return null;
+    }
+
+    return $FactoryCopyWith<$Res>(_value.factory!, (value) {
+      return _then(_value.copyWith(factory: value) as $Val);
+    });
+  }
+
+  /// Create a copy of TrainingSessionState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
   $DemonstrationCopyWith<$Res>? get recordedDemonstration {
     if (_value.recordedDemonstration == null) {
       return null;
@@ -290,7 +305,7 @@ abstract class _$$TrainingSessionStateImplCopyWith<$Res>
   @useResult
   $Res call(
       {String? prompt,
-      String? poolId,
+      Factory? factory,
       Demonstration? recordedDemonstration,
       Demonstration? recordingDemonstration,
       bool recordingLoading,
@@ -313,6 +328,8 @@ abstract class _$$TrainingSessionStateImplCopyWith<$Res>
       AudioPlayer? toneAudio,
       AudioPlayer? blipAudio});
 
+  @override
+  $FactoryCopyWith<$Res>? get factory;
   @override
   $DemonstrationCopyWith<$Res>? get recordedDemonstration;
   @override
@@ -337,7 +354,7 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? prompt = freezed,
-    Object? poolId = freezed,
+    Object? factory = freezed,
     Object? recordedDemonstration = freezed,
     Object? recordingDemonstration = freezed,
     Object? recordingLoading = null,
@@ -365,10 +382,10 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
           ? _value.prompt
           : prompt // ignore: cast_nullable_to_non_nullable
               as String?,
-      poolId: freezed == poolId
-          ? _value.poolId
-          : poolId // ignore: cast_nullable_to_non_nullable
-              as String?,
+      factory: freezed == factory
+          ? _value.factory
+          : factory // ignore: cast_nullable_to_non_nullable
+              as Factory?,
       recordedDemonstration: freezed == recordedDemonstration
           ? _value.recordedDemonstration
           : recordedDemonstration // ignore: cast_nullable_to_non_nullable
@@ -462,7 +479,7 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
 class _$TrainingSessionStateImpl extends _TrainingSessionState {
   const _$TrainingSessionStateImpl(
       {this.prompt,
-      this.poolId,
+      this.factory,
       this.recordedDemonstration,
       this.recordingDemonstration,
       this.recordingLoading = false,
@@ -492,7 +509,7 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
   @override
   final String? prompt;
   @override
-  final String? poolId;
+  final Factory? factory;
   @override
   final Demonstration? recordedDemonstration;
   @override
@@ -572,7 +589,7 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
 
   @override
   String toString() {
-    return 'TrainingSessionState(prompt: $prompt, poolId: $poolId, recordedDemonstration: $recordedDemonstration, recordingDemonstration: $recordingDemonstration, recordingLoading: $recordingLoading, recordingProcessing: $recordingProcessing, showUploadConfirmModal: $showUploadConfirmModal, showUploadBlock: $showUploadBlock, currentRecordingId: $currentRecordingId, isUploading: $isUploading, originalWindowSize: $originalWindowSize, loadingSftData: $loadingSftData, recordingState: $recordingState, chatMessages: $chatMessages, typingMessage: $typingMessage, isWaitingForResponse: $isWaitingForResponse, hoveredMessageIndex: $hoveredMessageIndex, deletedRanges: $deletedRanges, originalSftData: $originalSftData, app: $app, scrollToBottomNonce: $scrollToBottomNonce, toneAudio: $toneAudio, blipAudio: $blipAudio)';
+    return 'TrainingSessionState(prompt: $prompt, factory: $factory, recordedDemonstration: $recordedDemonstration, recordingDemonstration: $recordingDemonstration, recordingLoading: $recordingLoading, recordingProcessing: $recordingProcessing, showUploadConfirmModal: $showUploadConfirmModal, showUploadBlock: $showUploadBlock, currentRecordingId: $currentRecordingId, isUploading: $isUploading, originalWindowSize: $originalWindowSize, loadingSftData: $loadingSftData, recordingState: $recordingState, chatMessages: $chatMessages, typingMessage: $typingMessage, isWaitingForResponse: $isWaitingForResponse, hoveredMessageIndex: $hoveredMessageIndex, deletedRanges: $deletedRanges, originalSftData: $originalSftData, app: $app, scrollToBottomNonce: $scrollToBottomNonce, toneAudio: $toneAudio, blipAudio: $blipAudio)';
   }
 
   @override
@@ -581,7 +598,7 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
         (other.runtimeType == runtimeType &&
             other is _$TrainingSessionStateImpl &&
             (identical(other.prompt, prompt) || other.prompt == prompt) &&
-            (identical(other.poolId, poolId) || other.poolId == poolId) &&
+            (identical(other.factory, factory) || other.factory == factory) &&
             (identical(other.recordedDemonstration, recordedDemonstration) ||
                 other.recordedDemonstration == recordedDemonstration) &&
             (identical(other.recordingDemonstration, recordingDemonstration) ||
@@ -629,7 +646,7 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
   int get hashCode => Object.hashAll([
         runtimeType,
         prompt,
-        poolId,
+        factory,
         recordedDemonstration,
         recordingDemonstration,
         recordingLoading,
@@ -667,7 +684,7 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
 abstract class _TrainingSessionState extends TrainingSessionState {
   const factory _TrainingSessionState(
       {final String? prompt,
-      final String? poolId,
+      final Factory? factory,
       final Demonstration? recordedDemonstration,
       final Demonstration? recordingDemonstration,
       final bool recordingLoading,
@@ -694,7 +711,7 @@ abstract class _TrainingSessionState extends TrainingSessionState {
   @override
   String? get prompt;
   @override
-  String? get poolId;
+  Factory? get factory;
   @override
   Demonstration? get recordedDemonstration;
   @override

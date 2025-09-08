@@ -1,4 +1,6 @@
 import 'package:clones_desktop/assets.dart';
+import 'package:clones_desktop/domain/models/factory/factory.dart';
+import 'package:clones_desktop/ui/components/app_text_field.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/provider.dart';
 import 'package:flutter/material.dart';
@@ -83,46 +85,40 @@ class _ForgeFactoryGeneralTabPricePerDemoState
                   child: Stack(
                     alignment: Alignment.centerRight,
                     children: [
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: theme.colorScheme.primaryContainer,
-                            width: 0.5,
-                          ),
-                          gradient: ClonesColors.gradientInputFormBackground,
+                      AppTextField(
+                        onChanged: (value) {
+                          ref
+                              .read(
+                                forgeDetailNotifierProvider.notifier,
+                              )
+                              .setPricePerDemo(
+                                double.tryParse(value) ?? 0,
+                              );
+                        },
+                        controller: controller,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
                         ),
-                        child: TextField(
-                          onChanged: (value) {
-                            ref
-                                .read(
-                                  forgeDetailNotifierProvider.notifier,
-                                )
-                                .setPricePerDemo(
-                                  double.tryParse(value) ?? 0,
-                                );
-                          },
-                          controller: controller,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
+                        readOnly: forgeDetail.factory != null &&
+                            forgeDetail.factory!.status == FactoryStatus.active,
+                        style: theme.textTheme.bodyMedium,
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.allow(
+                            RegExp(
+                              '^\\d+\\.?\\d{0,${forgeDetail.factory!.token.decimals}}',
+                            ),
                           ),
-                          style: theme.textTheme.bodyMedium,
-                          inputFormatters: <TextInputFormatter>[
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'^\d+\.?\d{0,1}'),
-                            ),
-                          ],
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 12,
-                            ),
-                            hintText: 'Reward per demo',
-                            hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.textTheme.bodyMedium?.color!
-                                  .withValues(alpha: 0.2),
-                            ),
+                        ],
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 12,
+                          ),
+                          hintText: 'Reward per demo',
+                          hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.textTheme.bodyMedium?.color!
+                                .withValues(alpha: 0.2),
                           ),
                         ),
                       ),

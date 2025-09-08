@@ -22,7 +22,8 @@ DemonstrationReward _$DemonstrationRewardFromJson(Map<String, dynamic> json) {
 mixin _$DemonstrationReward {
   int get time => throw _privateConstructorUsedError;
   @JsonKey(name: 'max_reward')
-  int get maxReward => throw _privateConstructorUsedError;
+  double get maxReward => throw _privateConstructorUsedError;
+  FactoryToken? get token => throw _privateConstructorUsedError;
 
   /// Serializes this DemonstrationReward to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -40,7 +41,12 @@ abstract class $DemonstrationRewardCopyWith<$Res> {
           DemonstrationReward value, $Res Function(DemonstrationReward) then) =
       _$DemonstrationRewardCopyWithImpl<$Res, DemonstrationReward>;
   @useResult
-  $Res call({int time, @JsonKey(name: 'max_reward') int maxReward});
+  $Res call(
+      {int time,
+      @JsonKey(name: 'max_reward') double maxReward,
+      FactoryToken? token});
+
+  $FactoryTokenCopyWith<$Res>? get token;
 }
 
 /// @nodoc
@@ -60,6 +66,7 @@ class _$DemonstrationRewardCopyWithImpl<$Res, $Val extends DemonstrationReward>
   $Res call({
     Object? time = null,
     Object? maxReward = null,
+    Object? token = freezed,
   }) {
     return _then(_value.copyWith(
       time: null == time
@@ -69,8 +76,26 @@ class _$DemonstrationRewardCopyWithImpl<$Res, $Val extends DemonstrationReward>
       maxReward: null == maxReward
           ? _value.maxReward
           : maxReward // ignore: cast_nullable_to_non_nullable
-              as int,
+              as double,
+      token: freezed == token
+          ? _value.token
+          : token // ignore: cast_nullable_to_non_nullable
+              as FactoryToken?,
     ) as $Val);
+  }
+
+  /// Create a copy of DemonstrationReward
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $FactoryTokenCopyWith<$Res>? get token {
+    if (_value.token == null) {
+      return null;
+    }
+
+    return $FactoryTokenCopyWith<$Res>(_value.token!, (value) {
+      return _then(_value.copyWith(token: value) as $Val);
+    });
   }
 }
 
@@ -82,7 +107,13 @@ abstract class _$$DemonstrationRewardImplCopyWith<$Res>
       __$$DemonstrationRewardImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int time, @JsonKey(name: 'max_reward') int maxReward});
+  $Res call(
+      {int time,
+      @JsonKey(name: 'max_reward') double maxReward,
+      FactoryToken? token});
+
+  @override
+  $FactoryTokenCopyWith<$Res>? get token;
 }
 
 /// @nodoc
@@ -100,6 +131,7 @@ class __$$DemonstrationRewardImplCopyWithImpl<$Res>
   $Res call({
     Object? time = null,
     Object? maxReward = null,
+    Object? token = freezed,
   }) {
     return _then(_$DemonstrationRewardImpl(
       time: null == time
@@ -109,7 +141,11 @@ class __$$DemonstrationRewardImplCopyWithImpl<$Res>
       maxReward: null == maxReward
           ? _value.maxReward
           : maxReward // ignore: cast_nullable_to_non_nullable
-              as int,
+              as double,
+      token: freezed == token
+          ? _value.token
+          : token // ignore: cast_nullable_to_non_nullable
+              as FactoryToken?,
     ));
   }
 }
@@ -119,7 +155,8 @@ class __$$DemonstrationRewardImplCopyWithImpl<$Res>
 class _$DemonstrationRewardImpl implements _DemonstrationReward {
   const _$DemonstrationRewardImpl(
       {required this.time,
-      @JsonKey(name: 'max_reward') required this.maxReward});
+      @JsonKey(name: 'max_reward') required this.maxReward,
+      this.token});
 
   factory _$DemonstrationRewardImpl.fromJson(Map<String, dynamic> json) =>
       _$$DemonstrationRewardImplFromJson(json);
@@ -128,11 +165,13 @@ class _$DemonstrationRewardImpl implements _DemonstrationReward {
   final int time;
   @override
   @JsonKey(name: 'max_reward')
-  final int maxReward;
+  final double maxReward;
+  @override
+  final FactoryToken? token;
 
   @override
   String toString() {
-    return 'DemonstrationReward(time: $time, maxReward: $maxReward)';
+    return 'DemonstrationReward(time: $time, maxReward: $maxReward, token: $token)';
   }
 
   @override
@@ -142,12 +181,13 @@ class _$DemonstrationRewardImpl implements _DemonstrationReward {
             other is _$DemonstrationRewardImpl &&
             (identical(other.time, time) || other.time == time) &&
             (identical(other.maxReward, maxReward) ||
-                other.maxReward == maxReward));
+                other.maxReward == maxReward) &&
+            (identical(other.token, token) || other.token == token));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, time, maxReward);
+  int get hashCode => Object.hash(runtimeType, time, maxReward, token);
 
   /// Create a copy of DemonstrationReward
   /// with the given fields replaced by the non-null parameter values.
@@ -168,9 +208,9 @@ class _$DemonstrationRewardImpl implements _DemonstrationReward {
 
 abstract class _DemonstrationReward implements DemonstrationReward {
   const factory _DemonstrationReward(
-          {required final int time,
-          @JsonKey(name: 'max_reward') required final int maxReward}) =
-      _$DemonstrationRewardImpl;
+      {required final int time,
+      @JsonKey(name: 'max_reward') required final double maxReward,
+      final FactoryToken? token}) = _$DemonstrationRewardImpl;
 
   factory _DemonstrationReward.fromJson(Map<String, dynamic> json) =
       _$DemonstrationRewardImpl.fromJson;
@@ -179,7 +219,9 @@ abstract class _DemonstrationReward implements DemonstrationReward {
   int get time;
   @override
   @JsonKey(name: 'max_reward')
-  int get maxReward;
+  double get maxReward;
+  @override
+  FactoryToken? get token;
 
   /// Create a copy of DemonstrationReward
   /// with the given fields replaced by the non-null parameter values.

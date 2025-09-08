@@ -1,4 +1,6 @@
 import 'package:clones_desktop/assets.dart';
+import 'package:clones_desktop/domain/models/factory/factory.dart';
+import 'package:clones_desktop/ui/components/app_text_field.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/provider.dart';
 import 'package:flutter/material.dart';
@@ -75,36 +77,28 @@ class _ForgeFactoryGeneralTabFactoryNameState
             Row(
               children: [
                 Expanded(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: theme.colorScheme.primaryContainer,
-                        width: 0.5,
+                  child: AppTextField(
+                    controller: controller,
+                    onChanged: (value) {
+                      ref
+                          .read(
+                            forgeDetailNotifierProvider.notifier,
+                          )
+                          .setFactoryName(value);
+                    },
+                    style: theme.textTheme.bodyMedium,
+                    readOnly: forgeDetail.factory != null &&
+                        forgeDetail.factory!.status == FactoryStatus.active,
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 12,
                       ),
-                      gradient: ClonesColors.gradientInputFormBackground,
-                    ),
-                    child: TextField(
-                      controller: controller,
-                      onChanged: (value) {
-                        ref
-                            .read(
-                              forgeDetailNotifierProvider.notifier,
-                            )
-                            .setFactoryName(value);
-                      },
-                      style: theme.textTheme.bodyMedium,
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 12,
-                        ),
-                        hintText: 'Enter factory name',
-                        hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.textTheme.bodyMedium?.color!
-                              .withValues(alpha: 0.2),
-                        ),
+                      hintText: 'Enter factory name',
+                      hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.textTheme.bodyMedium?.color!
+                            .withValues(alpha: 0.2),
                       ),
                     ),
                   ),

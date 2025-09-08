@@ -1,3 +1,4 @@
+import 'package:clones_desktop/application/token_price_provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/provider.dart';
@@ -15,6 +16,8 @@ class ForgeFactoryGeneralTabStatDemoPrice extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
+    final priceUSD = ref.watch(
+        convertTokenPriceProvider(factory.token.symbol, factory.pricePerDemo));
     final theme = Theme.of(context);
     return Expanded(
       child: CardWidget(
@@ -59,6 +62,14 @@ class ForgeFactoryGeneralTabStatDemoPrice extends ConsumerWidget {
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
+            ),
+            priceUSD.when(
+              data: (price) => Text(
+                '(\$${price.toStringAsFixed(2)})',
+                style: theme.textTheme.bodySmall,
+              ),
+              error: (error, stackTrace) => const SizedBox.shrink(),
+              loading: () => const SizedBox.shrink(),
             ),
             const SizedBox(height: 5),
             Text(

@@ -1,5 +1,6 @@
 import 'package:clones_desktop/application/factory_funds_modal/provider.dart';
 import 'package:clones_desktop/application/factory_withdraw_modal/provider.dart';
+import 'package:clones_desktop/application/token_price_provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
@@ -17,6 +18,9 @@ class ForgeFactoryGeneralTabStatPoolBalance extends ConsumerWidget {
     if (factory == null) {
       return const SizedBox.shrink();
     }
+
+    final priceUSD = ref.watch(
+        convertTokenPriceProvider(factory.token.symbol, factory.balance));
     final theme = Theme.of(context);
     return Expanded(
       child: CardWidget(
@@ -46,7 +50,8 @@ class ForgeFactoryGeneralTabStatPoolBalance extends ConsumerWidget {
                         btnPrimaryType: BtnPrimaryType.outlinePrimary,
                         onTap: () {
                           ref
-                              .read(factoryWithdrawModalNotifierProvider.notifier)
+                              .read(
+                                  factoryWithdrawModalNotifierProvider.notifier)
                               .show(factory);
                         },
                       ),
@@ -99,6 +104,14 @@ class ForgeFactoryGeneralTabStatPoolBalance extends ConsumerWidget {
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
+                ),
+                priceUSD.when(
+                  data: (price) => Text(
+                    '(\$${price.toStringAsFixed(2)})',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  error: (error, stackTrace) => const SizedBox.shrink(),
+                  loading: () => const SizedBox.shrink(),
                 ),
                 const SizedBox(height: 5),
                 Text(
