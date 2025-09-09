@@ -33,53 +33,54 @@ class GenerateFactoryState with _$GenerateFactoryState {
 
   List<Map<String, String>> get examplePrompts => [
         {
+          'label': 'AI Chat Interfaces',
+          'text':
+              'Navigating and using ChatGPT, Claude, Perplexity web interfaces for document uploads and conversations',
+        },
+        {
+          'label': 'Social Commerce',
+          'text':
+              'Using TikTok Shop Creator Center, Instagram Business Suite, and YouTube Studio interfaces',
+        },
+        {
+          'label': 'Design Tools',
+          'text':
+              'Creating designs in Figma web app, Canva browser interface, and Midjourney Discord commands',
+        },
+        {
+          'label': 'Web3 Interfaces',
+          'text':
+              'Using MetaMask extension, Uniswap interface, OpenSea marketplace for wallet and trading operations',
+        },
+        {
+          'label': 'Productivity Apps',
+          'text':
+              'Managing projects in Notion web app, Linear interface, and Obsidian desktop application',
+        },
+        {
+          'label': 'Modern Social Platforms',
+          'text':
+              'Posting and managing content on X.com, Meta Threads, Discord desktop app, and LinkedIn',
+        },
+        {
           'label': 'Video Editing',
           'text':
-              'Video editing with tools like Premiere Pro, After Effects, and DaVinci Resolve',
+              'Editing videos in browser-based editors like CapCut, DaVinci Resolve, and Premiere Pro web interfaces',
         },
         {
-          'label': 'Gaming',
+          'label': 'E-commerce Management',
           'text':
-              'Playing and streaming Steam games, managing game libraries, and configuring game settings',
+              'Managing online stores through Shopify, Amazon Seller Central, and Etsy shop interfaces',
         },
         {
-          'label': 'Food Ordering',
+          'label': 'Code Development',
           'text':
-              'Ordering food on platforms like DoorDash, UberEats, and Grubhub',
+              'Using GitHub web interface, VS Code browser version, and online IDEs like CodePen and Replit',
         },
         {
-          'label': 'Spreadsheets',
+          'label': 'Content Creation',
           'text':
-              'Creating and managing spreadsheets in Excel, Google Sheets, or other tools',
-        },
-        {
-          'label': 'Documents',
-          'text':
-              'Writing and editing documents in Word, Google Docs, or other word processors',
-        },
-        {
-          'label': 'Coding',
-          'text':
-              'Using VSCode or other IDEs for programming, debugging, and version control',
-        },
-        {
-          'label': '3D Modeling',
-          'text':
-              'Creating 3D models and animations in Blender, Maya, or other modeling software',
-        },
-        {
-          'label': 'Social Media',
-          'text': 'Engaging on Twitter, Instagram, and other social platforms',
-        },
-        {
-          'label': 'Community Management',
-          'text':
-              'Setting up and managing Discord servers, Telegram groups, or Slack workspaces',
-        },
-        {
-          'label': 'Crypto Trading',
-          'text':
-              'Trading cryptocurrency on exchanges, managing wallets, and analyzing market trends',
+              'Creating and managing content using YouTube Studio, Twitch Creator Dashboard, and podcast platforms',
         },
       ];
 }

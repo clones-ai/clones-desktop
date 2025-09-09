@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:clones_desktop/application/token_price_provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/design_widget/text/app_text.dart';
+import 'package:clones_desktop/ui/views/record_overlay/layouts/record_overlay_view.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class RecordPanel extends ConsumerStatefulWidget {
   const RecordPanel({
@@ -139,8 +143,18 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
       );
     } else {
       return BtnPrimary(
-        onTap: () =>
-            ref.read(trainingSessionNotifierProvider.notifier).startRecording(),
+        onTap: () async {
+          unawaited(
+            ref
+                .read(
+                  trainingSessionNotifierProvider.notifier,
+                )
+                .startRecording(),
+          );
+          await context.push(
+            RecordOverlayView.routeName,
+          );
+        },
         buttonText: 'Start Recording',
         isLoading: recordingLoading,
       );

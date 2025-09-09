@@ -5,7 +5,6 @@ import 'package:clones_desktop/application/transaction/provider.dart';
 import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/setters.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/state.dart';
-import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'provider.g.dart';

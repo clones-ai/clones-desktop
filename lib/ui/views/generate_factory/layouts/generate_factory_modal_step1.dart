@@ -209,9 +209,11 @@ class _GenerateFactoryModalStep1State
             messageBoxType: MessageBoxType.warning,
             content: Row(
               children: [
-                Text(
-                  generateFactory.error!,
-                  style: theme.textTheme.bodyMedium,
+                Expanded(
+                  child: Text(
+                    generateFactory.error!,
+                    style: theme.textTheme.bodyMedium,
+                  ),
                 ),
               ],
             ),

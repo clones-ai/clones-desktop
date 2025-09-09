@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:clones_desktop/application/transaction/provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/views/generate_factory/bloc/provider.dart';
