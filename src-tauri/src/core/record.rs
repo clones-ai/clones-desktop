@@ -61,7 +61,7 @@ pub struct Demonstration {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct DemonstrationReward {
     time: i64,
-    max_reward: i64,
+    max_reward: f64,
 }
 
 /// Information about the primary monitor used for recording.

@@ -88,7 +88,6 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
             .startRecording(demonstration: state.recordingDemonstration);
         setRecordingState(RecordingState.recording);
       }
-      setRecordingLoading(false);
     } catch (error) {
       debugPrint('Recording error: $error');
     } finally {

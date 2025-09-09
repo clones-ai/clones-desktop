@@ -158,6 +158,20 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
     final transactionManager = ref.watch(transactionManagerProvider.notifier);
     final transactionState = ref.watch(transactionManagerProvider);
 
+    // If factory is created, show only close button
+    if (generateFactoryState.isCreated) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          BtnPrimary(
+            buttonText: 'Close',
+            onTap: onClose,
+          ),
+        ],
+      );
+    }
+
+    // Default state: show back and create factory buttons
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -173,13 +187,6 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
           buttonText: 'Create Factory',
           onTap: () async {
             await generateFactoryNotifier.createPool();
-
-            // Only close on successful creation or if user explicitly wants to leave
-            final finalState = ref.read(generateFactoryNotifierProvider);
-            if (finalState.isCreated) {
-              onClose();
-            }
-            // If there's an error, keep modal open to show error
           },
         ),
 
