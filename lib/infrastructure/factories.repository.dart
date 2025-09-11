@@ -265,6 +265,22 @@ class FactoriesRepositoryImpl implements FactoriesRepository {
     }
   }
 
+  /// Get pool balance only (lightweight endpoint)
+  Future<Map<String, dynamic>> getPoolBalance({
+    required String poolAddress,
+  }) async {
+    try {
+      final responseData = await _apiClient.get<Map<String, dynamic>>(
+        '/forge/factories/pools/$poolAddress/balance',
+        options: const RequestOptions(requiresAuth: true),
+        fromJson: (json) => json as Map<String, dynamic>,
+      );
+      return responseData;
+    } catch (e) {
+      throw Exception('Failed to get pool balance: $e');
+    }
+  }
+
   /// Fund a pool with tokens
   Future<Map<String, dynamic>> fundPool({
     required String poolAddress,

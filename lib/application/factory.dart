@@ -219,3 +219,13 @@ Future<Factory> updateFactoryApps(
     walletAddress: walletAddress,
   );
 }
+
+@riverpod
+Future<double> getFactoryBalance(
+  Ref ref, {
+  required String poolAddress,
+}) async {
+  final repository = ref.read(factoryRepositoryProvider);
+  final result = await repository.getPoolBalance(poolAddress: poolAddress);
+  return double.parse(result['balance'].toString());
+}

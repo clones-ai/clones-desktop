@@ -2556,5 +2556,136 @@ class _UpdateFactoryAppsProviderElement
   String get walletAddress =>
       (origin as UpdateFactoryAppsProvider).walletAddress;
 }
+
+String _$getFactoryBalanceHash() => r'74caa983518a37bf79c620f85ccc8fddbfc6197e';
+
+/// See also [getFactoryBalance].
+@ProviderFor(getFactoryBalance)
+const getFactoryBalanceProvider = GetFactoryBalanceFamily();
+
+/// See also [getFactoryBalance].
+class GetFactoryBalanceFamily extends Family<AsyncValue<double>> {
+  /// See also [getFactoryBalance].
+  const GetFactoryBalanceFamily();
+
+  /// See also [getFactoryBalance].
+  GetFactoryBalanceProvider call({
+    required String poolAddress,
+  }) {
+    return GetFactoryBalanceProvider(
+      poolAddress: poolAddress,
+    );
+  }
+
+  @override
+  GetFactoryBalanceProvider getProviderOverride(
+    covariant GetFactoryBalanceProvider provider,
+  ) {
+    return call(
+      poolAddress: provider.poolAddress,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'getFactoryBalanceProvider';
+}
+
+/// See also [getFactoryBalance].
+class GetFactoryBalanceProvider extends AutoDisposeFutureProvider<double> {
+  /// See also [getFactoryBalance].
+  GetFactoryBalanceProvider({
+    required String poolAddress,
+  }) : this._internal(
+          (ref) => getFactoryBalance(
+            ref as GetFactoryBalanceRef,
+            poolAddress: poolAddress,
+          ),
+          from: getFactoryBalanceProvider,
+          name: r'getFactoryBalanceProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$getFactoryBalanceHash,
+          dependencies: GetFactoryBalanceFamily._dependencies,
+          allTransitiveDependencies:
+              GetFactoryBalanceFamily._allTransitiveDependencies,
+          poolAddress: poolAddress,
+        );
+
+  GetFactoryBalanceProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.poolAddress,
+  }) : super.internal();
+
+  final String poolAddress;
+
+  @override
+  Override overrideWith(
+    FutureOr<double> Function(GetFactoryBalanceRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: GetFactoryBalanceProvider._internal(
+        (ref) => create(ref as GetFactoryBalanceRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        poolAddress: poolAddress,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<double> createElement() {
+    return _GetFactoryBalanceProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GetFactoryBalanceProvider &&
+        other.poolAddress == poolAddress;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, poolAddress.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GetFactoryBalanceRef on AutoDisposeFutureProviderRef<double> {
+  /// The parameter `poolAddress` of this provider.
+  String get poolAddress;
+}
+
+class _GetFactoryBalanceProviderElement
+    extends AutoDisposeFutureProviderElement<double> with GetFactoryBalanceRef {
+  _GetFactoryBalanceProviderElement(super.provider);
+
+  @override
+  String get poolAddress => (origin as GetFactoryBalanceProvider).poolAddress;
+}
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

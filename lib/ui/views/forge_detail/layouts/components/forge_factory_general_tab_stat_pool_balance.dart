@@ -20,7 +20,8 @@ class ForgeFactoryGeneralTabStatPoolBalance extends ConsumerWidget {
     }
 
     final priceUSD = ref.watch(
-        convertTokenPriceProvider(factory.token.symbol, factory.balance));
+      convertTokenPriceProvider(factory.token.symbol, factory.balance),
+    );
     final theme = Theme.of(context);
     return Expanded(
       child: CardWidget(
@@ -51,7 +52,8 @@ class ForgeFactoryGeneralTabStatPoolBalance extends ConsumerWidget {
                         onTap: () {
                           ref
                               .read(
-                                  factoryWithdrawModalNotifierProvider.notifier)
+                                factoryWithdrawModalNotifierProvider.notifier,
+                              )
                               .show(factory);
                         },
                       ),

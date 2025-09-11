@@ -4,7 +4,7 @@ import 'package:clones_desktop/domain/models/recording/api_recording.dart';
 import 'package:clones_desktop/domain/models/recording/monitor_info.dart';
 import 'package:clones_desktop/domain/models/recording/recording_meta.dart'
     as rec_meta;
-import 'package:clones_desktop/domain/models/submission/submission_status.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -92,12 +92,8 @@ Future<List<ApiRecording>> mergedRecordings(Ref ref) async {
     ..addAll(
       localRecordings.map(
         (rec) {
-          SubmissionStatus? submission;
-          try {
-            submission = submissions.firstWhere((s) => s.meta.id == rec.id);
-          } catch (e) {
-            submission = null;
-          }
+          final submission =
+              submissions.firstWhereOrNull((s) => s.meta.id == rec.id);
 
           return ApiRecording(
             id: rec.id,
