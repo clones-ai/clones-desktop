@@ -158,7 +158,7 @@ class _ForgeExistingFactoryCardState
           children: [
             Flexible(
               child: Text(
-                'Uploads / Remaining Demos',
+                'Sessions completed',
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(

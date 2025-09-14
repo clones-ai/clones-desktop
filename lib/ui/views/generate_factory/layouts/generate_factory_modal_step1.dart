@@ -91,6 +91,7 @@ class _GenerateFactoryModalStep1State
           ),
         ),
         const SizedBox(height: 10),
+        _buildErrorMessage(context, ref),
         _examplePrompts(ref),
         const SizedBox(height: 20),
         _buildRewardTokenSelector(context, ref),
@@ -99,6 +100,41 @@ class _GenerateFactoryModalStep1State
         const SizedBox(height: 20),
         _footerButtons(ref),
       ],
+    );
+  }
+
+  Widget _buildErrorMessage(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final generateFactoryState = ref.watch(generateFactoryNotifierProvider);
+
+    if (generateFactoryState.error == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.red.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error, color: Colors.red, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              generateFactoryState.error!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Colors.red,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
