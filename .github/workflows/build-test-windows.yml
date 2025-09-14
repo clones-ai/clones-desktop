@@ -2,7 +2,7 @@ name: Build Windows Dev/Test App (Unsigned)
 
 on:
   push:
-    branches: [ main, develop, 6-create-github-action-workflow-to-package-and-sign-flutter-app-for-macos-linux-and-windows ]
+    branches: [ main, develop]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
