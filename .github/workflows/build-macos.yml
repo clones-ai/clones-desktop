@@ -49,11 +49,12 @@ jobs:
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version "^2.0"
 
-      - name: Create environment file
+      - name: Create environment files
         env:
           ENV_FILE_LOCAL: ${{ secrets.ENV_FILE_LOCAL }}
         run: |
           echo "$ENV_FILE_LOCAL" > .env.local
+          echo "$ENV_FILE_LOCAL" > .env
 
       - name: Install Flutter dependencies
         run: flutter pub get
