@@ -39,7 +39,21 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             src-tauri/target/
-          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('src-tauri/src/**') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}-
+            ${{ runner.os }}-${{ matrix.target }}-cargo-
+
+      - name: Cache Flutter build
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/web/
+            .dart_tool/
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}-${{ hashFiles('lib/**') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}-
+            ${{ runner.os }}-flutter-
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -87,8 +101,38 @@ jobs:
       - name: Create Apple API key file
         run: echo "${{ secrets.APPLE_API_KEY_FILE }}" > apple_api.p8
 
-      - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+      - name: Check Apple notarization connectivity
+        run: |
+          echo "Testing connectivity to Apple notarization service..."
+          curl --fail --connect-timeout 10 --max-time 30 -s https://appstoreconnect.apple.com/ || {
+            echo "Warning: Cannot reach Apple services. Will proceed but notarization may fail."
+            exit 0
+          }
+          echo "✅ Apple services reachable"
+
+      - name: Build Tauri app with retry
+        run: |
+          set -e
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            echo "🚀 Build attempt $((RETRY_COUNT + 1))/$MAX_RETRIES"
+            
+            if cd src-tauri && cargo tauri build --target ${{ matrix.target }}; then
+              echo "✅ Build successful on attempt $((RETRY_COUNT + 1))"
+              exit 0
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "❌ Build failed, retrying in 60 seconds... ($RETRY_COUNT/$MAX_RETRIES)"
+                sleep 60
+              fi
+            fi
+          done
+          
+          echo "❌ Build failed after $MAX_RETRIES attempts"
+          exit 1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # macOS codesigning
@@ -99,8 +143,6 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_KEY_PATH: ${{ github.workspace }}/apple_api.p8
-        with:
-          args: --target ${{ matrix.target }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
