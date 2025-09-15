@@ -110,29 +110,16 @@ jobs:
           }
           echo "✅ Apple services reachable"
 
-      - name: Build Tauri app with retry
+      - name: Build Tauri app (without notarization)
         run: |
-          set -e
-          MAX_RETRIES=3
-          RETRY_COUNT=0
+          echo "🚀 Building Tauri app for ${{ matrix.target }} without notarization"
+          cd src-tauri
           
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            echo "🚀 Build attempt $((RETRY_COUNT + 1))/$MAX_RETRIES"
-            
-            if cd src-tauri && cargo tauri build --target ${{ matrix.target }}; then
-              echo "✅ Build successful on attempt $((RETRY_COUNT + 1))"
-              exit 0
-            else
-              RETRY_COUNT=$((RETRY_COUNT + 1))
-              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                echo "❌ Build failed, retrying in 60 seconds... ($RETRY_COUNT/$MAX_RETRIES)"
-                sleep 60
-              fi
-            fi
-          done
+          # Build without notarization first
+          cargo tauri build --target ${{ matrix.target }} --config '{"bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":[]}}}'
           
-          echo "❌ Build failed after $MAX_RETRIES attempts"
-          exit 1
+          echo "✅ Build completed without notarization"
+          echo "📦 Artifacts will be available for manual notarization"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # macOS codesigning
