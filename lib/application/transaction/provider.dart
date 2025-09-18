@@ -83,7 +83,7 @@ class TransactionManager extends _$TransactionManager {
   }
 
   /// Create and fund a factory transaction workflow (atomic operation)
-  Future<void> createAndFundFactory({
+  Future<void> createAndFundPool({
     required String token,
     required String creator,
     required String amount,
@@ -106,7 +106,7 @@ class TransactionManager extends _$TransactionManager {
       final response = await apiClient.post<Map<String, dynamic>>(
         '/transaction/prepare-tx',
         data: {
-          'type': 'createAndFundFactory',
+          'type': 'createAndFundPool',
           'sessionToken': connectionToken,
           'creator': creator,
           'token': token,
@@ -130,7 +130,7 @@ class TransactionManager extends _$TransactionManager {
       state = state.copyWith(
         isLoading: false,
         awaitingCallback: true,
-        currentTransactionType: 'createAndFundFactory',
+        currentTransactionType: 'createAndFundPool',
         currentSessionId: sessionId,
       );
     } catch (e) {

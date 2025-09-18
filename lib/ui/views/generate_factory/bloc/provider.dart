@@ -75,12 +75,12 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
 
   Future<void> startGeneration() async {
     if (state.skills?.trim().isEmpty ?? true) return;
-    
+
     // Check if there are any validation errors
     if (state.error != null) {
       return;
     }
-    
+
     state = state.copyWith(currentStep: GenerateFactoryStep.generating);
     try {
       final result = await ref.read(
@@ -101,18 +101,19 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
 
   void updateAppName(int appIndex, String value) {
     if (state.apps == null) return;
-    
+
     // Validate app name length (500 characters max)
     if (value.length > 500) {
       setError('App name is too long (${value.length}/500 characters max)');
       return;
     } else {
       // Clear error if it was about app name length
-      if (state.error != null && state.error!.contains('App name is too long')) {
+      if (state.error != null &&
+          state.error!.contains('App name is too long')) {
         setError('');
       }
     }
-    
+
     final newApps = List<FactoryApp>.from(state.apps!);
     newApps[appIndex] = newApps[appIndex].copyWith(name: value);
     setApps(newApps);
@@ -120,18 +121,19 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
 
   void updateTaskPrompt(int appIndex, int taskIndex, String value) {
     if (state.apps == null) return;
-    
+
     // Validate prompt length (500 characters max like skills)
     if (value.length > 500) {
       setError('Task prompt is too long (${value.length}/500 characters max)');
       return;
     } else {
       // Clear error if it was about prompt length
-      if (state.error != null && state.error!.contains('Task prompt is too long')) {
+      if (state.error != null &&
+          state.error!.contains('Task prompt is too long')) {
         setError('');
       }
     }
-    
+
     final newApps = List<FactoryApp>.from(state.apps!);
     final appToUpdate = newApps[appIndex];
     final newTasks = List.from(appToUpdate.tasks);
@@ -280,8 +282,8 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
       if (state.fundingAmount != null && state.fundingAmount!.isNotEmpty) {
         final fundingAmount = double.tryParse(state.fundingAmount!);
         if (fundingAmount != null && fundingAmount > 0) {
-          // Use createAndFundFactory for atomic operation
-          await transactionManager.createAndFundFactory(
+          // Use createAndFundPool for atomic operation
+          await transactionManager.createAndFundPool(
             token: state.selectedTokenSymbol!,
             creator: creatorAddress,
             amount: state.fundingAmount!,

@@ -7,7 +7,7 @@ part of 'provider.dart';
 // **************************************************************************
 
 String _$transactionManagerHash() =>
-    r'b05aad9957a8e1e96fc72dd9144e4f4f06ae6b99';
+    r'735554d6a121871bb2cbd45351a26d02f9769bc8';
 
 /// See also [TransactionManager].
 @ProviderFor(TransactionManager)
