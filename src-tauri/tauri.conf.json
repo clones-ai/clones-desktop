@@ -9,10 +9,12 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM1N0NFOEM2QUU4NUYyQjYKUldTMjhvV3V4dWg4eGZSeEZZeExUaFhreXJXUmRCREdjVEhKTmd4SXBNeXczRkNRdFQ1c3F2SUMK",
+      "active": false,
+      "pubkey": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUNvd0JRWURLMlZ3QXlFQVR1NzF1YW5Lbk5xVlN0T0ZCWU5ySkNYeEtpeEs3c0lscGxpbnVaMWlxZXc9Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo=",
       "endpoints": [
         "https://github.com/clones-ai/clones-desktop/releases/latest/download/latest.json"
-      ]
+      ],
+      "dialog": true
     },
     "deep-link": {
       "desktop": {
@@ -46,16 +48,17 @@
       },
       "csp": {
         "default-src": "'self' customprotocol: asset:",
-        "connect-src": "'self' ipc: http://ipc.localhost https://api.jup.ag http://localhost http://localhost:8001 https://clones.ai",
+        "connect-src": "'self' ipc: http://ipc.localhost https://api.jup.ag http://localhost http://localhost:8001 https://clones.ai https://www.gstatic.com https://fonts.gstatic.com http://127.0.0.1:*",
+        "script-src": "'self' 'unsafe-inline' https://www.gstatic.com 'wasm-unsafe-eval'",
         "font-src": "'self' https://fonts.googleapis.com https://fonts.gstatic.com",
         "img-src": "'self' asset: https://placehold.co http://asset.localhost https://s2.googleusercontent.com https://t0.gstatic.com https://t1.gstatic.com https://t2.gstatic.com https://t3.gstatic.com https://google.com https://www.google.com blob: data:",
         "media-src": "'self' data: blob: asset: http://asset.localhost",
-        "style-src": "'self' 'unsafe-inline'  https://fonts.googleapis.com https://fonts.gstatic.com"
+        "style-src": "'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com"
       }
     }
   },
   "bundle": {
-    "createUpdaterArtifacts": true,
+    "createUpdaterArtifacts": false,
     "windows": {
       "signCommand": {
         "cmd": "trusted-signing-cli",
@@ -73,6 +76,8 @@
       }
     },
     "macOS": {
+      "signingIdentity": "Developer ID Application: _______ (N6BFLZP5YM)",
+      "entitlements": "entitlements.plist",
       "dmg": {
         "appPosition": {
           "x": 180,
