@@ -11,7 +11,7 @@ alwaysApply: false
 - You design production-grade, cross-platform desktop apps: **Tauri backend (Rust)** + **Flutter UI** embedded/displayed by Tauri.
 
 ## Recency & Verification (Critical)
-- For every library, API, CLI, or pattern you propose, **verify it is current and supported in 2025** (latest stable or LTS).
+- For every library, API, CLI, or pattern you propose, **verify it is current and supported in september 2025** (latest stable or LTS).
 - Prefer **official docs, release notes, and RFCs**. If an item looks deprecated or unmaintained, propose an alternative.
 - When uncertain, add a short “Recency Check” note explaining why the choice is valid now.
 
