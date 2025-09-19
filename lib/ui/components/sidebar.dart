@@ -1,5 +1,6 @@
 import 'package:clones_desktop/application/route_provider.dart';
 import 'package:clones_desktop/application/upload_modal_provider.dart';
+import 'package:clones_desktop/application/version_provider.dart';
 import 'package:clones_desktop/application/wallet_modal_provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
@@ -30,6 +31,7 @@ class Sidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentRoute = ref.watch(currentRouteProvider);
+    final appVersion = ref.watch(appVersionProvider);
     final buttons = [
       SidebarButtonData(
         path: HomeView.routeName,
@@ -74,7 +76,7 @@ class Sidebar extends ConsumerWidget {
       );
       if (activeIndex == -1) activeIndex = 0;
     }
-
+    final theme = Theme.of(context);
     return Container(
       width: 64,
       color: Colors.transparent,
@@ -112,7 +114,9 @@ class Sidebar extends ConsumerWidget {
                   width: 32,
                   height: 32,
                   child: CircularProgressIndicator(
-                      color: Colors.red, strokeWidth: 0.5),
+                    color: Colors.red,
+                    strokeWidth: 0.5,
+                  ),
                 ),
                 onPressed: null,
                 tooltip: 'Stop Recording',
@@ -122,6 +126,17 @@ class Sidebar extends ConsumerWidget {
                 ),
               ),
             ),
+          appVersion.when(
+            data: (version) => Padding(
+              padding: const EdgeInsets.only(bottom: 16, top: 8),
+              child: Text(
+                'v$version',
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+            loading: () => const SizedBox(),
+            error: (err, stack) => const SizedBox(),
+          ),
         ],
       ),
     );

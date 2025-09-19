@@ -56,13 +56,13 @@ class HomeView extends ConsumerWidget {
             child: Column(
               children: [
                 Text(
-                  'Clone your know-how',
+                  'Clone yourself',
                   style: theme.textTheme.titleLarge,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Turn your actions into AI agents, earn rewards, and build the future of work.',
+                  'The first liquid AI infra where YOU create, trade & own the IP',
                   style: theme.textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
