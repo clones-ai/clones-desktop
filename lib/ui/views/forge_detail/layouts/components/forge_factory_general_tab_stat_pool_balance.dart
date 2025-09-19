@@ -109,7 +109,7 @@ class ForgeFactoryGeneralTabStatPoolBalance extends ConsumerWidget {
                 ),
                 priceUSD.when(
                   data: (price) => Text(
-                    '(\$${price.toStringAsFixed(2)})',
+                    '(\$${price.toStringAsFixedLowValue(2, 5)})',
                     style: theme.textTheme.bodySmall,
                   ),
                   error: (error, stackTrace) => const SizedBox.shrink(),

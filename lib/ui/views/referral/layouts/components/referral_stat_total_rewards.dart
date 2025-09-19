@@ -1,6 +1,7 @@
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/views/referral/bloc/provider.dart';
+import 'package:clones_desktop/utils/format_num.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,7 +34,8 @@ class ReferralStatTotalRewards extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            referralState.referralInfo!.totalRewards.toStringAsFixed(2),
+            referralState.referralInfo!.totalRewards
+                .toStringAsFixedLowValue(2, 5),
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),

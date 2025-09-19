@@ -131,7 +131,9 @@ class Sidebar extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: 16, top: 8),
               child: Text(
                 'v$version',
-                style: theme.textTheme.bodyMedium,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.5),
+                ),
               ),
             ),
             loading: () => const SizedBox(),
