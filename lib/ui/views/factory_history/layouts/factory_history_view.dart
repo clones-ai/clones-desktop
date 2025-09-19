@@ -1,3 +1,4 @@
+import 'package:clones_desktop/application/recording.dart';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/assets.dart';
@@ -77,26 +78,46 @@ class FactoryHistoryView extends ConsumerWidget {
   }
 
   Widget _buildList(BuildContext context, WidgetRef ref) {
+    final mergedRecordingsAsync = ref.watch(mergedRecordingsProvider);
     final factoryHistory = ref.watch(factoryHistoryNotifierProvider);
 
-    if (factoryHistory.recordings.isEmpty) {
-      return const Expanded(
+    return mergedRecordingsAsync.when(
+      loading: () => const Expanded(
         child: Center(
-          child: MessageBox(
-            messageBoxType: MessageBoxType.info,
-            content: Text('No recordings found.'),
+          child: CircularProgressIndicator(
+            strokeWidth: 1,
           ),
         ),
-      );
-    }
-    return Expanded(
-      child: ListView.builder(
-        padding: const EdgeInsets.all(10),
-        itemCount: factoryHistory.recordings.length,
-        itemBuilder: (context, index) {
-          return RecordingCard(recording: factoryHistory.recordings[index]);
-        },
       ),
+      error: (error, stackTrace) => Expanded(
+        child: Center(
+          child: MessageBox(
+            messageBoxType: MessageBoxType.warning,
+            content: Text('Error loading recordings: $error'),
+          ),
+        ),
+      ),
+      data: (recordings) {
+        if (factoryHistory.recordings.isEmpty) {
+          return const Expanded(
+            child: Center(
+              child: MessageBox(
+                messageBoxType: MessageBoxType.info,
+                content: Text('No recordings found.'),
+              ),
+            ),
+          );
+        }
+        return Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(10),
+            itemCount: factoryHistory.recordings.length,
+            itemBuilder: (context, index) {
+              return RecordingCard(recording: factoryHistory.recordings[index]);
+            },
+          ),
+        );
+      },
     );
   }
 

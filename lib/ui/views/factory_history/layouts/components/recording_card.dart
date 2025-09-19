@@ -8,6 +8,7 @@ import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/design_widget/dialog/dialog.dart';
 import 'package:clones_desktop/ui/components/memory_image_tauri.dart';
+import 'package:clones_desktop/ui/components/score_indicator.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
 import 'package:clones_desktop/utils/format_time.dart';
 import 'package:flutter/material.dart';
@@ -46,7 +47,7 @@ class RecordingCard extends ConsumerWidget {
                 const SizedBox(width: 10),
                 Expanded(child: _buildTitleAndMeta(context)),
                 _buildStatus(context, uploadItem),
-                _buildActions(context, ref, uploadItem, maxReward.toDouble()),
+                _buildActions(context, ref, uploadItem, maxReward),
               ],
             ),
           ),
@@ -204,19 +205,13 @@ class RecordingCard extends ConsumerWidget {
   }
 
   Widget _ratingDisplay(BuildContext context, double score) {
-    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Column(
-        children: [
-          Text(
-            '${score.toStringAsFixed(0)}%',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: ClonesColors.secondary,
-            ),
-          ),
-          Text('Rating', style: theme.textTheme.bodySmall),
-        ],
+      child: ScoreIndicator(
+        score: score,
+        size: 60,
+        strokeWidth: 6,
+        label: 'Score',
       ),
     );
   }

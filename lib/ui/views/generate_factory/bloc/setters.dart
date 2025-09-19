@@ -12,16 +12,17 @@ mixin GenerateFactorySetters on AutoDisposeNotifier<GenerateFactoryState> {
     final skillLines = skills.split('\n');
     var hasInvalidSkill = false;
     String? error;
-    
-    for (int i = 0; i < skillLines.length; i++) {
+
+    for (var i = 0; i < skillLines.length; i++) {
       final skill = skillLines[i].trim();
       if (skill.isNotEmpty && skill.length > 500) {
         hasInvalidSkill = true;
-        error = 'Skill ${i + 1} is too long (${skill.length}/500 characters max)';
+        error =
+            'Skill ${i + 1} is too long (${skill.length}/500 characters max)';
         break;
       }
     }
-    
+
     if (hasInvalidSkill) {
       state = state.copyWith(skills: skills, error: error);
     } else {
@@ -38,12 +39,14 @@ mixin GenerateFactorySetters on AutoDisposeNotifier<GenerateFactoryState> {
     if (factoryName.length > 500) {
       state = state.copyWith(
         factoryName: factoryName,
-        error: 'Factory name is too long (${factoryName.length}/500 characters max)',
+        error:
+            'Factory name is too long (${factoryName.length}/500 characters max)',
       );
     } else {
       // Clear error if it was about factory name length
       var currentError = state.error;
-      if (currentError != null && currentError.contains('Factory name is too long')) {
+      if (currentError != null &&
+          currentError.contains('Factory name is too long')) {
         currentError = null;
       }
       state = state.copyWith(factoryName: factoryName, error: currentError);

@@ -151,7 +151,7 @@ class _DemoDetailVideoPreviewState
                           _isEditing = value;
                         });
                       },
-                      activeColor: ClonesColors.primary,
+                      activeThumbColor: ClonesColors.primary,
                     ),
                     const SizedBox(width: 32),
                     if (_isEditing)

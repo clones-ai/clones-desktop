@@ -265,7 +265,9 @@ class TauriApiClient {
   }
 
   Future<void> applyEdits(
-      String recordingId, List<Map<String, double>> segments) async {
+    String recordingId,
+    List<Map<String, double>> segments,
+  ) async {
     final response = await _client.post(
       Uri.parse('$_baseUrl/recordings/$recordingId/apply-edits'),
       headers: {'Content-Type': 'application/json'},

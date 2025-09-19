@@ -17,7 +17,8 @@ class ForgeFactoryGeneralTabStatDemoPrice extends ConsumerWidget {
     }
 
     final priceUSD = ref.watch(
-        convertTokenPriceProvider(factory.token.symbol, factory.pricePerDemo));
+      convertTokenPriceProvider(factory.token.symbol, factory.pricePerDemo),
+    );
     final theme = Theme.of(context);
     return Expanded(
       child: CardWidget(

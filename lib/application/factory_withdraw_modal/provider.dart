@@ -17,38 +17,39 @@ class FactoryWithdrawModalNotifier extends _$FactoryWithdrawModalNotifier {
 
   @override
   FactoryWithdrawModalState build() {
-    ref.onDispose(() {
-      _debounceTimer?.cancel();
-    });
+    ref
+      ..onDispose(() {
+        _debounceTimer?.cancel();
+      })
 
-    // Listen to transaction state changes
-    ref.listen(transactionManagerProvider, (previous, next) {
-      // Only react if modal is shown and we're withdrawing
-      if (!state.isShown) return;
+      // Listen to transaction state changes
+      ..listen(transactionManagerProvider, (previous, next) {
+        // Only react if modal is shown and we're withdrawing
+        if (!state.isShown) return;
 
-      // Close modal on successful transaction and refresh balance
-      if (next.lastSuccessfulTx != null &&
-          next.currentTransactionType == 'withdrawPool' &&
-          previous?.lastSuccessfulTx != next.lastSuccessfulTx) {
-        // Trigger balance refresh to update factory balance in UI
-        try {
-          ref.read(forgeDetailNotifierProvider.notifier).refreshBalance();
-        } catch (e) {
-          // Don't block modal closing if refresh fails
-          debugPrint('Failed to refresh balance after withdrawing: $e');
+        // Close modal on successful transaction and refresh balance
+        if (next.lastSuccessfulTx != null &&
+            next.currentTransactionType == 'withdrawPool' &&
+            previous?.lastSuccessfulTx != next.lastSuccessfulTx) {
+          // Trigger balance refresh to update factory balance in UI
+          try {
+            ref.read(forgeDetailNotifierProvider.notifier).refreshBalance();
+          } catch (e) {
+            // Don't block modal closing if refresh fails
+            debugPrint('Failed to refresh balance after withdrawing: $e');
+          }
         }
-      }
 
-      // Show error if transaction failed
-      if (next.error != null &&
-          next.currentTransactionType == 'withdrawPool' &&
-          previous?.error != next.error) {
-        state = state.copyWith(
-          isWithdrawing: false,
-          error: _formatTransactionError(next.error!),
-        );
-      }
-    });
+        // Show error if transaction failed
+        if (next.error != null &&
+            next.currentTransactionType == 'withdrawPool' &&
+            previous?.error != next.error) {
+          state = state.copyWith(
+            isWithdrawing: false,
+            error: _formatTransactionError(next.error!),
+          );
+        }
+      });
 
     return const FactoryWithdrawModalState();
   }

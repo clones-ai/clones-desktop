@@ -1,9 +1,8 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
 import 'package:clones_desktop/domain/models/submission/claim_authorization.dart';
 import 'package:clones_desktop/domain/models/submission/grade_result.dart';
 import 'package:clones_desktop/domain/models/submission/submission_file.dart';
 import 'package:clones_desktop/domain/models/submission/submission_meta.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'pool_submission.freezed.dart';
 part 'pool_submission.g.dart';

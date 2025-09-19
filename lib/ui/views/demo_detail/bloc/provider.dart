@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:clones_desktop/application/recording.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
@@ -8,7 +7,6 @@ import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/recording/recording_event.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:video_player/video_player.dart';
 
@@ -36,12 +34,10 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
         recording: recording,
       );
 
-      // Now load other data
-      await Future.wait([
-        loadEvents(recordingId),
-        loadSftData(recordingId),
-        initializeVideoPlayer(recordingId),
-      ]);
+      // Now load other data separately to avoid one failure stopping others
+      await loadEvents(recordingId);
+      await loadSftData(recordingId);
+      await initializeVideoPlayer(recordingId);
     } catch (e) {
       // TODO(reddwarf03): Handle error
     }
@@ -50,14 +46,12 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
 
   Future<void> initializeVideoPlayer(String recordingId) async {
     try {
-      // 1. Fetch the video as a Base64 string
       final videoData = await ref.read(tauriApiClientProvider).getRecordingFile(
             recordingId: recordingId,
             filename: 'recording.mp4',
             asBase64: true,
           );
 
-      // 2. Decode the Base64 string
       // The string is a data URI: "data:video/mp4;base64,...."
       final parts = videoData.split(',');
       if (parts.length != 2) {
@@ -66,29 +60,15 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       final base64String = parts[1];
       final videoBytes = base64Decode(base64String);
 
-      // 3. Save to a temporary file
-      final tempDir = await getTemporaryDirectory();
-      final tempFile = File('${tempDir.path}/$recordingId.mp4');
-      await tempFile.writeAsBytes(videoBytes);
-
-      // 4. Use the temporary file with the VideoPlayerController
-      final controller = VideoPlayerController.file(tempFile);
+      final videoUri = Uri.dataFromBytes(
+        videoBytes,
+        mimeType: 'video/mp4',
+      );
+      final controller = VideoPlayerController.networkUrl(videoUri);
       await controller.initialize();
 
-      // Clean up the old controller if it exists
       await state.videoController?.dispose();
-
       state = state.copyWith(videoController: controller);
-
-      // Optional: Delete the file when the controller is disposed
-      controller.addListener(() {
-        if (controller.value.isInitialized == false) {
-          final exists = tempFile.existsSync();
-          if (exists) {
-            tempFile.deleteSync();
-          }
-        }
-      });
     } catch (e, s) {
       debugPrint('Failed to initialize video player: $e');
       debugPrint(s.toString());
@@ -141,8 +121,9 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
 
   Future<void> loadSftData(String recordingId) async {
     state = state.copyWith(sftMessages: [], privateRanges: []);
+
+    // Load SFT messages
     try {
-      // Load SFT messages
       final sftJson = await ref.read(tauriApiClientProvider).getRecordingFile(
             recordingId: recordingId,
             filename: 'sft.json',
@@ -151,24 +132,30 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       final sftMessages =
           sftData.map((data) => SftMessage.fromJson(data)).toList();
       state = state.copyWith(sftMessages: sftMessages);
-      // Load private ranges
-      final rangesJson =
-          await ref.read(tauriApiClientProvider).getRecordingFile(
-                recordingId: recordingId,
-                filename: 'private_ranges.json',
-              );
-      final List<dynamic> rangesData = jsonDecode(rangesJson);
-      final privateRanges =
-          rangesData.map((data) => DeletedRange.fromJson(data)).toList();
-
-      state = state.copyWith(
-        sftMessages: sftMessages,
-        privateRanges: privateRanges,
-      );
-      _applyMasking();
     } catch (e) {
-      // It's okay if these files don't exist
+      // SFT file might not exist, continue with empty messages
     }
+
+    // Load private ranges (optional file for future feature)
+    // TODO: Temporarily disabled until backend 500 error is fixed
+    // try {
+    //   debugPrint('Attempting to load private_ranges.json for $recordingId');
+    //   final rangesJson =
+    //       await ref.read(tauriApiClientProvider).getRecordingFile(
+    //             recordingId: recordingId,
+    //             filename: 'private_ranges.json',
+    //           );
+    //   final List<dynamic> rangesData = jsonDecode(rangesJson);
+    //   final privateRanges =
+    //       rangesData.map((data) => DeletedRange.fromJson(data)).toList();
+    //   state = state.copyWith(privateRanges: privateRanges);
+    //   debugPrint('Successfully loaded private_ranges.json');
+    // } catch (e) {
+    //   debugPrint('private_ranges.json not found (expected): $e');
+    //   // Private ranges file doesn't exist yet - this is expected
+    // }
+
+    _applyMasking();
   }
 
   void _applyMasking() {
@@ -288,7 +275,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       ..removeAt(idx)
       ..insertAll(idx, [
         RangeValues(clip.start, positionMs),
-        RangeValues(positionMs, clip.end)
+        RangeValues(positionMs, clip.end),
       ]);
     state = state.copyWith(clipSegments: clips);
     // Select the right-side clip after split
@@ -384,24 +371,30 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     // Prefer explicit clipSegments over deletedSegments
     final keep = state.clipSegments.isNotEmpty
         ? (state.clipSegments
-            .map((r) => RangeValues(
-                  r.start.clamp(
-                      0.0,
-                      state.videoController!.value.duration.inMilliseconds
-                          .toDouble()),
-                  r.end.clamp(
-                      0.0,
-                      state.videoController!.value.duration.inMilliseconds
-                          .toDouble()),
-                ))
+            .map(
+              (r) => RangeValues(
+                r.start.clamp(
+                  0.0,
+                  state.videoController!.value.duration.inMilliseconds
+                      .toDouble(),
+                ),
+                r.end.clamp(
+                  0.0,
+                  state.videoController!.value.duration.inMilliseconds
+                      .toDouble(),
+                ),
+              ),
+            )
             .toList())
         : _invertDeletedToKeep();
 
     final segmentsToKeep = keep
-        .map((r) => {
-              'start': r.start / 1000.0,
-              'end': r.end / 1000.0,
-            })
+        .map(
+          (r) => {
+            'start': r.start / 1000.0,
+            'end': r.end / 1000.0,
+          },
+        )
         .toList();
 
     try {

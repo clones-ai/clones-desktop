@@ -68,8 +68,9 @@ class BtnFooterPrimary extends StatelessWidget {
                     child: SizedBox.square(
                       dimension: 10,
                       child: CircularProgressIndicator(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          strokeWidth: 0.5),
+                        color: Colors.white.withValues(alpha: 0.2),
+                        strokeWidth: 0.5,
+                      ),
                     ),
                   )
                 else
