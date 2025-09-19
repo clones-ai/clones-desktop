@@ -34,12 +34,10 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
         recording: recording,
       );
 
-      // Now load other data
-      await Future.wait([
-        loadEvents(recordingId),
-        loadSftData(recordingId),
-        initializeVideoPlayer(recordingId),
-      ]);
+      // Now load other data separately to avoid one failure stopping others
+      await loadEvents(recordingId);
+      await loadSftData(recordingId);
+      await initializeVideoPlayer(recordingId);
     } catch (e) {
       // TODO(reddwarf03): Handle error
     }
@@ -123,8 +121,9 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
 
   Future<void> loadSftData(String recordingId) async {
     state = state.copyWith(sftMessages: [], privateRanges: []);
+
+    // Load SFT messages
     try {
-      // Load SFT messages
       final sftJson = await ref.read(tauriApiClientProvider).getRecordingFile(
             recordingId: recordingId,
             filename: 'sft.json',
@@ -133,24 +132,30 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       final sftMessages =
           sftData.map((data) => SftMessage.fromJson(data)).toList();
       state = state.copyWith(sftMessages: sftMessages);
-      // Load private ranges
-      final rangesJson =
-          await ref.read(tauriApiClientProvider).getRecordingFile(
-                recordingId: recordingId,
-                filename: 'private_ranges.json',
-              );
-      final List<dynamic> rangesData = jsonDecode(rangesJson);
-      final privateRanges =
-          rangesData.map((data) => DeletedRange.fromJson(data)).toList();
-
-      state = state.copyWith(
-        sftMessages: sftMessages,
-        privateRanges: privateRanges,
-      );
-      _applyMasking();
     } catch (e) {
-      // It's okay if these files don't exist
+      // SFT file might not exist, continue with empty messages
     }
+
+    // Load private ranges (optional file for future feature)
+    // TODO: Temporarily disabled until backend 500 error is fixed
+    // try {
+    //   debugPrint('Attempting to load private_ranges.json for $recordingId');
+    //   final rangesJson =
+    //       await ref.read(tauriApiClientProvider).getRecordingFile(
+    //             recordingId: recordingId,
+    //             filename: 'private_ranges.json',
+    //           );
+    //   final List<dynamic> rangesData = jsonDecode(rangesJson);
+    //   final privateRanges =
+    //       rangesData.map((data) => DeletedRange.fromJson(data)).toList();
+    //   state = state.copyWith(privateRanges: privateRanges);
+    //   debugPrint('Successfully loaded private_ranges.json');
+    // } catch (e) {
+    //   debugPrint('private_ranges.json not found (expected): $e');
+    //   // Private ranges file doesn't exist yet - this is expected
+    // }
+
+    _applyMasking();
   }
 
   void _applyMasking() {
@@ -174,6 +179,258 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       newEnabledTypes.add(eventType);
     }
     state = state.copyWith(enabledEventTypes: newEnabledTypes);
+  }
+
+  // --- Video Editing Logic ---
+  void addDeletedSegment(RangeValues segment) {
+    final newSegments = [...state.deletedSegments, segment];
+    _updateDeletedSegments(newSegments);
+  }
+
+  void updateDeletedSegment(int index, RangeValues segment) {
+    final newSegments = [...state.deletedSegments];
+    newSegments[index] = segment;
+    _updateDeletedSegments(newSegments);
+  }
+
+  void removeDeletedSegment(int index) {
+    final newSegments = [...state.deletedSegments]..removeAt(index);
+    state = state.copyWith(deletedSegments: newSegments);
+  }
+
+  void _updateDeletedSegments(List<RangeValues> segments) {
+    // Sort by start time
+    segments.sort((a, b) => a.start.compareTo(b.start));
+
+    // Merge overlapping segments
+    if (segments.isEmpty) {
+      state = state.copyWith(deletedSegments: []);
+      return;
+    }
+
+    final merged = <RangeValues>[segments.first];
+    for (var i = 1; i < segments.length; i++) {
+      final last = merged.last;
+      final current = segments[i];
+      if (current.start < last.end) {
+        final newEnd = last.end > current.end ? last.end : current.end;
+        merged[merged.length - 1] = RangeValues(last.start, newEnd);
+      } else {
+        merged.add(current);
+      }
+    }
+    state = state.copyWith(deletedSegments: merged);
+  }
+
+  // Build clips from current video duration when first requested
+  void initializeClipsFromDuration() {
+    if (state.videoController == null) return;
+    if (state.clipSegments.isNotEmpty) return;
+    final durationMs =
+        state.videoController!.value.duration.inMilliseconds.toDouble();
+    if (durationMs <= 0) return;
+    state = state.copyWith(
+      clipSegments: [RangeValues(0, durationMs)],
+      selectedClipIndexes: <int>{},
+    );
+  }
+
+  void selectClip(int index, {bool toggle = false, bool additive = false}) {
+    if (index < 0 || index >= state.clipSegments.length) return;
+    final current = Set<int>.from(state.selectedClipIndexes);
+    if (toggle) {
+      if (current.contains(index)) {
+        current.remove(index);
+      } else {
+        current.add(index);
+      }
+    } else if (additive) {
+      current.add(index);
+    } else {
+      current
+        ..clear()
+        ..add(index);
+    }
+    state = state.copyWith(selectedClipIndexes: current);
+  }
+
+  void clearSelection() {
+    if (state.selectedClipIndexes.isEmpty) return;
+    state = state.copyWith(selectedClipIndexes: <int>{});
+  }
+
+  void splitClipAt(double positionMs) {
+    // Ensure clips are initialized
+    initializeClipsFromDuration();
+    final clips = [...state.clipSegments];
+    if (clips.isEmpty) return;
+    // Find the clip that contains position
+    final idx =
+        clips.indexWhere((c) => positionMs > c.start && positionMs < c.end);
+    if (idx == -1) return;
+    final clip = clips[idx];
+    // Avoid tiny splits
+    if ((positionMs - clip.start) < 50 || (clip.end - positionMs) < 50) return;
+    clips
+      ..removeAt(idx)
+      ..insertAll(idx, [
+        RangeValues(clip.start, positionMs),
+        RangeValues(positionMs, clip.end),
+      ]);
+    state = state.copyWith(clipSegments: clips);
+    // Select the right-side clip after split
+    state = state.copyWith(selectedClipIndexes: {idx + 1});
+  }
+
+  void deleteSelectedClips() {
+    if (state.selectedClipIndexes.isEmpty) return;
+    final indexes = state.selectedClipIndexes.toList()..sort();
+    final remaining = <RangeValues>[];
+    for (var i = 0; i < state.clipSegments.length; i++) {
+      if (!indexes.contains(i)) remaining.add(state.clipSegments[i]);
+    }
+    state =
+        state.copyWith(clipSegments: remaining, selectedClipIndexes: <int>{});
+  }
+
+  void mergeAdjacentClips() {
+    if (state.clipSegments.isEmpty) return;
+    final sorted = [...state.clipSegments]
+      ..sort((a, b) => a.start.compareTo(b.start));
+    final merged = <RangeValues>[sorted.first];
+    for (var i = 1; i < sorted.length; i++) {
+      final last = merged.last;
+      final cur = sorted[i];
+      if (cur.start <= last.end + 1) {
+        merged[merged.length - 1] = RangeValues(last.start, cur.end);
+      } else {
+        merged.add(cur);
+      }
+    }
+    state = state.copyWith(clipSegments: merged);
+  }
+
+  // Clipboard operations for clips
+  void cutSelectedClips() {
+    if (state.selectedClipIndexes.isEmpty) return;
+    // Only support single-clip cut for now
+    final idx = state.selectedClipIndexes.first;
+    if (idx < 0 || idx >= state.clipSegments.length) return;
+    final clip = state.clipSegments[idx];
+    final remaining = [...state.clipSegments]..removeAt(idx);
+    state = state.copyWith(
+      clipSegments: remaining,
+      selectedClipIndexes: <int>{},
+      clipboardClip: clip,
+    );
+  }
+
+  void copySelectedClips() {
+    if (state.selectedClipIndexes.isEmpty) return;
+    final idx = state.selectedClipIndexes.first;
+    if (idx < 0 || idx >= state.clipSegments.length) return;
+    final clip = state.clipSegments[idx];
+    state = state.copyWith(clipboardClip: clip);
+  }
+
+  void pasteClipboardAt(double positionMs) {
+    final clip = state.clipboardClip;
+    if (clip == null) return;
+    // Paste will insert a clip of same duration, starting at positionMs
+    final duration = clip.end - clip.start;
+    final newStart = positionMs;
+    final newEnd = positionMs + duration;
+    if (newEnd <= newStart) return;
+    final newClip = RangeValues(newStart, newEnd);
+    final clips = [...state.clipSegments, newClip]
+      ..sort((a, b) => a.start.compareTo(b.start));
+    state = state.copyWith(clipSegments: clips);
+  }
+
+  void trimToPlayhead(double positionMs) {
+    // For all selected clips, trim their end to playhead if playhead inside clip
+    if (state.selectedClipIndexes.isEmpty) return;
+    final clips = [...state.clipSegments];
+    final selected = state.selectedClipIndexes;
+    for (final idx in selected) {
+      if (idx < 0 || idx >= clips.length) continue;
+      final c = clips[idx];
+      if (positionMs > c.start && positionMs < c.end) {
+        clips[idx] = RangeValues(c.start, positionMs);
+      }
+    }
+    state = state.copyWith(clipSegments: clips);
+  }
+
+  Future<void> applyEdits() async {
+    final recordingId = state.recording?.id;
+    if (recordingId == null || state.videoController == null) return;
+
+    state = state.copyWith(isApplyingEdits: true);
+
+    // Prefer explicit clipSegments over deletedSegments
+    final keep = state.clipSegments.isNotEmpty
+        ? (state.clipSegments
+            .map(
+              (r) => RangeValues(
+                r.start.clamp(
+                  0.0,
+                  state.videoController!.value.duration.inMilliseconds
+                      .toDouble(),
+                ),
+                r.end.clamp(
+                  0.0,
+                  state.videoController!.value.duration.inMilliseconds
+                      .toDouble(),
+                ),
+              ),
+            )
+            .toList())
+        : _invertDeletedToKeep();
+
+    final segmentsToKeep = keep
+        .map(
+          (r) => {
+            'start': r.start / 1000.0,
+            'end': r.end / 1000.0,
+          },
+        )
+        .toList();
+
+    try {
+      await ref
+          .read(tauriApiClientProvider)
+          .applyEdits(recordingId, segmentsToKeep);
+      await initializeVideoPlayer(recordingId);
+      state = state.copyWith(
+        isApplyingEdits: false,
+        deletedSegments: [],
+        clipSegments: [],
+        selectedClipIndexes: <int>{},
+      );
+    } catch (e) {
+      // TODO(reddwarf03): handle error
+      state = state.copyWith(isApplyingEdits: false);
+    }
+  }
+
+  List<RangeValues> _invertDeletedToKeep() {
+    final duration =
+        state.videoController!.value.duration.inMilliseconds.toDouble();
+    final segmentsToKeep = <RangeValues>[];
+    double lastEndTime = 0;
+    final sortedDeleted = [...state.deletedSegments]
+      ..sort((a, b) => a.start.compareTo(b.start));
+    for (final deletedSegment in sortedDeleted) {
+      if (deletedSegment.start > lastEndTime) {
+        segmentsToKeep.add(RangeValues(lastEndTime, deletedSegment.start));
+      }
+      lastEndTime = deletedSegment.end;
+    }
+    if (lastEndTime < duration) {
+      segmentsToKeep.add(RangeValues(lastEndTime, duration));
+    }
+    return segmentsToKeep;
   }
 
   // --- SFT Editor Logic ---

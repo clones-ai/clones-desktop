@@ -17,40 +17,41 @@ class FactoryFundsModalNotifier extends _$FactoryFundsModalNotifier {
 
   @override
   FactoryFundsModalState build() {
-    ref.onDispose(() {
-      _debounceTimer?.cancel();
-    });
+    ref
+      ..onDispose(() {
+        _debounceTimer?.cancel();
+      })
 
-    // Listen to transaction state changes
-    ref.listen(transactionManagerProvider, (previous, next) {
-      // Only react if modal is shown and we're funding
-      if (!state.isShown) return;
+      // Listen to transaction state changes
+      ..listen(transactionManagerProvider, (previous, next) {
+        // Only react if modal is shown and we're funding
+        if (!state.isShown) return;
 
-      // Close modal on successful transaction and refresh balance
-      if (next.lastSuccessfulTx != null &&
-          next.currentTransactionType == 'fundPool' &&
-          previous?.lastSuccessfulTx != next.lastSuccessfulTx) {
-        hide();
+        // Close modal on successful transaction and refresh balance
+        if (next.lastSuccessfulTx != null &&
+            next.currentTransactionType == 'fundPool' &&
+            previous?.lastSuccessfulTx != next.lastSuccessfulTx) {
+          hide();
 
-        // Trigger balance refresh to update factory balance in UI
-        try {
-          ref.read(forgeDetailNotifierProvider.notifier).refreshBalance();
-        } catch (e) {
-          // Don't block modal closing if refresh fails
-          debugPrint('Failed to refresh balance after funding: $e');
+          // Trigger balance refresh to update factory balance in UI
+          try {
+            ref.read(forgeDetailNotifierProvider.notifier).refreshBalance();
+          } catch (e) {
+            // Don't block modal closing if refresh fails
+            debugPrint('Failed to refresh balance after funding: $e');
+          }
         }
-      }
 
-      // Show error if transaction failed
-      if (next.error != null &&
-          next.currentTransactionType == 'fundPool' &&
-          previous?.error != next.error) {
-        state = state.copyWith(
-          isFunding: false,
-          error: _formatTransactionError(next.error!),
-        );
-      }
-    });
+        // Show error if transaction failed
+        if (next.error != null &&
+            next.currentTransactionType == 'fundPool' &&
+            previous?.error != next.error) {
+          state = state.copyWith(
+            isFunding: false,
+            error: _formatTransactionError(next.error!),
+          );
+        }
+      });
 
     return const FactoryFundsModalState();
   }

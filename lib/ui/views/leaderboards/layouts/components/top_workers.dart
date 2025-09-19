@@ -40,66 +40,45 @@ class _TopWorkersState extends ConsumerState<TopWorkers> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 25),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildLeaderboardTable(context),
-            ],
-          ),
-        ),
-        if (widget.showTitle)
-          Positioned(
-            top: 8,
-            right: 20,
-            child: Row(
-              children: [
-                const Text(
-                  'Top Workers',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: ClonesColors.primary,
-                  ),
-                ),
-                if (widget.onExpand != null) ...[
-                  const SizedBox(width: 12),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.open_in_full,
-                      color: ClonesColors.secondary,
+    return CardWidget(
+      variant: CardVariant.black,
+      padding: CardPadding.none,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.showTitle)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 8, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Top Workers',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: ClonesColors.primary,
                     ),
-                    onPressed: widget.onExpand,
                   ),
+                  if (widget.onExpand != null)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.fullscreen,
+                        color: ClonesColors.secondary,
+                      ),
+                      onPressed: widget.onExpand,
+                      tooltip: 'Fullscreen',
+                    ),
                 ],
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildLeaderboardTable(BuildContext context) {
-    return Column(
-      children: [
-        CardWidget(
-          variant: CardVariant.black,
-          padding: CardPadding.none,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildTableHeader(context),
-              SizedBox(
-                height: widget.listHeight ?? 300,
-                child: _buildWorkersList(),
               ),
-            ],
+            ),
+          _buildTableHeader(context),
+          SizedBox(
+            height: widget.listHeight ?? 300,
+            child: _buildWorkersList(),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

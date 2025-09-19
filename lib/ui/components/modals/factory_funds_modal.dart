@@ -89,13 +89,16 @@ class FactoryFundsModal extends ConsumerWidget {
                               return TextField(
                                 onChanged: (value) {
                                   ref
-                                      .read(factoryFundsModalNotifierProvider
-                                          .notifier)
+                                      .read(
+                                        factoryFundsModalNotifierProvider
+                                            .notifier,
+                                      )
                                       .setFundingAmount(value);
                                 },
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
-                                        decimal: true),
+                                  decimal: true,
+                                ),
                                 style: theme.textTheme.bodyMedium,
                                 enabled: !modalState.isFunding,
                                 decoration: InputDecoration(

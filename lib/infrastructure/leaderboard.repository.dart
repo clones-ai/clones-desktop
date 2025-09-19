@@ -27,10 +27,12 @@ class LeaderboardRepositoryImpl {
                 rewards: worker['rewards'].toDouble(),
                 avgScore: worker['avgScore'].toDouble(),
                 tokens: (worker['tokens'] as List<dynamic>? ?? [])
-                    .map((tokenData) => WorkerTokenReward(
-                          token: FactoryToken.fromJson(tokenData),
-                          totalReward: (tokenData['totalReward'] ?? 0).toDouble(),
-                        ))
+                    .map(
+                      (tokenData) => WorkerTokenReward(
+                        token: FactoryToken.fromJson(tokenData),
+                        totalReward: (tokenData['totalReward'] ?? 0).toDouble(),
+                      ),
+                    )
                     .toList(),
                 totalUSD: (worker['totalUSD'] ?? 0).toDouble(),
               ),
@@ -43,7 +45,7 @@ class LeaderboardRepositoryImpl {
                 name: forge['name'],
                 tasks: forge['tasks'],
                 payout: forge['payout'].toDouble(),
-                token: forge['token'] != null 
+                token: forge['token'] != null
                     ? FactoryToken.fromJson(forge['token'])
                     : null,
                 payoutUSD: (forge['payoutUSD'] ?? 0).toDouble(),

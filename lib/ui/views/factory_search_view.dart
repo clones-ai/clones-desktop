@@ -85,8 +85,9 @@ class _FactorySearchViewState extends ConsumerState<FactorySearchView> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              ref.invalidate(factoryOverviewProvider);
-              ref.invalidate(poolSearchProvider(_currentFilters));
+              ref
+                ..invalidate(factoryOverviewProvider)
+                ..invalidate(poolSearchProvider(_currentFilters));
             },
             tooltip: 'Refresh Data',
           ),

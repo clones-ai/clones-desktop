@@ -1,7 +1,7 @@
 import 'package:clones_desktop/application/session/provider.dart';
-import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/submission/grade_result.dart';
 import 'package:clones_desktop/ui/components/card.dart';
+import 'package:clones_desktop/ui/components/score_indicator.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:flutter/material.dart';
@@ -38,32 +38,10 @@ class DemoDetailSubmissionResult extends ConsumerWidget {
           child: Column(
             children: [
               const SizedBox(height: 10, width: double.infinity),
-              SizedBox(
-                width: 100,
-                height: 100,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    CircularProgressIndicator(
-                      value: score / 100,
-                      strokeWidth: 10,
-                      backgroundColor: ClonesColors.getScoreColor(score)
-                          .withValues(alpha: 0.2),
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        ClonesColors.getScoreColor(score),
-                      ),
-                    ),
-                    Center(
-                      child: Text(
-                        '$score%',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: ClonesColors.getScoreColor(score),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              ScoreIndicator(
+                score: score.toDouble(),
+                size: 100,
+                strokeWidth: 10,
               ),
               const SizedBox(height: 30),
               Text(

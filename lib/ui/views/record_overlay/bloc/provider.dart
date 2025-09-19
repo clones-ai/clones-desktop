@@ -14,15 +14,15 @@ class RecordOverlayNotifier extends _$RecordOverlayNotifier {
 
   @override
   RecordOverlayState build() {
-    ref.onDispose(stopTimer);
-
-    ref.listen(trainingSessionNotifierProvider, (previous, next) {
-      if (next.recordingState == RecordingState.recording) {
-        startTimer();
-      } else {
-        stopTimer();
-      }
-    });
+    ref
+      ..onDispose(stopTimer)
+      ..listen(trainingSessionNotifierProvider, (previous, next) {
+        if (next.recordingState == RecordingState.recording) {
+          startTimer();
+        } else {
+          stopTimer();
+        }
+      });
 
     return const RecordOverlayState();
   }

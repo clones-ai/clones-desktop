@@ -27,9 +27,10 @@ class ForgeFactoryUploadsTab extends ConsumerWidget {
 
     return submissionsAsync.when(
       loading: () => const Center(
-          child: CircularProgressIndicator(
-        strokeWidth: 0.5,
-      )),
+        child: CircularProgressIndicator(
+          strokeWidth: 0.5,
+        ),
+      ),
       error: (err, stack) => Center(child: Text('Error: $err')),
       data: (submissions) {
         return SingleChildScrollView(
