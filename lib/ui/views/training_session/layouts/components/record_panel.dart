@@ -7,6 +7,7 @@ import 'package:clones_desktop/ui/components/design_widget/text/app_text.dart';
 import 'package:clones_desktop/ui/views/record_overlay/layouts/record_overlay_view.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/state.dart';
+import 'package:clones_desktop/utils/format_num.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -68,7 +69,7 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
                       ),
                       tokenPrice.when(
                         data: (price) => Text(
-                          '(\$${price.toStringAsFixed(2)})',
+                          '(\$${price.toStringAsFixedLowValue(2, 5)})',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: ClonesColors.secondary,
                           ),

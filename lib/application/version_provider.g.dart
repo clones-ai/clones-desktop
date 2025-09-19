@@ -6,7 +6,7 @@ part of 'version_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appVersionHash() => r'fb72dd8e79eb5d5f839cdca8ffb574b12906c330';
+String _$appVersionHash() => r'e8bdf0eb01e50b65eb7931eadc45c32b561fce64';
 
 /// See also [appVersion].
 @ProviderFor(appVersion)

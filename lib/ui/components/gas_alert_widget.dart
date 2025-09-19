@@ -1,4 +1,5 @@
 import 'package:clones_desktop/domain/models/factory/gas.dart';
+import 'package:clones_desktop/utils/format_num.dart';
 import 'package:flutter/material.dart';
 
 /// Smart gas alert widget that warns users when gas costs are too high
@@ -94,12 +95,12 @@ class GasAlertWidget extends StatelessWidget {
           _buildDetailRow(
             context,
             'Estimated Gas Cost:',
-            '\$${gasAnalysis.estimatedGas.totalGasCostUsd.toStringAsFixed(2)}',
+            '\$${gasAnalysis.estimatedGas.totalGasCostUsd.toStringAsFixedLowValue(2, 5)}',
           ),
           _buildDetailRow(
             context,
             'Net Reward:',
-            '\$${gasAnalysis.netRewardUsd.toStringAsFixed(2)}',
+            '\$${gasAnalysis.netRewardUsd.toStringAsFixedLowValue(2, 5)}',
           ),
           _buildDetailRow(
             context,

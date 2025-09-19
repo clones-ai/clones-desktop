@@ -9,6 +9,7 @@ import 'package:clones_desktop/ui/views/home/layouts/home_view.dart';
 import 'package:clones_desktop/ui/views/referral/layouts/referral_view.dart';
 import 'package:clones_desktop/utils/env.dart';
 import 'package:clones_desktop/utils/format_address.dart';
+import 'package:clones_desktop/utils/format_num.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -294,7 +295,7 @@ class WalletModal extends ConsumerWidget {
                                   )
                                 else
                                   Text(
-                                    '${tokenBalance.balance?.toStringAsFixed(2) ?? '0.00'} ${tokenBalance.symbol}',
+                                    '${tokenBalance.balance?.toStringAsFixedLowValue(2, 5) ?? '0.00'} ${tokenBalance.symbol}',
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       color: ClonesColors.secondary,
                                     ),
