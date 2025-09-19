@@ -34,7 +34,10 @@ class RecordingPanel extends StatelessWidget {
                 const SizedBox(width: 20),
                 BtnPrimary(
                   onTap: () {
-                    context.go(DemoDetailView.routeName, extra: recordingId);
+                    context.push(
+                      DemoDetailView.routeName,
+                      extra: recordingId,
+                    );
                   },
                   buttonText: 'View details',
                 ),

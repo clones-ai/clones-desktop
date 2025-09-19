@@ -1,11 +1,10 @@
 // ignore_for_file: invalid_annotation_target
 
-import 'package:freezed_annotation/freezed_annotation.dart';
-
 import 'package:clones_desktop/domain/models/submission/claim_authorization.dart';
 import 'package:clones_desktop/domain/models/submission/grade_result.dart';
 import 'package:clones_desktop/domain/models/submission/submission_file.dart';
 import 'package:clones_desktop/domain/models/submission/submission_meta.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'submission_status.freezed.dart';
 part 'submission_status.g.dart';

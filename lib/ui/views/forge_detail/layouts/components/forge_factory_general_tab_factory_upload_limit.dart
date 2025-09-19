@@ -143,8 +143,9 @@ class _ForgeFactoryGeneralTabFactoryUploadLimitState
                                 ? null
                                 : (val) {
                                     ref
-                                        .read(forgeDetailNotifierProvider
-                                            .notifier)
+                                        .read(
+                                          forgeDetailNotifierProvider.notifier,
+                                        )
                                         .setUploadLimitType(val ?? 'per-task');
                                   },
                           ),

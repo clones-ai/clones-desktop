@@ -54,11 +54,9 @@ final _router = GoRouter(
         GoRoute(
           path: DemoDetailView.routeName,
           pageBuilder: (context, state) {
-            final recordingId = state.extra.toString();
+            final recordingId = state.extra as String? ?? '';
             return NoTransitionPage(
-              child: DemoDetailView(
-                recordingId: recordingId,
-              ),
+              child: DemoDetailView(recordingId: recordingId),
             );
           },
         ),
