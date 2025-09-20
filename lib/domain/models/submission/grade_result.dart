@@ -14,6 +14,17 @@ class GradeResult with _$GradeResult {
     required String reasoning,
     String? scratchpad,
     @JsonKey(name: '_id') required String id,
+    String? version,
+    String? observations,
+    double? confidence,
+    double? outcomeAchievement,
+    double? processQuality,
+    double? efficiency,
+    String? confidenceReasoning,
+    String? outcomeAchievementReasoning,
+    String? processQualityReasoning,
+    String? efficiencyReasoning,
+    Map<String, dynamic>? programmaticResults,
   }) = _GradeResult;
 
   factory GradeResult.fromJson(Map<String, dynamic> json) =>

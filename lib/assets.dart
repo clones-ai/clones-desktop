@@ -125,6 +125,7 @@ class ClonesColors {
 
   static const Color rewardInfo = Color(0xFF10B981);
   static const Color uploadLimit = Color.fromARGB(255, 203, 132, 46);
+  static Color deleteButton = Colors.red[300]!;
 
   static Gradient gradientBtnPrimary = const LinearGradient(
     colors: [

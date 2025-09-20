@@ -205,6 +205,61 @@ class RecordingCard extends ConsumerWidget {
   }
 
   Widget _ratingDisplay(BuildContext context, double score) {
+    final gradeResult = recording.submission?.gradeResult;
+
+    if (gradeResult != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          spacing: 30,
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (gradeResult.outcomeAchievement != null)
+              ScoreIndicator(
+                score: gradeResult.outcomeAchievement!,
+                size: 40,
+                strokeWidth: 4,
+                fontSize: 8,
+                label: 'Outcome',
+              ),
+            if (gradeResult.processQuality != null)
+              ScoreIndicator(
+                score: gradeResult.processQuality!,
+                size: 40,
+                strokeWidth: 4,
+                fontSize: 8,
+                label: 'Process',
+              ),
+            if (gradeResult.efficiency != null)
+              ScoreIndicator(
+                score: gradeResult.efficiency!,
+                size: 40,
+                strokeWidth: 4,
+                fontSize: 8,
+                label: 'Efficiency',
+              ),
+            if (gradeResult.confidence != null)
+              ScoreIndicator(
+                score: gradeResult.confidence!,
+                size: 40,
+                strokeWidth: 4,
+                fontSize: 8,
+                label: 'Confidence',
+              ),
+            ScoreIndicator(
+              score: gradeResult.score.toDouble(),
+              size: 60,
+              strokeWidth: 6,
+              label: 'Total',
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Fallback for old data without detailed scores
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: ScoreIndicator(
