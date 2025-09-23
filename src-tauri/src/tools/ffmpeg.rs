@@ -791,14 +791,22 @@ impl FFmpegRecorder {
 }
 
 fn get_ffmpeg_url_windows() -> String {
-    std::env::var("FFMPEG_URL_WIN").expect("FFMPEG_URL_WIN must be set in environment")
+    std::env::var("FFMPEG_URL_WIN").unwrap_or_else(|_| {
+        "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip".to_string()
+    })
 }
 fn get_ffmpeg_url_linux() -> String {
-    std::env::var("FFMPEG_URL_LINUX").expect("FFMPEG_URL_LINUX must be set in environment")
+    std::env::var("FFMPEG_URL_LINUX").unwrap_or_else(|_| {
+        "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl-shared.tar.xz".to_string()
+    })
 }
 fn get_ffmpeg_url_macos() -> String {
-    std::env::var("FFMPEG_URL_MACOS").expect("FFMPEG_URL_MACOS must be set in environment")
+    std::env::var("FFMPEG_URL_MACOS").unwrap_or_else(|_| {
+        "https://www.osxexperts.net/ffmpeg71intel.zip".to_string()
+    })
 }
 fn get_ffprobe_url_macos() -> String {
-    std::env::var("FFPROBE_URL_MACOS").expect("FFPROBE_URL_MACOS must be set in environment")
+    std::env::var("FFPROBE_URL_MACOS").unwrap_or_else(|_| {
+        "https://www.osxexperts.net/ffprobe71intel.zip".to_string()
+    })
 }

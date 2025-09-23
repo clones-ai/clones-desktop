@@ -55,10 +55,9 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Complete the task to get a reward.',
+                    'Complete the task to earn a reward.',
                     style: theme.textTheme.bodyMedium,
                   ),
-                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Text(
@@ -79,12 +78,32 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 10),
+                  Text(
+                    '''
+Please focus on the required steps: keep actions efficient, avoid unnecessary clicks, and limit unrelated activity.
+For the cleanest recording, it’s best to close any applications you don’t need before starting.
+Once the recording is finished, you’ll be able to trim segments—for example, to remove personal data or any information you don’t want to share.''',
+                    style: theme.textTheme.bodyMedium,
+                  ),
                 ],
               )
             else
-              Text(
-                'Complete the task to get a reward.',
-                style: theme.textTheme.bodyMedium,
+              Column(
+                children: [
+                  Text(
+                    'Complete the task to get a reward.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    '''
+Please focus on the required steps: keep actions efficient, avoid unnecessary clicks, and limit unrelated activity.
+For the cleanest recording, it’s best to close any applications you don’t need before starting.
+Once the recording is finished, you’ll be able to trim segments—for example, to remove personal data or any information you don’t want to share.''',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
               ),
             const SizedBox(height: 10),
             Text(

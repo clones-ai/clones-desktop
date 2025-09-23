@@ -14,11 +14,10 @@ use display_info::DisplayInfo;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fs::{self, create_dir_all, File};
 use std::io::{BufRead, BufReader, BufWriter, Cursor, Read, Write};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
 use tauri::{Emitter, State};
-use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
 use zip::{write::FileOptions, ZipWriter};
 /// Metadata for a recording session, including quest, platform, and monitor info.
@@ -1172,11 +1171,15 @@ pub async fn create_recording_zip(
     );
 
     for filename in filenames {
-        let file_path = if has_private_ranges && filename != "meta.json" && temp_dir.is_some() {
-            // Use temp files for input_log and recording
+        let file_path = if has_private_ranges
+            && filename != "meta.json"
+            && filename != "sft.json"
+            && temp_dir.is_some()
+        {
+            // Use temp files for input_log and recording only
             temp_dir.as_ref().unwrap().join(filename)
         } else {
-            // Use original meta.json
+            // Use original files for meta.json and sft.json
             recordings_dir.join(filename)
         };
 
@@ -1204,11 +1207,55 @@ pub async fn create_recording_zip(
             file_size
         );
 
-        let mut file =
-            File::open(&file_path).map_err(|e| format!("Failed to open {}: {}", filename, e))?;
-        let mut contents = Vec::new();
-        file.read_to_end(&mut contents)
-            .map_err(|e| format!("Failed to read {}: {}", filename, e))?;
+        let contents = if filename == "sft.json" && has_private_ranges {
+            // Filter SFT data based on private ranges
+            log::info!("[create_recording_zip] Filtering sft.json based on private ranges");
+
+            let sft_content = fs::read_to_string(&file_path)
+                .map_err(|e| format!("Failed to read sft.json: {}", e))?;
+
+            let sft_data: Vec<serde_json::Value> = serde_json::from_str(&sft_content)
+                .map_err(|e| format!("Failed to parse sft.json: {}", e))?;
+
+            let private_ranges: Vec<PrivateRange> = read_json_file(&private_ranges_path)?;
+            let original_count = sft_data.len();
+
+            // Filter out messages that fall within private ranges
+            let filtered_sft: Vec<serde_json::Value> = sft_data
+                .into_iter()
+                .filter(|msg| {
+                    if let Some(timestamp) = msg.get("timestamp").and_then(|t| t.as_i64()) {
+                        let timestamp_f64 = timestamp as f64;
+                        // Keep message if it's NOT in any private range
+                        !private_ranges
+                            .iter()
+                            .any(|range| timestamp_f64 >= range.start && timestamp_f64 <= range.end)
+                    } else {
+                        // Keep messages without timestamps
+                        true
+                    }
+                })
+                .collect();
+
+            log::info!(
+                "[create_recording_zip] Filtered SFT: {} -> {} messages",
+                original_count,
+                filtered_sft.len()
+            );
+
+            let filtered_content = serde_json::to_string_pretty(&filtered_sft)
+                .map_err(|e| format!("Failed to serialize filtered SFT: {}", e))?;
+
+            filtered_content.into_bytes()
+        } else {
+            // Read file normally
+            let mut file = File::open(&file_path)
+                .map_err(|e| format!("Failed to open {}: {}", filename, e))?;
+            let mut contents = Vec::new();
+            file.read_to_end(&mut contents)
+                .map_err(|e| format!("Failed to read {}: {}", filename, e))?;
+            contents
+        };
 
         log::info!(
             "[create_recording_zip] Read {} bytes from {}",
@@ -1254,29 +1301,6 @@ pub async fn create_recording_zip(
         recording_id
     );
     Ok(buf)
-}
-
-pub async fn export_recording_zip(id: String, app: tauri::AppHandle) -> Result<String, String> {
-    let buf = create_recording_zip(app.clone(), id.clone()).await;
-    let selected_dir = app
-        .dialog()
-        .file()
-        .set_file_name(&format!("export_recording_{}.zip", id))
-        .blocking_save_file();
-
-    // If user cancels the dialog, selected_dir will be None
-    if let Some(dir_path) = selected_dir {
-        // Create the full path for history.zip
-        let dir_path_str = dir_path.to_string();
-        let file_path = Path::new(&dir_path_str).join(format!("export_recording_{}.zip", id));
-
-        // Write the buffer to the file
-        std::fs::write(&file_path, buf?).map_err(|e| format!("Failed to write zip file: {}", e))?;
-
-        Ok(file_path.to_string_lossy().into_owned())
-    } else {
-        Ok("".to_string())
-    }
 }
 
 pub async fn get_current_demonstration(

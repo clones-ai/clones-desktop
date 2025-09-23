@@ -86,7 +86,7 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(16),
                                   child: Image.network(
-                                    'https://www.google.com/s2/favicons?domain=${app.domain}&sz=32',
+                                    'http://127.0.0.1:19847/proxy-image?url=${Uri.encodeComponent('https://www.google.com/s2/favicons?domain=${app.domain}&sz=32')}',
                                     errorBuilder:
                                         (context, error, stackTrace) =>
                                             const Icon(

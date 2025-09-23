@@ -103,7 +103,7 @@ class DemoDetailEditor extends ConsumerWidget {
         if (privateRanges.isNotEmpty)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
             decoration: BoxDecoration(
               color: ClonesColors.secondaryText.withValues(alpha: 0.1),
@@ -112,10 +112,36 @@ class DemoDetailEditor extends ConsumerWidget {
               ),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(
-              '${privateRanges.length} masked ${privateRanges.length == 1 ? 'range' : 'ranges'} in this recording',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade600),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.visibility_off,
+                      size: 16,
+                      color: Colors.red.shade400,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${privateRanges.length} privacy ${privateRanges.length == 1 ? 'range' : 'ranges'} active',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _getPrivacyImpactText(privateRanges, demoDetail.sftMessages),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ),
         Expanded(
@@ -290,5 +316,35 @@ class DemoDetailEditor extends ConsumerWidget {
         // TODO(reddwarf03): Add up/down buttons
       ),
     );
+  }
+
+  String _getPrivacyImpactText(
+    List<dynamic> privateRanges,
+    List<dynamic> sftMessages,
+  ) {
+    if (privateRanges.isEmpty) return '';
+
+    // Calculate total masked duration
+    final totalMaskedMs = privateRanges.fold<int>(
+      0,
+      (sum, range) => sum + (range.end - range.start) as int,
+    );
+    final maskedSeconds = (totalMaskedMs / 1000).round();
+
+    // Calculate masked messages
+    final maskedMessages = sftMessages
+        .where(
+          (msg) => privateRanges.any(
+            (range) =>
+                msg.timestamp >= range.start && msg.timestamp <= range.end,
+          ),
+        )
+        .length;
+
+    if (maskedSeconds > 0) {
+      return '~${maskedSeconds}s of content and $maskedMessages messages will be masked';
+    } else {
+      return '$maskedMessages messages will be masked';
+    }
   }
 }

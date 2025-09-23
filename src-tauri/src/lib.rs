@@ -16,21 +16,19 @@ use utils::permissions::{has_ax_perms, has_record_perms, request_ax_perms, reque
 
 use crate::commands::general::{greet, list_apps, take_screenshot};
 use crate::commands::record::{
-    create_recording_zip, delete_recording, export_recording_zip, get_app_data_dir,
-    get_current_demonstration, get_recording_file, get_recording_state, list_recordings,
-    open_recording_folder, process_recording, start_recording, stop_recording, write_file,
-    write_recording_file,
+    create_recording_zip, delete_recording, get_app_data_dir, get_current_demonstration,
+    get_recording_file, get_recording_state, list_recordings, open_recording_folder,
+    process_recording, start_recording, stop_recording, write_file, write_recording_file,
 };
-use crate::commands::recordings::export_recordings;
 use crate::commands::settings::{
     get_onboarding_complete, get_upload_data_allowed, set_onboarding_complete,
     set_upload_data_allowed,
 };
 use crate::commands::tools::{check_tools, init_tools};
 use crate::commands::transaction::{
-    generate_session_token, prepare_transaction_request, generate_transaction_deep_link,
-    get_transaction_request, update_transaction_status, list_pending_transactions,
-    cleanup_old_transactions, handle_transaction_callback,
+    cleanup_old_transactions, generate_session_token, generate_transaction_deep_link,
+    get_transaction_request, handle_transaction_callback, list_pending_transactions,
+    prepare_transaction_request, update_transaction_status,
 };
 
 // State to hold the latest deep link URL
@@ -92,10 +90,8 @@ pub fn setup_builder() -> tauri::Builder<tauri::Wry> {
             open_recording_folder,
             process_recording,
             create_recording_zip,
-            export_recording_zip,
             get_upload_data_allowed,
             set_upload_data_allowed,
-            export_recordings,
             delete_recording,
             get_recording_state,
             get_current_demonstration,

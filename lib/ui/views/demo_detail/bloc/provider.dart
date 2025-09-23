@@ -1,12 +1,18 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:clones_desktop/application/recording.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
+import 'package:clones_desktop/application/upload/provider.dart';
+import 'package:clones_desktop/application/upload/state.dart';
 import 'package:clones_desktop/domain/models/message/deleted_range.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/recording/recording_event.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:video_player/video_player.dart';
 
@@ -14,10 +20,14 @@ part 'provider.g.dart';
 
 @riverpod
 class DemoDetailNotifier extends _$DemoDetailNotifier {
+  File? _tempVideoFile;
+
   @override
   DemoDetailState build() {
     ref.onDispose(() {
       state.videoController?.dispose();
+      // Clean up temporary file if it exists
+      _tempVideoFile?.deleteSync();
     });
     return const DemoDetailState();
   }
@@ -60,18 +70,38 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       final base64String = parts[1];
       final videoBytes = base64Decode(base64String);
 
-      final videoUri = Uri.dataFromBytes(
-        videoBytes,
-        mimeType: 'video/mp4',
-      );
-      final controller = VideoPlayerController.networkUrl(videoUri);
+      VideoPlayerController controller;
+
+      if (kIsWeb) {
+        // Web: Use data URI
+        final videoUri = Uri.dataFromBytes(
+          videoBytes,
+          mimeType: 'video/mp4',
+        );
+        controller = VideoPlayerController.networkUrl(videoUri);
+      } else {
+        // Desktop: Create temporary file
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File('${tempDir.path}/temp_video_$recordingId.mp4');
+
+        // Clean up previous temp file if exists
+        _tempVideoFile?.deleteSync();
+
+        // Write video bytes to temporary file
+        await tempFile.writeAsBytes(videoBytes);
+        _tempVideoFile = tempFile;
+
+        // Use file controller for desktop
+        controller = VideoPlayerController.file(tempFile);
+      }
+
       await controller.initialize();
 
       await state.videoController?.dispose();
       state = state.copyWith(videoController: controller);
-    } catch (e, s) {
-      debugPrint('Failed to initialize video player: $e');
-      debugPrint(s.toString());
+    } catch (e) {
+      debugPrint('Video file not available for recording $recordingId: $e');
+      // This is expected for recordings without video files
     }
   }
 
@@ -136,24 +166,24 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       // SFT file might not exist, continue with empty messages
     }
 
-    // Load private ranges (optional file for future feature)
-    // TODO: Temporarily disabled until backend 500 error is fixed
-    // try {
-    //   debugPrint('Attempting to load private_ranges.json for $recordingId');
-    //   final rangesJson =
-    //       await ref.read(tauriApiClientProvider).getRecordingFile(
-    //             recordingId: recordingId,
-    //             filename: 'private_ranges.json',
-    //           );
-    //   final List<dynamic> rangesData = jsonDecode(rangesJson);
-    //   final privateRanges =
-    //       rangesData.map((data) => DeletedRange.fromJson(data)).toList();
-    //   state = state.copyWith(privateRanges: privateRanges);
-    //   debugPrint('Successfully loaded private_ranges.json');
-    // } catch (e) {
-    //   debugPrint('private_ranges.json not found (expected): $e');
-    //   // Private ranges file doesn't exist yet - this is expected
-    // }
+    // Load private ranges (optional file for privacy masking feature)
+    try {
+      final rangesJson =
+          await ref.read(tauriApiClientProvider).getRecordingFile(
+                recordingId: recordingId,
+                filename: 'private_ranges.json',
+              );
+      final List<dynamic> rangesData = jsonDecode(rangesJson);
+      final privateRanges =
+          rangesData.map((data) => DeletedRange.fromJson(data)).toList();
+      state = state.copyWith(privateRanges: privateRanges);
+      debugPrint(
+        'Loaded ${privateRanges.length} private ranges for $recordingId',
+      );
+    } catch (e) {
+      // Private ranges file doesn't exist yet - this is expected for new recordings
+      state = state.copyWith(privateRanges: []);
+    }
 
     _applyMasking();
   }
@@ -475,6 +505,16 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     _savePrivateRanges();
   }
 
+  void updatePrivateRange(int index, DeletedRange updatedRange) {
+    if (index < 0 || index >= state.privateRanges.length) return;
+
+    final updatedRanges = [...state.privateRanges];
+    updatedRanges[index] = updatedRange;
+    state = state.copyWith(privateRanges: updatedRanges);
+    _applyMasking();
+    _savePrivateRanges();
+  }
+
   Future<void> _savePrivateRanges() async {
     final recordingId = state.recording?.id;
     if (recordingId == null) return;
@@ -489,6 +529,38 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     } catch (e) {
       // TODO(reddwarf03): handle error
     }
+  }
+
+  // --- Modal Management ---
+
+  void setShowTrainingSessionModal(bool show) {
+    state = state.copyWith(showTrainingSessionModal: show);
+  }
+
+  void setShowUploadConfirmModal(bool show) {
+    state = state.copyWith(showUploadConfirmModal: show);
+  }
+
+  Future<void> confirmUploadPermission() async {
+    try {
+      await ref.read(uploadQueueProvider.notifier).setUploadDataAllowed(true);
+      state = state.copyWith(showUploadConfirmModal: false);
+      // Retry the upload
+      await uploadRecording();
+    } catch (e) {
+      state = state.copyWith(
+        uploadError: e.toString(),
+        showUploadConfirmModal: false,
+      );
+    }
+  }
+
+  Future<void> onDemoRecordingCompleted(String recordingId) async {
+    // Close modal and load the new recording
+    state = state.copyWith(showTrainingSessionModal: false);
+
+    // Small delay to ensure files are written to disk
+    await loadRecording(recordingId);
   }
 
   // --- Button Actions ---
@@ -515,37 +587,56 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     }
   }
 
-  Future<void> exportRecording() async {
-    final recordingId = state.recording?.id;
-    if (recordingId == null || state.isExporting) return;
-
-    state =
-        state.copyWith(isExporting: true, exportError: null, exportPath: null);
-    try {
-      final path =
-          await ref.read(tauriApiClientProvider).exportRecording(recordingId);
-      state = state.copyWith(exportPath: path);
-    } catch (e) {
-      state = state.copyWith(exportError: e.toString());
-    } finally {
-      state = state.copyWith(isExporting: false);
-    }
-  }
-
   Future<void> uploadRecording() async {
     final recordingId = state.recording?.id;
     if (recordingId == null || state.isUploading) return;
 
     state = state.copyWith(isUploading: true, uploadError: null);
+
     try {
-      // TODO(reddwarf03): Implement actual upload logic
-      await Future.delayed(const Duration(seconds: 2));
-      // final result = await ref.read(tauriApiClientProvider).uploadRecording(recordingId);
-      // state = state.copyWith(recording: state.recording?.copyWith(submission: result));
+      final demonstrationTitle = state.recording?.title ?? 'Unknown';
+
+      late ProviderSubscription<Map<String, UploadTaskState>> sub;
+      sub = ref.listen<Map<String, UploadTaskState>>(uploadQueueProvider,
+          (previous, next) async {
+        final uploadState = next[recordingId];
+        if (uploadState == null) return;
+
+        if (uploadState.uploadStatus == UploadStatus.done) {
+          sub.close();
+          state = state.copyWith(isUploading: false);
+
+          // Reload recording to get updated submission data
+          await loadRecording(recordingId);
+        } else if (uploadState.uploadStatus == UploadStatus.error) {
+          sub.close();
+          state = state.copyWith(
+            isUploading: false,
+            uploadError: uploadState.error ?? 'Upload failed',
+          );
+        }
+      });
+
+      // Start the upload by calling the upload method
+      // We need to find the poolId from the recording's demonstration
+      final poolId = state.recording?.demonstration?.poolId ?? 'unknown';
+      await ref.read(uploadQueueProvider.notifier).upload(
+            recordingId,
+            poolId,
+            demonstrationTitle,
+          );
     } catch (e) {
-      state = state.copyWith(uploadError: e.toString());
-    } finally {
-      state = state.copyWith(isUploading: false);
+      if (e.toString().contains('Upload data is not allowed')) {
+        state = state.copyWith(
+          showUploadConfirmModal: true,
+          isUploading: false,
+        );
+        return;
+      }
+      state = state.copyWith(
+        isUploading: false,
+        uploadError: e.toString(),
+      );
     }
   }
 }

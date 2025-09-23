@@ -41,7 +41,7 @@ final isPrivacyAcceptedProvider = AutoDisposeFutureProvider<bool>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef IsPrivacyAcceptedRef = AutoDisposeFutureProviderRef<bool>;
-String _$acceptPrivacyHash() => r'0f31c88feff446d6dd9d4e02c30c2238d4f0e3bd';
+String _$acceptPrivacyHash() => r'5c74c4eca9e99f484c2597d9744677b550776277';
 
 /// See also [acceptPrivacy].
 @ProviderFor(acceptPrivacy)
@@ -58,7 +58,7 @@ final acceptPrivacyProvider = AutoDisposeFutureProvider<void>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AcceptPrivacyRef = AutoDisposeFutureProviderRef<void>;
-String _$rejectPrivacyHash() => r'016e4a53cd23a6f55468551d832deeb8180441f9';
+String _$rejectPrivacyHash() => r'd7ab9f1b0a1f5610a4c13055270aca2ca548e277';
 
 /// See also [rejectPrivacy].
 @ProviderFor(rejectPrivacy)

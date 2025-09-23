@@ -9,7 +9,7 @@ import 'package:clones_desktop/domain/models/factory/factory_task.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/memory_image_tauri.dart';
-import 'package:clones_desktop/ui/views/training_session/layouts/training_session_view.dart';
+import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
 import 'package:clones_desktop/utils/fav_tools.dart';
 import 'package:clones_desktop/utils/format_num.dart';
 import 'package:flutter/material.dart';
@@ -53,7 +53,7 @@ class TaskCard extends ConsumerWidget {
       final appParam = Uri.encodeComponent(jsonEncode(appInfo.toJson()));
 
       context.go(
-        TrainingSessionView.routeName,
+        DemoDetailView.routeName,
         extra: {
           'prompt': task.prompt,
           'appParam': appParam,

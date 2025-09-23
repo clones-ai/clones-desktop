@@ -24,7 +24,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 final _router = GoRouter(
-  initialLocation: HomeView.routeName,
+  initialLocation: '/', // We'll handle initial routing in the app
   routes: [
     ShellRoute(
       builder: (context, state, child) {
@@ -54,9 +54,24 @@ final _router = GoRouter(
         GoRoute(
           path: DemoDetailView.routeName,
           pageBuilder: (context, state) {
-            final recordingId = state.extra as String? ?? '';
+            final extra = state.extra;
+            String? recordingId;
+            Map<String, dynamic>? trainingParams;
+
+            // Handle both cases: String recordingId or Map with training params
+            if (extra is String) {
+              recordingId = extra.isEmpty ? null : extra;
+            } else if (extra is Map<String, dynamic>) {
+              // For new demo recording, recordingId is null
+              recordingId = null;
+              trainingParams = extra;
+            }
+
             return NoTransitionPage(
-              child: DemoDetailView(recordingId: recordingId),
+              child: DemoDetailView(
+                recordingId: recordingId,
+                trainingParams: trainingParams,
+              ),
             );
           },
         ),

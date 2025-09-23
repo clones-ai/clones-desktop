@@ -22,7 +22,7 @@ use tauri::{AppHandle, State};
 pub async fn start_recording(
     app: AppHandle,
     demonstration_state: State<'_, DemonstrationState>,
-   demonstration: Option<Demonstration>,
+    demonstration: Option<Demonstration>,
     fps: u32,
 ) -> Result<(), String> {
     record::start_recording(app, demonstration_state, demonstration, fps).await
@@ -194,21 +194,6 @@ pub async fn delete_recording(app: AppHandle, recording_id: String) -> Result<()
 pub async fn create_recording_zip(app: AppHandle, recording_id: String) -> Result<Vec<u8>, String> {
     validate_id(&recording_id)?;
     record::create_recording_zip(app, recording_id).await
-}
-
-/// Exports a recording's zip archive to a user-accessible location.
-///
-/// # Arguments
-/// * `id` - The recording ID.
-/// * `app` - The Tauri `AppHandle`.
-///
-/// # Returns
-/// * `Ok(String)` with the export path.
-/// * `Err` if export failed.
-#[tauri::command]
-pub async fn export_recording_zip(id: String, app: AppHandle) -> Result<String, String> {
-    validate_id(&id)?;
-    record::export_recording_zip(id, app).await
 }
 
 /// Gets the application data directory path.

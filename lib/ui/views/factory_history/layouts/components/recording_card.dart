@@ -320,31 +320,6 @@ class RecordingCard extends ConsumerWidget {
                       .read(tauriApiClientProvider)
                       .openRecordingFolder(recording.id);
                   break;
-                case 'export_zip':
-                  final result = await ref
-                      .read(tauriApiClientProvider)
-                      .exportRecording(recording.id);
-                  if (result.isNotEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Record exported successfully',
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Failed to export recording',
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      ),
-                    );
-                  }
-
-                  break;
                 case 'delete':
                   await AppDialogs.showConfirmDialog(
                     context,
@@ -379,17 +354,6 @@ class RecordingCard extends ConsumerWidget {
                       Icon(Icons.folder, color: ClonesColors.secondaryText),
                   title: Text(
                     'Open Folder',
-                    style: TextStyle(color: ClonesColors.secondaryText),
-                  ),
-                ),
-              ),
-              PopupMenuItem<String>(
-                value: 'export_zip',
-                child: ListTile(
-                  leading:
-                      Icon(Icons.archive, color: ClonesColors.secondaryText),
-                  title: Text(
-                    'Export Zip',
                     style: TextStyle(color: ClonesColors.secondaryText),
                   ),
                 ),

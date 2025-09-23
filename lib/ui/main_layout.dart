@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:clones_desktop/application/onboarding_provider.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/application/tools_provider.dart';
 import 'package:clones_desktop/ui/components/layout_background.dart';
@@ -34,6 +35,10 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
   void initState() {
     super.initState();
     _initializeTools();
+    // Initialize onboarding after widget is mounted
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(onboardingProvider);
+    });
   }
 
   Future<void> _initializeTools() async {

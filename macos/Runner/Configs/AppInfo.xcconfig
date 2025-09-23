@@ -10,5 +10,5 @@ PRODUCT_NAME = clones
 // The application's bundle identifier
 PRODUCT_BUNDLE_IDENTIFIER = ai.clones
 
-// The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.
+// The copyright displayed in the application's About box.
+PRODUCT_COPYRIGHT = Copyright © 2025 Clones AI. All rights reserved.

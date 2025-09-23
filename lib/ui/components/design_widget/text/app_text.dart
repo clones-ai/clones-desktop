@@ -52,8 +52,8 @@ class AppText extends StatelessWidget {
           );
         } else {
           final domain = part.content.toLowerCase();
-          final faviconUrl =
-              'https://www.google.com/s2/favicons?domain=$domain.com';
+          final googleFaviconUrl = 'https://www.google.com/s2/favicons?domain=$domain.com';
+          final faviconUrl = 'http://127.0.0.1:19847/proxy-image?url=${Uri.encodeComponent(googleFaviconUrl)}';
 
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

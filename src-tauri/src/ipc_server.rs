@@ -20,12 +20,10 @@ use crate::commands::general::{list_apps, take_screenshot};
 use crate::commands::settings::{get_upload_data_allowed, set_upload_data_allowed};
 // Import function from `utils/permissions`
 use crate::utils::permissions::has_ax_perms;
-// Import functions from `commands/recordings`
-use crate::commands::recordings::export_recordings;
 // Import functions from `commands/tools`
 use crate::commands::tools::{check_tools, init_tools};
 // Import functions from `core/record`
-use crate::core::record::{export_recording_zip, open_recording_folder, process_recording};
+use crate::core::record::{open_recording_folder, process_recording};
 // Import functions from `utils/permissions`
 use crate::utils::permissions::{has_record_perms, request_record_perms};
 // Import functions from `commands/settings`
@@ -221,10 +219,6 @@ pub async fn init(app_handle: AppHandle) {
         .route("/recordings/:id/process", post(process_recording_handler))
         // POST /recordings/:id/open: Trigger opening the folder of a specific recording.
         .route("/recordings/:id/open", post(open_recording_folder_handler))
-        // POST /recordings/:id/export: Trigger an export of a specific recording.
-        .route("/recordings/:id/export", post(export_recording_handler))
-        // POST /recordings/export: Trigger an export of all recordings.
-        .route("/recordings/export", post(export_recordings_handler))
         // GET /deeplink: Retrieve the latest deep link URL received by the application.
         .route("/deeplink", get(get_deeplink_handler))
         // POST /open-url: Open an external URL.
@@ -536,25 +530,6 @@ async fn open_recording_folder_handler(
 ) -> Result<StatusCode, (StatusCode, String)> {
     match open_recording_folder(state.app_handle, id).await {
         Ok(_) => Ok(StatusCode::OK),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
-    }
-}
-
-async fn export_recording_handler(
-    State(state): State<AppState>,
-    axum::extract::Path(id): axum::extract::Path<String>,
-) -> Result<impl IntoResponse, (StatusCode, String)> {
-    match export_recording_zip(id, state.app_handle).await {
-        Ok(path) => Ok((StatusCode::OK, path)),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
-    }
-}
-
-async fn export_recordings_handler(
-    State(state): State<AppState>,
-) -> Result<impl IntoResponse, (StatusCode, String)> {
-    match export_recordings(state.app_handle).await {
-        Ok(path) => Ok((StatusCode::OK, path)),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }

@@ -129,11 +129,28 @@ class Sidebar extends ConsumerWidget {
           appVersion.when(
             data: (version) => Padding(
               padding: const EdgeInsets.only(bottom: 16, top: 8),
-              child: Text(
-                'v$version',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.5),
-                ),
+              child: Column(
+                children: [
+                  Text(
+                    '$version - alpha',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  Text(
+                    'TESTNET',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: ClonesColors.error,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Base sepolia',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: ClonesColors.error,
+                    ),
+                  ),
+                ],
               ),
             ),
             loading: () => const SizedBox(),
@@ -212,44 +229,47 @@ class AnimatedSidebarSection extends StatelessWidget {
                   return SizedBox(
                     height: buttonHeight,
                     child: Center(
-                      child: GestureDetector(
-                        onTap: () => onTap(i),
-                        child: ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return LinearGradient(
-                              colors: [
-                                ClonesColors.primary.withValues(alpha: 0.5),
-                                ClonesColors.secondary.withValues(alpha: 0.9),
-                              ],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                            ).createShader(bounds);
-                          },
-                          blendMode: BlendMode.dstIn,
-                          child: activeIndex == i
-                              ? Stack(
-                                  children: [
-                                    Image.asset(
-                                      button.imagePath,
-                                      width: 40,
-                                      height: 40,
-                                      color: ClonesColors.primary,
-                                    ),
-                                    Opacity(
-                                      opacity: 0.7,
-                                      child: Image.asset(
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: () => onTap(i),
+                          child: ShaderMask(
+                            shaderCallback: (Rect bounds) {
+                              return LinearGradient(
+                                colors: [
+                                  ClonesColors.primary.withValues(alpha: 0.5),
+                                  ClonesColors.secondary.withValues(alpha: 0.9),
+                                ],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ).createShader(bounds);
+                            },
+                            blendMode: BlendMode.dstIn,
+                            child: activeIndex == i
+                                ? Stack(
+                                    children: [
+                                      Image.asset(
                                         button.imagePath,
                                         width: 40,
                                         height: 40,
+                                        color: ClonesColors.primary,
                                       ),
-                                    ),
-                                  ],
-                                )
-                              : Image.asset(
-                                  button.imagePath,
-                                  width: 40,
-                                  height: 40,
-                                ),
+                                      Opacity(
+                                        opacity: 0.7,
+                                        child: Image.asset(
+                                          button.imagePath,
+                                          width: 40,
+                                          height: 40,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Image.asset(
+                                    button.imagePath,
+                                    width: 40,
+                                    height: 40,
+                                  ),
+                          ),
                         ),
                       ),
                     ),
