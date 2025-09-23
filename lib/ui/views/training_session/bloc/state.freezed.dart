@@ -37,10 +37,9 @@ mixin _$TrainingSessionState {
   int? get hoveredMessageIndex => throw _privateConstructorUsedError;
   List<DeletedRange> get deletedRanges => throw _privateConstructorUsedError;
   List<SftMessage>? get originalSftData => throw _privateConstructorUsedError;
+  List<SftMessage> get availableSftData => throw _privateConstructorUsedError;
   AppInfo? get app => throw _privateConstructorUsedError;
   int get scrollToBottomNonce => throw _privateConstructorUsedError;
-  AudioPlayer? get toneAudio => throw _privateConstructorUsedError;
-  AudioPlayer? get blipAudio => throw _privateConstructorUsedError;
 
   /// Create a copy of TrainingSessionState
   /// with the given fields replaced by the non-null parameter values.
@@ -75,10 +74,9 @@ abstract class $TrainingSessionStateCopyWith<$Res> {
       int? hoveredMessageIndex,
       List<DeletedRange> deletedRanges,
       List<SftMessage>? originalSftData,
+      List<SftMessage> availableSftData,
       AppInfo? app,
-      int scrollToBottomNonce,
-      AudioPlayer? toneAudio,
-      AudioPlayer? blipAudio});
+      int scrollToBottomNonce});
 
   $FactoryCopyWith<$Res>? get factory;
   $DemonstrationCopyWith<$Res>? get recordedDemonstration;
@@ -122,10 +120,9 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
     Object? hoveredMessageIndex = freezed,
     Object? deletedRanges = null,
     Object? originalSftData = freezed,
+    Object? availableSftData = null,
     Object? app = freezed,
     Object? scrollToBottomNonce = null,
-    Object? toneAudio = freezed,
-    Object? blipAudio = freezed,
   }) {
     return _then(_value.copyWith(
       prompt: freezed == prompt
@@ -204,6 +201,10 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
           ? _value.originalSftData
           : originalSftData // ignore: cast_nullable_to_non_nullable
               as List<SftMessage>?,
+      availableSftData: null == availableSftData
+          ? _value.availableSftData
+          : availableSftData // ignore: cast_nullable_to_non_nullable
+              as List<SftMessage>,
       app: freezed == app
           ? _value.app
           : app // ignore: cast_nullable_to_non_nullable
@@ -212,14 +213,6 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
           ? _value.scrollToBottomNonce
           : scrollToBottomNonce // ignore: cast_nullable_to_non_nullable
               as int,
-      toneAudio: freezed == toneAudio
-          ? _value.toneAudio
-          : toneAudio // ignore: cast_nullable_to_non_nullable
-              as AudioPlayer?,
-      blipAudio: freezed == blipAudio
-          ? _value.blipAudio
-          : blipAudio // ignore: cast_nullable_to_non_nullable
-              as AudioPlayer?,
     ) as $Val);
   }
 
@@ -323,10 +316,9 @@ abstract class _$$TrainingSessionStateImplCopyWith<$Res>
       int? hoveredMessageIndex,
       List<DeletedRange> deletedRanges,
       List<SftMessage>? originalSftData,
+      List<SftMessage> availableSftData,
       AppInfo? app,
-      int scrollToBottomNonce,
-      AudioPlayer? toneAudio,
-      AudioPlayer? blipAudio});
+      int scrollToBottomNonce});
 
   @override
   $FactoryCopyWith<$Res>? get factory;
@@ -372,10 +364,9 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
     Object? hoveredMessageIndex = freezed,
     Object? deletedRanges = null,
     Object? originalSftData = freezed,
+    Object? availableSftData = null,
     Object? app = freezed,
     Object? scrollToBottomNonce = null,
-    Object? toneAudio = freezed,
-    Object? blipAudio = freezed,
   }) {
     return _then(_$TrainingSessionStateImpl(
       prompt: freezed == prompt
@@ -454,6 +445,10 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
           ? _value._originalSftData
           : originalSftData // ignore: cast_nullable_to_non_nullable
               as List<SftMessage>?,
+      availableSftData: null == availableSftData
+          ? _value._availableSftData
+          : availableSftData // ignore: cast_nullable_to_non_nullable
+              as List<SftMessage>,
       app: freezed == app
           ? _value.app
           : app // ignore: cast_nullable_to_non_nullable
@@ -462,14 +457,6 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
           ? _value.scrollToBottomNonce
           : scrollToBottomNonce // ignore: cast_nullable_to_non_nullable
               as int,
-      toneAudio: freezed == toneAudio
-          ? _value.toneAudio
-          : toneAudio // ignore: cast_nullable_to_non_nullable
-              as AudioPlayer?,
-      blipAudio: freezed == blipAudio
-          ? _value.blipAudio
-          : blipAudio // ignore: cast_nullable_to_non_nullable
-              as AudioPlayer?,
     ));
   }
 }
@@ -497,13 +484,13 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
       this.hoveredMessageIndex = null,
       final List<DeletedRange> deletedRanges = const [],
       final List<SftMessage>? originalSftData = null,
+      final List<SftMessage> availableSftData = const [],
       this.app,
-      this.scrollToBottomNonce = 0,
-      this.toneAudio,
-      this.blipAudio})
+      this.scrollToBottomNonce = 0})
       : _chatMessages = chatMessages,
         _deletedRanges = deletedRanges,
         _originalSftData = originalSftData,
+        _availableSftData = availableSftData,
         super._();
 
   @override
@@ -577,19 +564,25 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
     return EqualUnmodifiableListView(value);
   }
 
+  final List<SftMessage> _availableSftData;
+  @override
+  @JsonKey()
+  List<SftMessage> get availableSftData {
+    if (_availableSftData is EqualUnmodifiableListView)
+      return _availableSftData;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_availableSftData);
+  }
+
   @override
   final AppInfo? app;
   @override
   @JsonKey()
   final int scrollToBottomNonce;
-  @override
-  final AudioPlayer? toneAudio;
-  @override
-  final AudioPlayer? blipAudio;
 
   @override
   String toString() {
-    return 'TrainingSessionState(prompt: $prompt, factory: $factory, recordedDemonstration: $recordedDemonstration, recordingDemonstration: $recordingDemonstration, recordingLoading: $recordingLoading, recordingProcessing: $recordingProcessing, showUploadConfirmModal: $showUploadConfirmModal, showUploadBlock: $showUploadBlock, currentRecordingId: $currentRecordingId, isUploading: $isUploading, originalWindowSize: $originalWindowSize, loadingSftData: $loadingSftData, recordingState: $recordingState, chatMessages: $chatMessages, typingMessage: $typingMessage, isWaitingForResponse: $isWaitingForResponse, hoveredMessageIndex: $hoveredMessageIndex, deletedRanges: $deletedRanges, originalSftData: $originalSftData, app: $app, scrollToBottomNonce: $scrollToBottomNonce, toneAudio: $toneAudio, blipAudio: $blipAudio)';
+    return 'TrainingSessionState(prompt: $prompt, factory: $factory, recordedDemonstration: $recordedDemonstration, recordingDemonstration: $recordingDemonstration, recordingLoading: $recordingLoading, recordingProcessing: $recordingProcessing, showUploadConfirmModal: $showUploadConfirmModal, showUploadBlock: $showUploadBlock, currentRecordingId: $currentRecordingId, isUploading: $isUploading, originalWindowSize: $originalWindowSize, loadingSftData: $loadingSftData, recordingState: $recordingState, chatMessages: $chatMessages, typingMessage: $typingMessage, isWaitingForResponse: $isWaitingForResponse, hoveredMessageIndex: $hoveredMessageIndex, deletedRanges: $deletedRanges, originalSftData: $originalSftData, availableSftData: $availableSftData, app: $app, scrollToBottomNonce: $scrollToBottomNonce)';
   }
 
   @override
@@ -633,13 +626,11 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
                 .equals(other._deletedRanges, _deletedRanges) &&
             const DeepCollectionEquality()
                 .equals(other._originalSftData, _originalSftData) &&
+            const DeepCollectionEquality()
+                .equals(other._availableSftData, _availableSftData) &&
             (identical(other.app, app) || other.app == app) &&
             (identical(other.scrollToBottomNonce, scrollToBottomNonce) ||
-                other.scrollToBottomNonce == scrollToBottomNonce) &&
-            (identical(other.toneAudio, toneAudio) ||
-                other.toneAudio == toneAudio) &&
-            (identical(other.blipAudio, blipAudio) ||
-                other.blipAudio == blipAudio));
+                other.scrollToBottomNonce == scrollToBottomNonce));
   }
 
   @override
@@ -664,10 +655,9 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
         hoveredMessageIndex,
         const DeepCollectionEquality().hash(_deletedRanges),
         const DeepCollectionEquality().hash(_originalSftData),
+        const DeepCollectionEquality().hash(_availableSftData),
         app,
-        scrollToBottomNonce,
-        toneAudio,
-        blipAudio
+        scrollToBottomNonce
       ]);
 
   /// Create a copy of TrainingSessionState
@@ -702,10 +692,9 @@ abstract class _TrainingSessionState extends TrainingSessionState {
       final int? hoveredMessageIndex,
       final List<DeletedRange> deletedRanges,
       final List<SftMessage>? originalSftData,
+      final List<SftMessage> availableSftData,
       final AppInfo? app,
-      final int scrollToBottomNonce,
-      final AudioPlayer? toneAudio,
-      final AudioPlayer? blipAudio}) = _$TrainingSessionStateImpl;
+      final int scrollToBottomNonce}) = _$TrainingSessionStateImpl;
   const _TrainingSessionState._() : super._();
 
   @override
@@ -747,13 +736,11 @@ abstract class _TrainingSessionState extends TrainingSessionState {
   @override
   List<SftMessage>? get originalSftData;
   @override
+  List<SftMessage> get availableSftData;
+  @override
   AppInfo? get app;
   @override
   int get scrollToBottomNonce;
-  @override
-  AudioPlayer? get toneAudio;
-  @override
-  AudioPlayer? get blipAudio;
 
   /// Create a copy of TrainingSessionState
   /// with the given fields replaced by the non-null parameter values.
@@ -761,4 +748,304 @@ abstract class _TrainingSessionState extends TrainingSessionState {
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$TrainingSessionStateImplCopyWith<_$TrainingSessionStateImpl>
       get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+mixin _$ReplayGroupItem {
+  List<SingleMessageItem> get messages => throw _privateConstructorUsedError;
+
+  /// Create a copy of ReplayGroupItem
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $ReplayGroupItemCopyWith<ReplayGroupItem> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ReplayGroupItemCopyWith<$Res> {
+  factory $ReplayGroupItemCopyWith(
+          ReplayGroupItem value, $Res Function(ReplayGroupItem) then) =
+      _$ReplayGroupItemCopyWithImpl<$Res, ReplayGroupItem>;
+  @useResult
+  $Res call({List<SingleMessageItem> messages});
+}
+
+/// @nodoc
+class _$ReplayGroupItemCopyWithImpl<$Res, $Val extends ReplayGroupItem>
+    implements $ReplayGroupItemCopyWith<$Res> {
+  _$ReplayGroupItemCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of ReplayGroupItem
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? messages = null,
+  }) {
+    return _then(_value.copyWith(
+      messages: null == messages
+          ? _value.messages
+          : messages // ignore: cast_nullable_to_non_nullable
+              as List<SingleMessageItem>,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ReplayGroupItemImplCopyWith<$Res>
+    implements $ReplayGroupItemCopyWith<$Res> {
+  factory _$$ReplayGroupItemImplCopyWith(_$ReplayGroupItemImpl value,
+          $Res Function(_$ReplayGroupItemImpl) then) =
+      __$$ReplayGroupItemImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({List<SingleMessageItem> messages});
+}
+
+/// @nodoc
+class __$$ReplayGroupItemImplCopyWithImpl<$Res>
+    extends _$ReplayGroupItemCopyWithImpl<$Res, _$ReplayGroupItemImpl>
+    implements _$$ReplayGroupItemImplCopyWith<$Res> {
+  __$$ReplayGroupItemImplCopyWithImpl(
+      _$ReplayGroupItemImpl _value, $Res Function(_$ReplayGroupItemImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of ReplayGroupItem
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? messages = null,
+  }) {
+    return _then(_$ReplayGroupItemImpl(
+      messages: null == messages
+          ? _value._messages
+          : messages // ignore: cast_nullable_to_non_nullable
+              as List<SingleMessageItem>,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ReplayGroupItemImpl implements _ReplayGroupItem {
+  const _$ReplayGroupItemImpl({required final List<SingleMessageItem> messages})
+      : _messages = messages;
+
+  final List<SingleMessageItem> _messages;
+  @override
+  List<SingleMessageItem> get messages {
+    if (_messages is EqualUnmodifiableListView) return _messages;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_messages);
+  }
+
+  @override
+  String toString() {
+    return 'ReplayGroupItem(messages: $messages)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ReplayGroupItemImpl &&
+            const DeepCollectionEquality().equals(other._messages, _messages));
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, const DeepCollectionEquality().hash(_messages));
+
+  /// Create a copy of ReplayGroupItem
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ReplayGroupItemImplCopyWith<_$ReplayGroupItemImpl> get copyWith =>
+      __$$ReplayGroupItemImplCopyWithImpl<_$ReplayGroupItemImpl>(
+          this, _$identity);
+}
+
+abstract class _ReplayGroupItem implements ReplayGroupItem {
+  const factory _ReplayGroupItem(
+          {required final List<SingleMessageItem> messages}) =
+      _$ReplayGroupItemImpl;
+
+  @override
+  List<SingleMessageItem> get messages;
+
+  /// Create a copy of ReplayGroupItem
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ReplayGroupItemImplCopyWith<_$ReplayGroupItemImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+mixin _$SingleMessageItem {
+  Message get message => throw _privateConstructorUsedError;
+  int get index => throw _privateConstructorUsedError;
+
+  /// Create a copy of SingleMessageItem
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $SingleMessageItemCopyWith<SingleMessageItem> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $SingleMessageItemCopyWith<$Res> {
+  factory $SingleMessageItemCopyWith(
+          SingleMessageItem value, $Res Function(SingleMessageItem) then) =
+      _$SingleMessageItemCopyWithImpl<$Res, SingleMessageItem>;
+  @useResult
+  $Res call({Message message, int index});
+
+  $MessageCopyWith<$Res> get message;
+}
+
+/// @nodoc
+class _$SingleMessageItemCopyWithImpl<$Res, $Val extends SingleMessageItem>
+    implements $SingleMessageItemCopyWith<$Res> {
+  _$SingleMessageItemCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of SingleMessageItem
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? message = null,
+    Object? index = null,
+  }) {
+    return _then(_value.copyWith(
+      message: null == message
+          ? _value.message
+          : message // ignore: cast_nullable_to_non_nullable
+              as Message,
+      index: null == index
+          ? _value.index
+          : index // ignore: cast_nullable_to_non_nullable
+              as int,
+    ) as $Val);
+  }
+
+  /// Create a copy of SingleMessageItem
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $MessageCopyWith<$Res> get message {
+    return $MessageCopyWith<$Res>(_value.message, (value) {
+      return _then(_value.copyWith(message: value) as $Val);
+    });
+  }
+}
+
+/// @nodoc
+abstract class _$$SingleMessageItemImplCopyWith<$Res>
+    implements $SingleMessageItemCopyWith<$Res> {
+  factory _$$SingleMessageItemImplCopyWith(_$SingleMessageItemImpl value,
+          $Res Function(_$SingleMessageItemImpl) then) =
+      __$$SingleMessageItemImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({Message message, int index});
+
+  @override
+  $MessageCopyWith<$Res> get message;
+}
+
+/// @nodoc
+class __$$SingleMessageItemImplCopyWithImpl<$Res>
+    extends _$SingleMessageItemCopyWithImpl<$Res, _$SingleMessageItemImpl>
+    implements _$$SingleMessageItemImplCopyWith<$Res> {
+  __$$SingleMessageItemImplCopyWithImpl(_$SingleMessageItemImpl _value,
+      $Res Function(_$SingleMessageItemImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of SingleMessageItem
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? message = null,
+    Object? index = null,
+  }) {
+    return _then(_$SingleMessageItemImpl(
+      message: null == message
+          ? _value.message
+          : message // ignore: cast_nullable_to_non_nullable
+              as Message,
+      index: null == index
+          ? _value.index
+          : index // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$SingleMessageItemImpl implements _SingleMessageItem {
+  const _$SingleMessageItemImpl({required this.message, required this.index});
+
+  @override
+  final Message message;
+  @override
+  final int index;
+
+  @override
+  String toString() {
+    return 'SingleMessageItem(message: $message, index: $index)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$SingleMessageItemImpl &&
+            (identical(other.message, message) || other.message == message) &&
+            (identical(other.index, index) || other.index == index));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, message, index);
+
+  /// Create a copy of SingleMessageItem
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$SingleMessageItemImplCopyWith<_$SingleMessageItemImpl> get copyWith =>
+      __$$SingleMessageItemImplCopyWithImpl<_$SingleMessageItemImpl>(
+          this, _$identity);
+}
+
+abstract class _SingleMessageItem implements SingleMessageItem {
+  const factory _SingleMessageItem(
+      {required final Message message,
+      required final int index}) = _$SingleMessageItemImpl;
+
+  @override
+  Message get message;
+  @override
+  int get index;
+
+  /// Create a copy of SingleMessageItem
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$SingleMessageItemImplCopyWith<_$SingleMessageItemImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }

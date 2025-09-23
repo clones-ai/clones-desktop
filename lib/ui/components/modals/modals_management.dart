@@ -1,11 +1,15 @@
 import 'package:clones_desktop/application/factory_funds_modal/provider.dart';
 import 'package:clones_desktop/application/factory_withdraw_modal/provider.dart';
 import 'package:clones_desktop/application/gas_alert_provider.dart';
+import 'package:clones_desktop/application/permissions_modal_provider.dart';
+import 'package:clones_desktop/application/privacy_modal_provider.dart';
 import 'package:clones_desktop/application/upload_modal_provider.dart';
 import 'package:clones_desktop/application/wallet_modal_provider.dart';
 import 'package:clones_desktop/ui/components/gas_alert_widget.dart';
 import 'package:clones_desktop/ui/components/modals/factory_funds_modal.dart';
 import 'package:clones_desktop/ui/components/modals/factory_withdraw_modal.dart';
+import 'package:clones_desktop/ui/components/modals/permissions_modal.dart';
+import 'package:clones_desktop/ui/components/modals/privacy_modal.dart';
 import 'package:clones_desktop/ui/components/modals/upload_progress_modal.dart';
 import 'package:clones_desktop/ui/components/modals/wallet_modal.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +28,8 @@ class ModalsManagement extends ConsumerWidget {
     final showFactoryWithdrawModal =
         ref.watch(factoryWithdrawModalNotifierProvider).isShown;
     final gasAlertState = ref.watch(gasAlertProvider);
+    final showPrivacyModal = ref.watch(privacyModalProvider);
+    final showPermissionsModal = ref.watch(permissionsModalProvider);
 
     return ClipRect(
       child: Stack(
@@ -42,6 +48,8 @@ class ModalsManagement extends ConsumerWidget {
             ),
           if (showFactoryFundsModal) const FactoryFundsModal(),
           if (showFactoryWithdrawModal) const FactoryWithdrawModal(),
+          if (showPrivacyModal) const PrivacyModal(),
+          if (showPermissionsModal) const PermissionsModal(),
           if (gasAlertState.isVisible && gasAlertState.currentAlert != null)
             Positioned(
               top: 20,

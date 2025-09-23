@@ -26,6 +26,8 @@ mixin _$DemoDetailState {
   int get startTime => throw _privateConstructorUsedError;
   @JsonKey(includeIfNull: false)
   VideoPlayerController? get videoController =>
+      throw _privateConstructorUsedError;
+  bool get showTrainingSessionModal =>
       throw _privateConstructorUsedError; // Video editing
   List<RangeValues> get deletedSegments => throw _privateConstructorUsedError;
   List<RangeValues> get clipSegments => throw _privateConstructorUsedError;
@@ -37,6 +39,7 @@ mixin _$DemoDetailState {
   bool get isProcessing => throw _privateConstructorUsedError;
   bool get isExporting => throw _privateConstructorUsedError;
   bool get isUploading => throw _privateConstructorUsedError;
+  bool get showUploadConfirmModal => throw _privateConstructorUsedError;
   String? get exportPath => throw _privateConstructorUsedError;
   String? get exportError => throw _privateConstructorUsedError;
   String? get uploadError => throw _privateConstructorUsedError;
@@ -64,6 +67,7 @@ abstract class $DemoDetailStateCopyWith<$Res> {
       Set<String> enabledEventTypes,
       int startTime,
       @JsonKey(includeIfNull: false) VideoPlayerController? videoController,
+      bool showTrainingSessionModal,
       List<RangeValues> deletedSegments,
       List<RangeValues> clipSegments,
       Set<int> selectedClipIndexes,
@@ -72,6 +76,7 @@ abstract class $DemoDetailStateCopyWith<$Res> {
       bool isProcessing,
       bool isExporting,
       bool isUploading,
+      bool showUploadConfirmModal,
       String? exportPath,
       String? exportError,
       String? uploadError});
@@ -103,6 +108,7 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
     Object? enabledEventTypes = null,
     Object? startTime = null,
     Object? videoController = freezed,
+    Object? showTrainingSessionModal = null,
     Object? deletedSegments = null,
     Object? clipSegments = null,
     Object? selectedClipIndexes = null,
@@ -111,6 +117,7 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
     Object? isProcessing = null,
     Object? isExporting = null,
     Object? isUploading = null,
+    Object? showUploadConfirmModal = null,
     Object? exportPath = freezed,
     Object? exportError = freezed,
     Object? uploadError = freezed,
@@ -152,6 +159,10 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
           ? _value.videoController
           : videoController // ignore: cast_nullable_to_non_nullable
               as VideoPlayerController?,
+      showTrainingSessionModal: null == showTrainingSessionModal
+          ? _value.showTrainingSessionModal
+          : showTrainingSessionModal // ignore: cast_nullable_to_non_nullable
+              as bool,
       deletedSegments: null == deletedSegments
           ? _value.deletedSegments
           : deletedSegments // ignore: cast_nullable_to_non_nullable
@@ -183,6 +194,10 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
       isUploading: null == isUploading
           ? _value.isUploading
           : isUploading // ignore: cast_nullable_to_non_nullable
+              as bool,
+      showUploadConfirmModal: null == showUploadConfirmModal
+          ? _value.showUploadConfirmModal
+          : showUploadConfirmModal // ignore: cast_nullable_to_non_nullable
               as bool,
       exportPath: freezed == exportPath
           ? _value.exportPath
@@ -232,6 +247,7 @@ abstract class _$$DemoDetailStateImplCopyWith<$Res>
       Set<String> enabledEventTypes,
       int startTime,
       @JsonKey(includeIfNull: false) VideoPlayerController? videoController,
+      bool showTrainingSessionModal,
       List<RangeValues> deletedSegments,
       List<RangeValues> clipSegments,
       Set<int> selectedClipIndexes,
@@ -240,6 +256,7 @@ abstract class _$$DemoDetailStateImplCopyWith<$Res>
       bool isProcessing,
       bool isExporting,
       bool isUploading,
+      bool showUploadConfirmModal,
       String? exportPath,
       String? exportError,
       String? uploadError});
@@ -270,6 +287,7 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
     Object? enabledEventTypes = null,
     Object? startTime = null,
     Object? videoController = freezed,
+    Object? showTrainingSessionModal = null,
     Object? deletedSegments = null,
     Object? clipSegments = null,
     Object? selectedClipIndexes = null,
@@ -278,6 +296,7 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
     Object? isProcessing = null,
     Object? isExporting = null,
     Object? isUploading = null,
+    Object? showUploadConfirmModal = null,
     Object? exportPath = freezed,
     Object? exportError = freezed,
     Object? uploadError = freezed,
@@ -319,6 +338,10 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
           ? _value.videoController
           : videoController // ignore: cast_nullable_to_non_nullable
               as VideoPlayerController?,
+      showTrainingSessionModal: null == showTrainingSessionModal
+          ? _value.showTrainingSessionModal
+          : showTrainingSessionModal // ignore: cast_nullable_to_non_nullable
+              as bool,
       deletedSegments: null == deletedSegments
           ? _value._deletedSegments
           : deletedSegments // ignore: cast_nullable_to_non_nullable
@@ -351,6 +374,10 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
           ? _value.isUploading
           : isUploading // ignore: cast_nullable_to_non_nullable
               as bool,
+      showUploadConfirmModal: null == showUploadConfirmModal
+          ? _value.showUploadConfirmModal
+          : showUploadConfirmModal // ignore: cast_nullable_to_non_nullable
+              as bool,
       exportPath: freezed == exportPath
           ? _value.exportPath
           : exportPath // ignore: cast_nullable_to_non_nullable
@@ -380,6 +407,7 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
       final Set<String> enabledEventTypes = const {},
       this.startTime = 0,
       @JsonKey(includeIfNull: false) this.videoController,
+      this.showTrainingSessionModal = false,
       final List<RangeValues> deletedSegments = const [],
       final List<RangeValues> clipSegments = const [],
       final Set<int> selectedClipIndexes = const {},
@@ -388,6 +416,7 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
       this.isProcessing = false,
       this.isExporting = false,
       this.isUploading = false,
+      this.showUploadConfirmModal = false,
       this.exportPath,
       this.exportError,
       this.uploadError})
@@ -458,6 +487,9 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
   @override
   @JsonKey(includeIfNull: false)
   final VideoPlayerController? videoController;
+  @override
+  @JsonKey()
+  final bool showTrainingSessionModal;
 // Video editing
   final List<RangeValues> _deletedSegments;
 // Video editing
@@ -505,6 +537,9 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
   @JsonKey()
   final bool isUploading;
   @override
+  @JsonKey()
+  final bool showUploadConfirmModal;
+  @override
   final String? exportPath;
   @override
   final String? exportError;
@@ -513,7 +548,7 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
 
   @override
   String toString() {
-    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, privateRanges: $privateRanges, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoController: $videoController, deletedSegments: $deletedSegments, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, clipboardClip: $clipboardClip, isApplyingEdits: $isApplyingEdits, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError)';
+    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, privateRanges: $privateRanges, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoController: $videoController, showTrainingSessionModal: $showTrainingSessionModal, deletedSegments: $deletedSegments, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, clipboardClip: $clipboardClip, isApplyingEdits: $isApplyingEdits, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, showUploadConfirmModal: $showUploadConfirmModal, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError)';
   }
 
   @override
@@ -538,6 +573,9 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
                 other.startTime == startTime) &&
             (identical(other.videoController, videoController) ||
                 other.videoController == videoController) &&
+            (identical(
+                    other.showTrainingSessionModal, showTrainingSessionModal) ||
+                other.showTrainingSessionModal == showTrainingSessionModal) &&
             const DeepCollectionEquality()
                 .equals(other._deletedSegments, _deletedSegments) &&
             const DeepCollectionEquality()
@@ -554,6 +592,8 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
                 other.isExporting == isExporting) &&
             (identical(other.isUploading, isUploading) ||
                 other.isUploading == isUploading) &&
+            (identical(other.showUploadConfirmModal, showUploadConfirmModal) ||
+                other.showUploadConfirmModal == showUploadConfirmModal) &&
             (identical(other.exportPath, exportPath) ||
                 other.exportPath == exportPath) &&
             (identical(other.exportError, exportError) ||
@@ -574,6 +614,7 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
         const DeepCollectionEquality().hash(_enabledEventTypes),
         startTime,
         videoController,
+        showTrainingSessionModal,
         const DeepCollectionEquality().hash(_deletedSegments),
         const DeepCollectionEquality().hash(_clipSegments),
         const DeepCollectionEquality().hash(_selectedClipIndexes),
@@ -582,6 +623,7 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
         isProcessing,
         isExporting,
         isUploading,
+        showUploadConfirmModal,
         exportPath,
         exportError,
         uploadError
@@ -609,6 +651,7 @@ abstract class _DemoDetailState extends DemoDetailState {
       final int startTime,
       @JsonKey(includeIfNull: false)
       final VideoPlayerController? videoController,
+      final bool showTrainingSessionModal,
       final List<RangeValues> deletedSegments,
       final List<RangeValues> clipSegments,
       final Set<int> selectedClipIndexes,
@@ -617,6 +660,7 @@ abstract class _DemoDetailState extends DemoDetailState {
       final bool isProcessing,
       final bool isExporting,
       final bool isUploading,
+      final bool showUploadConfirmModal,
       final String? exportPath,
       final String? exportError,
       final String? uploadError}) = _$DemoDetailStateImpl;
@@ -640,7 +684,9 @@ abstract class _DemoDetailState extends DemoDetailState {
   int get startTime;
   @override
   @JsonKey(includeIfNull: false)
-  VideoPlayerController? get videoController; // Video editing
+  VideoPlayerController? get videoController;
+  @override
+  bool get showTrainingSessionModal; // Video editing
   @override
   List<RangeValues> get deletedSegments;
   @override
@@ -658,6 +704,8 @@ abstract class _DemoDetailState extends DemoDetailState {
   bool get isExporting;
   @override
   bool get isUploading;
+  @override
+  bool get showUploadConfirmModal;
   @override
   String? get exportPath;
   @override

@@ -22,11 +22,15 @@ Future<bool> isPrivacyAccepted(Ref ref) async {
 @riverpod
 Future<void> acceptPrivacy(Ref ref) async {
   final privacyRepository = ref.read(privacyRepositoryProvider);
-  return privacyRepository.setPrivacyAccepted(true);
+  await privacyRepository.setPrivacyAccepted(true);
+  // Invalidate the cache to force a re-read
+  ref.invalidate(isPrivacyAcceptedProvider);
 }
 
 @riverpod
 Future<void> rejectPrivacy(Ref ref) async {
   final privacyRepository = ref.read(privacyRepositoryProvider);
-  return privacyRepository.setPrivacyAccepted(false);
+  await privacyRepository.setPrivacyAccepted(false);
+  // Invalidate the cache to force a re-read
+  ref.invalidate(isPrivacyAcceptedProvider);
 }

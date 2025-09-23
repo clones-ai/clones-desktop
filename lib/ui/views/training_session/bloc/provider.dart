@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:audioplayers/audioplayers.dart';
 import 'package:clones_desktop/application/submissions.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/application/upload/provider.dart';
@@ -34,26 +33,7 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
 
   @override
   TrainingSessionState build() {
-    ref.onDispose(() {
-      state.toneAudio?.dispose();
-      state.blipAudio?.dispose();
-    });
-
     return const TrainingSessionState();
-  }
-
-  Future<void> setToneAudio(String source) async {
-    final toneAudio = AudioPlayer();
-    await toneAudio.setSource(AssetSource(source));
-    state = state.copyWith(toneAudio: toneAudio);
-    await state.toneAudio!.setVolume(0.15);
-  }
-
-  Future<void> setBlipAudio(String source) async {
-    final blipAudio = AudioPlayer();
-    await blipAudio.setSource(AssetSource(source));
-    state = state.copyWith(blipAudio: blipAudio);
-    await state.blipAudio!.setVolume(0.15);
   }
 
   Future<void> startRecording() async {
@@ -233,7 +213,9 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
           //   taskId: state.app!.taskId,
           // );
 
-          await addMessage(generateUserMessage('Sure!'));
+          await addMessage(
+            generateUserMessage("I'll show you how to do this task."),
+          );
         } catch (error) {
           await addMessage(
             generateAssistantMessage(
@@ -300,7 +282,7 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
           content = jsonEncode(msg.content);
         }
         chatMessages.add(
-          generateUserMessage(
+          generateAssistantMessage(
             content,
             timestamp: msg.timestamp,
             type: typeMessage,
@@ -392,6 +374,9 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
     // Save the updated ranges to file
     await savePrivateRanges();
 
+    // Update available SFT data
+    _updateAvailableSftData();
+
     setChatMessages([
       ...state.chatMessages.sublist(0, index),
       generateUserMessage(
@@ -400,14 +385,12 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
       ),
       ...state.chatMessages.sublist(index + 1),
     ]);
-    triggerScrollToBottom();
   }
 
   Future<void> undoDelete(int? clickedMessageIndex) async {
     // Parse the start, end, and count from the delete message
     if (clickedMessageIndex != null && state.originalSftData != null) {
       final deleteMsg = state.chatMessages[clickedMessageIndex];
-      // TODO(reddwarf03): check this
       if (deleteMsg.type == MessageType.delete) {
         final content = deleteMsg.content.substring(3);
         final parts = content.trim().split(' ').map(int.parse).toList();
@@ -421,6 +404,9 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
 
         // Save the updated ranges to file
         await savePrivateRanges();
+
+        // Update available SFT data
+        _updateAvailableSftData();
 
         // Find messages in originalSftData that fall within this time range
         final messagesToRestore = state.originalSftData!.where(
@@ -438,8 +424,22 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
         ]);
       }
     }
+  }
 
-    triggerScrollToBottom();
+  void _updateAvailableSftData() {
+    if (state.originalSftData == null) {
+      setAvailableSftData([]);
+      return;
+    }
+
+    // Filter out deleted messages for UI display
+    final available = state.originalSftData!.where((msg) {
+      return !state.deletedRanges.any(
+        (range) => msg.timestamp >= range.start && msg.timestamp <= range.end,
+      );
+    }).toList();
+
+    setAvailableSftData(available);
   }
 
   Future<void> recordingComplete() async {
@@ -512,6 +512,9 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
       if (sftData != null && sftData.isNotEmpty) {
         // Store original SFT data for filtering
         setOriginalSftData([...sftData]);
+
+        // Initialize available SFT data
+        _updateAvailableSftData();
 
         // Add styled start replay message
         await addMessage(

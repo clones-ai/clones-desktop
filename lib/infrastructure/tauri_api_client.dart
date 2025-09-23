@@ -181,6 +181,14 @@ class TauriApiClient {
     }
   }
 
+  Future<void> requestAxPerms() async {
+    final response =
+        await _client.post(Uri.parse('$_baseUrl/permissions/ax/request'));
+    if (response.statusCode != 200) {
+      throw Exception('Failed to request accessibility permissions: ${response.body}');
+    }
+  }
+
   Future<bool> getOnboardingComplete() async {
     final response =
         await _client.get(Uri.parse('$_baseUrl/onboarding/complete'));
@@ -244,24 +252,6 @@ class TauriApiClient {
     if (response.statusCode != 200) {
       throw Exception('Failed to open recording folder: ${response.body}');
     }
-  }
-
-  Future<String> exportRecording(String recordingId) async {
-    final response = await _client
-        .post(Uri.parse('$_baseUrl/recordings/$recordingId/export'));
-    if (response.statusCode == 200) {
-      return response.body;
-    }
-    throw Exception('Failed to export recording: ${response.body}');
-  }
-
-  Future<String> exportRecordings() async {
-    final response =
-        await _client.post(Uri.parse('$_baseUrl/recordings/export'));
-    if (response.statusCode == 200) {
-      return response.body;
-    }
-    throw Exception('Failed to export recordings: ${response.body}');
   }
 
   Future<void> applyEdits(

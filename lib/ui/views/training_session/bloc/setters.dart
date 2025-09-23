@@ -81,6 +81,10 @@ mixin TrainingSessionSetters on AutoDisposeNotifier<TrainingSessionState> {
     state = state.copyWith(originalSftData: originalSftData);
   }
 
+  void setAvailableSftData(List<SftMessage> availableSftData) {
+    state = state.copyWith(availableSftData: availableSftData);
+  }
+
   void setApp(AppInfo? app) {
     state = state.copyWith(app: app);
   }

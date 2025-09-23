@@ -5,9 +5,9 @@ import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/domain/models/factory/factory_task.dart';
 import 'package:clones_desktop/ui/components/design_widget/dialog/dialog.dart';
+import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/manage_task/bloc/state.dart';
-import 'package:clones_desktop/ui/views/training_session/layouts/training_session_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -46,7 +46,7 @@ class TaskActionsWidget extends ConsumerWidget {
             );
 
             context.go(
-              TrainingSessionView.routeName,
+              DemoDetailView.routeName,
               extra: {
                 'prompt': task.prompt,
                 'appParam': appParam,

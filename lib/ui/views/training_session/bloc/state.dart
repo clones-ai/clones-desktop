@@ -1,4 +1,3 @@
-import 'package:audioplayers/audioplayers.dart';
 import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
@@ -35,10 +34,26 @@ class TrainingSessionState with _$TrainingSessionState {
     @Default(null) int? hoveredMessageIndex,
     @Default([]) List<DeletedRange> deletedRanges,
     @Default(null) List<SftMessage>? originalSftData,
+    @Default([]) List<SftMessage> availableSftData,
     AppInfo? app,
     @Default(0) int scrollToBottomNonce,
-    AudioPlayer? toneAudio,
-    AudioPlayer? blipAudio,
   }) = _TrainingSessionState;
   const TrainingSessionState._();
 }
+
+@freezed
+class ReplayGroupItem with _$ReplayGroupItem implements ChatItem {
+  const factory ReplayGroupItem({
+    required List<SingleMessageItem> messages,
+  }) = _ReplayGroupItem;
+}
+
+@freezed
+class SingleMessageItem with _$SingleMessageItem implements ChatItem {
+  const factory SingleMessageItem({
+    required Message message,
+    required int index,
+  }) = _SingleMessageItem;
+}
+
+abstract class ChatItem {}

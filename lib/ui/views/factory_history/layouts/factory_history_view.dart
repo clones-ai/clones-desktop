@@ -57,7 +57,6 @@ class FactoryHistoryView extends ConsumerWidget {
   }
 
   Widget _buildFooter(BuildContext context, WidgetRef ref) {
-    final factoryHistory = ref.watch(factoryHistoryNotifierProvider);
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -67,12 +66,6 @@ class FactoryHistoryView extends ConsumerWidget {
           btnPrimaryType: BtnPrimaryType.outlinePrimary,
         ),
         const SizedBox(width: 10),
-        if (factoryHistory.recordings.isNotEmpty)
-          BtnPrimary(
-            onTap: () => ref.read(tauriApiClientProvider).exportRecordings(),
-            buttonText: 'Export Recordings',
-            btnPrimaryType: BtnPrimaryType.outlinePrimary,
-          ),
       ],
     );
   }

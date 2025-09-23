@@ -66,9 +66,9 @@ check_prerequisites() {
     FLUTTER_VERSION=$(flutter --version | head -n 1 | cut -d' ' -f2)
     log_info "Flutter version: $FLUTTER_VERSION (required: $REQUIRED_FLUTTER_VERSION)"
     
-    # Check if .env.local exists
-    if [ ! -f ".env.local" ]; then
-        log_error ".env.local file not found. Please create it with your environment variables."
+    # Check if .env exists
+    if [ ! -f ".env" ]; then
+        log_error ".env file not found. Please create it with your environment variables."
         exit 1
     fi
     
@@ -79,15 +79,11 @@ check_prerequisites() {
 setup_environment() {
     log_info "Setting up environment..."
     
-    # Copy .env.local to .env for Flutter assets
-    cp .env.local .env
-    log_info "Created .env from .env.local"
-    
-    # Source .env.local to load environment variables
+    # Source .env to load environment variables
     set -a  # automatically export all variables
-    source .env.local
+    source .env
     set +a  # stop auto-export
-    log_info "Loaded environment variables from .env.local"
+    log_info "Loaded environment variables from .env"
     
     # Create build directory
     mkdir -p "$BUILD_DIR"
@@ -133,7 +129,9 @@ build_tauri_target() {
     local target_dir="$ROOT_DIR/src-tauri/target/$target/release/bundle"
     
     if [ -d "$target_dir/macos" ]; then
-        cp -r "$target_dir/macos" "$BUILD_DIR/macos_$arch"
+        mkdir -p "$BUILD_DIR/macos_$arch"
+        # Copy only .app bundles, exclude temporary DMG files with rw.* prefix
+        find "$target_dir/macos" -name "*.app" -exec cp -r {} "$BUILD_DIR/macos_$arch/" \;
         log_success "macOS app copied to build directory: macos_$arch"
     fi
     
@@ -185,8 +183,8 @@ notarize_artifacts() {
         return 0
     fi
     
-    # Notarize DMG files (preferred format)
-    local dmg_files=($(find "$BUILD_DIR" -name "*.dmg"))
+    # Notarize DMG files (preferred format) - exclude temporary files with rw.* prefix
+    local dmg_files=($(find "$BUILD_DIR" -name "*.dmg" -not -name "rw.*"))
     
     if [ ${#dmg_files[@]} -eq 0 ]; then
         log_warning "No DMG files found for notarization"
@@ -242,8 +240,16 @@ notarize_artifacts() {
 # Cleanup function
 cleanup() {
     log_info "Cleaning up temporary files..."
-    rm -f .env
-    log_info "Cleanup completed"
+    
+    # Remove temporary DMG files with rw.* prefix from build directories
+    if [ -n "$BUILD_DIR" ] && [ -d "$BUILD_DIR" ]; then
+        find "$BUILD_DIR" -name "rw.*.dmg" -delete 2>/dev/null || true
+    fi
+    
+    # Clean up Tauri build cache temporary files
+    find "$ROOT_DIR/src-tauri/target" -name "rw.*.dmg" -delete 2>/dev/null || true
+    
+    log_info "Temporary files cleaned up"
 }
 
 # Error handling

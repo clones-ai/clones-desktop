@@ -20,6 +20,7 @@ class DemoDetailState with _$DemoDetailState {
     @Default({}) Set<String> enabledEventTypes,
     @Default(0) int startTime,
     @JsonKey(includeIfNull: false) VideoPlayerController? videoController,
+    @Default(false) bool showTrainingSessionModal,
 
     // Video editing
     @Default([]) List<RangeValues> deletedSegments,
@@ -32,6 +33,7 @@ class DemoDetailState with _$DemoDetailState {
     @Default(false) bool isProcessing,
     @Default(false) bool isExporting,
     @Default(false) bool isUploading,
+    @Default(false) bool showUploadConfirmModal,
     String? exportPath,
     String? exportError,
     String? uploadError,
