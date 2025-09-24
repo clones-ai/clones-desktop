@@ -8,7 +8,6 @@ import 'package:clones_desktop/domain/models/permissions.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -80,33 +79,6 @@ class _PermissionsModalState extends ConsumerState<PermissionsModal> {
       }
     } catch (e) {
       debugPrint('Error opening system preferences: $e');
-    }
-  }
-
-  Future<void> _restartApp() async {
-    try {
-      if (mounted) {
-        await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Restart Required'),
-            content: const Text(
-              'Please restart the application for the permission changes to take effect.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  SystemNavigator.pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('Error restarting app: $e');
     }
   }
 
@@ -193,6 +165,7 @@ class _PermissionsModalState extends ConsumerState<PermissionsModal> {
                             description:
                                 "This allows Clones to understand what's on your screen and provide relevant assistance.",
                             status: permissionsState.accessibilityStatus,
+                            // TODO: Clean this
                             onRequest: () => ref
                                 .read(permissionsNotifierProvider.notifier)
                                 .requestAccessibilityPermission(),
@@ -209,6 +182,7 @@ class _PermissionsModalState extends ConsumerState<PermissionsModal> {
                             description:
                                 'This allows Clones to record your screen for training and assistance purposes.',
                             status: permissionsState.screenRecordingStatus,
+                            // TODO: Clean this
                             onRequest: () => ref
                                 .read(permissionsNotifierProvider.notifier)
                                 .requestScreenRecordingPermission(),
@@ -220,46 +194,6 @@ class _PermissionsModalState extends ConsumerState<PermissionsModal> {
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 32),
-
-                  // Action buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          ref.read(permissionsModalProvider.notifier).hide();
-                          ref
-                              .read(onboardingProvider.notifier)
-                              .onPermissionsCompleted();
-                        },
-                        child: const Text('Skip for now'),
-                      ),
-                      SizedBox(
-                        width: 250,
-                        child: BtnPrimary(
-                          buttonText: _getButtonText(permissionsState),
-                          widthExpanded: true,
-                          isLocked: !_canContinue(permissionsState),
-                          onTap: _canContinue(permissionsState)
-                              ? () {
-                                  if (permissionsState.anyRestartRequired) {
-                                    _restartApp();
-                                  } else {
-                                    ref
-                                        .read(permissionsModalProvider.notifier)
-                                        .hide();
-                                    ref
-                                        .read(onboardingProvider.notifier)
-                                        .onPermissionsCompleted();
-                                  }
-                                }
-                              : null,
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -267,20 +201,6 @@ class _PermissionsModalState extends ConsumerState<PermissionsModal> {
         ),
       ],
     );
-  }
-
-  String _getButtonText(PermissionsData state) {
-    if (state.anyRestartRequired) {
-      return 'Restart Application';
-    } else if (state.allPermissionsGranted) {
-      return 'Continue';
-    } else {
-      return 'Please Grant All Permissions';
-    }
-  }
-
-  bool _canContinue(PermissionsData state) {
-    return state.allPermissionsGranted || state.anyRestartRequired;
   }
 
   Widget _buildPermissionCard({
@@ -390,21 +310,21 @@ class _PermissionsModalState extends ConsumerState<PermissionsModal> {
     switch (status) {
       case PermissionStatus.denied:
         instructions =
-            '💡 Click "Grant Permission" below and a system dialog will appear. Please click "Allow" to enable this feature.';
+            'Click "Open Settings" below and a system dialog will appear. Please click "Allow" to enable this feature for Clones Desktop Application and restart the app.';
         backgroundColor = Colors.blue.withValues(alpha: 0.1);
         break;
       case PermissionStatus.pending:
-        instructions = '⏳ Waiting for your response in the system dialog...';
+        instructions = 'Waiting for your response in the system dialog...';
         backgroundColor = Colors.orange.withValues(alpha: 0.1);
         break;
       case PermissionStatus.restartRequired:
         instructions =
-            '✅ Permission granted! Please restart the app for changes to take effect.';
+            'Permission granted! Please restart the app for changes to take effect.';
         backgroundColor = Colors.green.withValues(alpha: 0.1);
         break;
       case PermissionStatus.granted:
         instructions =
-            '✅ This permission is already granted and working properly.';
+            'This permission is already granted and working properly.';
         backgroundColor = Colors.green.withValues(alpha: 0.1);
         break;
       default:
@@ -420,9 +340,7 @@ class _PermissionsModalState extends ConsumerState<PermissionsModal> {
       ),
       child: Text(
         instructions,
-        style: theme.textTheme.bodySmall?.copyWith(
-          fontStyle: FontStyle.italic,
-        ),
+        style: theme.textTheme.bodySmall,
       ),
     );
   }
@@ -436,13 +354,6 @@ class _PermissionsModalState extends ConsumerState<PermissionsModal> {
       case PermissionStatus.denied:
         return Row(
           children: [
-            Expanded(
-              child: BtnPrimary(
-                buttonText: 'Grant Permission',
-                onTap: onRequest,
-              ),
-            ),
-            const SizedBox(width: 12),
             Expanded(
               child: BtnPrimary(
                 buttonText: 'Open Settings',

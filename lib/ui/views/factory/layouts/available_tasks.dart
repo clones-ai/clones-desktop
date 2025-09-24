@@ -105,7 +105,7 @@ class _AvailableTasksState extends ConsumerState<AvailableTasks> {
             children: [
               Expanded(
                 child: AutoSizeText(
-                  'Choose a task, record a demonstration on your desktop, earn rewards.\nYour data helps us build the largest open-source dataset for training sophisticated AI assistants.',
+                  'Your journey starts here: choose a task and record your demo.',
                   maxLines: 2,
                   textAlign: TextAlign.center,
                   minFontSize: 14,

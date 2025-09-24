@@ -309,7 +309,7 @@ class RecordingCard extends ConsumerWidget {
                         ? 'Upload for ${maxReward.toStringAsFixed(2)} Tokens'
                         : 'Upload Recording',
           ),
-        if (recording.location == 'local')
+        if (recording.submission == null)
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: ClonesColors.secondaryText),
             color: Colors.black.withValues(alpha: 0.9),
@@ -347,28 +347,16 @@ class RecordingCard extends ConsumerWidget {
               }
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              PopupMenuItem<String>(
-                value: 'open_folder',
+              const PopupMenuItem<String>(
+                value: 'delete',
                 child: ListTile(
-                  leading:
-                      Icon(Icons.folder, color: ClonesColors.secondaryText),
+                  leading: Icon(Icons.delete, color: Colors.red),
                   title: Text(
-                    'Open Folder',
-                    style: TextStyle(color: ClonesColors.secondaryText),
+                    'Delete',
+                    style: TextStyle(color: Colors.red),
                   ),
                 ),
               ),
-              if (recording.submission == null)
-                const PopupMenuItem<String>(
-                  value: 'delete',
-                  child: ListTile(
-                    leading: Icon(Icons.delete, color: Colors.red),
-                    title: Text(
-                      'Delete',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ),
             ],
           ),
       ],

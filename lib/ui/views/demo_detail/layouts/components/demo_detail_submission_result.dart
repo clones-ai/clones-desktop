@@ -94,7 +94,7 @@ class _DemoDetailSubmissionResultState
                                   child: Text(
                                     scores[index]['reasoning'] ??
                                         'No reasoning provided.',
-                                    style: theme.textTheme.bodyMedium,
+                                    style: theme.textTheme.bodySmall,
                                     textAlign: TextAlign.center,
                                   ),
                                 ),

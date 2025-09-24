@@ -2,17 +2,12 @@ import 'package:clones_desktop/application/submissions.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/submission/pool_submission.dart';
 import 'package:clones_desktop/ui/components/card.dart';
-import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
-import 'package:clones_desktop/ui/components/modals/download_scripts_modal.dart';
 import 'package:clones_desktop/ui/views/forge_detail/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/forge_detail/layouts/components/forge_factory_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
-
-final _selectedSubmissionsProvider =
-    StateProvider.autoDispose<Set<String>>((ref) => {});
 
 class ForgeFactoryUploadsTab extends ConsumerWidget {
   const ForgeFactoryUploadsTab({super.key});
@@ -56,35 +51,6 @@ class _PageHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final selectedSubmissions = ref.watch(_selectedSubmissionsProvider);
-    final hasSelection = selectedSubmissions.isNotEmpty;
-
-    VoidCallback? onTapCallback;
-    if (hasSelection) {
-      onTapCallback = () {
-        final submissionsToExport = submissions
-            .where((s) => selectedSubmissions.contains(s.id))
-            .toList();
-        showDialog(
-          context: context,
-          builder: (context) =>
-              DownloadScriptsModal(submissions: submissionsToExport),
-        );
-      };
-    } else {
-      if (submissions.isEmpty) {
-        onTapCallback = null;
-      } else {
-        onTapCallback = () {
-          showDialog(
-            context: context,
-            builder: (context) =>
-                DownloadScriptsModal(submissions: submissions),
-          );
-        };
-      }
-    }
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -95,21 +61,7 @@ class _PageHeader extends ConsumerWidget {
               '3. Uploads',
               style: theme.textTheme.titleMedium,
             ),
-            if (hasSelection) ...[
-              const SizedBox(width: 8),
-              Chip(
-                label: Text('${selectedSubmissions.length} selected'),
-                padding: const EdgeInsets.all(4),
-                backgroundColor: ClonesColors.secondary.withValues(alpha: 0.2),
-                labelStyle: theme.textTheme.bodySmall
-                    ?.copyWith(color: ClonesColors.secondary),
-              ),
-            ],
           ],
-        ),
-        BtnPrimary(
-          buttonText: hasSelection ? 'Export Selected' : 'Export All Uploads',
-          onTap: onTapCallback,
         ),
       ],
     );
@@ -122,17 +74,7 @@ class _UploadsTable extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedSubmissions = ref.watch(_selectedSubmissionsProvider);
-
-    void onSelectAll(bool? selected) {
-      final notifier = ref.read(_selectedSubmissionsProvider.notifier);
-      if (selected == true) {
-        notifier.state = submissions.map((s) => s.id).toSet();
-      } else {
-        notifier.state = {};
-      }
-    }
-
+    final theme = Theme.of(context);
     return CardWidget(
       padding: CardPadding.none,
       child: ClipRRect(
@@ -148,20 +90,29 @@ class _UploadsTable extends ConsumerWidget {
                 ),
                 columns: [
                   DataColumn(
-                    label: Checkbox(
-                      value: selectedSubmissions.length == submissions.length &&
-                          submissions.isNotEmpty,
-                      onChanged: onSelectAll,
-                    ),
+                    label: Text('Platform', style: theme.textTheme.titleSmall),
                   ),
-                  const DataColumn(label: Text('Platform')),
-                  const DataColumn(label: Text('Task')),
-                  const DataColumn(label: Text('Status')),
-                  const DataColumn(label: Text('Duration')),
-                  const DataColumn(label: Text('Size')),
-                  const DataColumn(label: Text('Date')),
-                  const DataColumn(label: Text('Quality')),
-                  const DataColumn(label: Text('Reward')),
+                  DataColumn(
+                    label: Text('Task', style: theme.textTheme.titleSmall),
+                  ),
+                  DataColumn(
+                    label: Text('Status', style: theme.textTheme.titleSmall),
+                  ),
+                  DataColumn(
+                    label: Text('Duration', style: theme.textTheme.titleSmall),
+                  ),
+                  DataColumn(
+                    label: Text('Size', style: theme.textTheme.titleSmall),
+                  ),
+                  DataColumn(
+                    label: Text('Date', style: theme.textTheme.titleSmall),
+                  ),
+                  DataColumn(
+                    label: Text('Quality', style: theme.textTheme.titleSmall),
+                  ),
+                  DataColumn(
+                    label: Text('Reward', style: theme.textTheme.titleSmall),
+                  ),
                 ],
                 rows: submissions
                     .map(
@@ -169,7 +120,6 @@ class _UploadsTable extends ConsumerWidget {
                         submission,
                         context,
                         ref,
-                        selectedSubmissions,
                       ),
                     )
                     .toList(),
@@ -185,55 +135,35 @@ class _UploadsTable extends ConsumerWidget {
     PoolSubmission submission,
     BuildContext context,
     WidgetRef ref,
-    Set<String> selected,
   ) {
-    final isSelected = selected.contains(submission.id);
     final theme = Theme.of(context);
-    void onSelect(bool? selected) {
-      final notifier = ref.read(_selectedSubmissionsProvider.notifier);
-      if (selected == true) {
-        notifier.state = {...notifier.state, submission.id};
-      } else {
-        notifier.state = {...notifier.state..remove(submission.id)};
-      }
-    }
 
     return DataRow(
-      selected: isSelected,
       cells: [
-        DataCell(
-          Checkbox(
-            value: isSelected,
-            onChanged: onSelect,
-            activeColor: ClonesColors.primary,
-            checkColor: Colors.white,
-            side: const BorderSide(color: ClonesColors.primaryText),
-          ),
-        ),
         DataCell(_PlatformCell(submission: submission)),
         DataCell(
           Text(
             _getTitle(submission),
-            style: theme.textTheme.bodyMedium,
+            style: theme.textTheme.bodySmall,
           ),
         ),
         DataCell(_StatusCell(submission: submission)),
         DataCell(
           Text(
             _formatDuration(submission),
-            style: theme.textTheme.bodyMedium,
+            style: theme.textTheme.bodySmall,
           ),
         ),
         DataCell(
           Text(
             _getTotalFileSize(submission),
-            style: theme.textTheme.bodyMedium,
+            style: theme.textTheme.bodySmall,
           ),
         ),
         DataCell(
           Text(
             _formatDate(submission.createdAt),
-            style: theme.textTheme.bodyMedium,
+            style: theme.textTheme.bodySmall,
           ),
         ),
         DataCell(_QualityCell(submission: submission)),
@@ -356,17 +286,10 @@ class _StatusCell extends StatelessWidget {
         textColor = Colors.grey;
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        submission.status,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: textColor,
-        ),
+    return Text(
+      submission.status,
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: textColor,
       ),
     );
   }
@@ -393,7 +316,7 @@ class _QualityCell extends StatelessWidget {
 
     return Text(
       '${score.toStringAsFixed(0)}%',
-      style: theme.textTheme.bodyMedium?.copyWith(
+      style: theme.textTheme.bodySmall?.copyWith(
         color: color,
         fontWeight: FontWeight.bold,
       ),
@@ -401,39 +324,22 @@ class _QualityCell extends StatelessWidget {
   }
 }
 
-class _RewardCell extends StatelessWidget {
+class _RewardCell extends ConsumerWidget {
   const _RewardCell({required this.submission});
   final PoolSubmission submission;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final reward = submission.reward;
+
     if (reward != null && reward > 0) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          gradient: ClonesColors.gradientBtnPrimary,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          '$reward Tokens',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: Colors.white,
-          ),
-        ),
+      final factory = ref.watch(forgeDetailNotifierProvider).factory;
+      return Text(
+        '$reward ${factory?.token.symbol}',
+        style: theme.textTheme.bodySmall,
       );
     }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        'FREE',
-        style: theme.textTheme.bodyMedium,
-      ),
-    );
+    return const SizedBox.shrink();
   }
 }

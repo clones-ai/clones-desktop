@@ -11,7 +11,7 @@ _$ClaimAuthorizationImpl _$$ClaimAuthorizationImplFromJson(
     _$ClaimAuthorizationImpl(
       account: json['account'] as String,
       cumulativeAmount: json['cumulativeAmount'] as String,
-      deadline: (json['deadline'] as num).toInt(),
+      deadline: (json['deadline'] as num?)?.toInt(),
       signature: json['signature'] as String,
       publisherUsed: json['publisherUsed'] as String,
       poolAddress: json['poolAddress'] as String,

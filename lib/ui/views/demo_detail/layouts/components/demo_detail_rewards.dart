@@ -5,6 +5,7 @@ import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/submission/claim_authorization.dart';
 import 'package:clones_desktop/domain/models/submission/grade_result.dart';
 import 'package:clones_desktop/ui/components/card.dart';
+import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/design_widget/message_box/message_box.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
@@ -12,7 +13,6 @@ import 'package:clones_desktop/utils/env.dart';
 import 'package:clones_desktop/utils/format_address.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 class DemoDetailRewards extends ConsumerWidget {
   const DemoDetailRewards({super.key});
@@ -137,54 +137,9 @@ class DemoDetailRewards extends ConsumerWidget {
     String tokenSymbol,
   ) {
     final theme = Theme.of(context);
-    final deadline =
-        DateTime.fromMillisecondsSinceEpoch(claimAuth.deadline * 1000);
-    final isExpired = DateTime.now().isAfter(deadline);
 
     return Column(
       children: [
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Claim Status:',
-              style: theme.textTheme.bodyMedium,
-            ),
-            Row(
-              children: [
-                Icon(
-                  isExpired ? Icons.warning : Icons.check_circle,
-                  color: isExpired ? Colors.orange : Colors.green,
-                  size: 16,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  isExpired ? 'Expired' : 'Ready to Claim',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: isExpired ? Colors.orange : Colors.green,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Expires:',
-              style: theme.textTheme.bodyMedium,
-            ),
-            Text(
-              DateFormat.yMMMMd().add_Hms().format(deadline),
-              style: TextStyle(
-                color: ClonesColors.secondaryText,
-              ),
-            ),
-          ],
-        ),
         const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -224,21 +179,16 @@ class DemoDetailRewards extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 20),
-        if (!isExpired)
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () =>
-                  _handleClaimReward(context, ref, claimAuth, tokenSymbol),
-              icon: const Icon(Icons.account_balance_wallet),
-              label: const Text('Claim Reward'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
+        SizedBox(
+          width: double.infinity,
+          child: BtnPrimary(
+            widthExpanded: true,
+            btnPrimaryType: BtnPrimaryType.outlinePrimary,
+            buttonText: 'Claim Reward',
+            onTap: () =>
+                _handleClaimReward(context, ref, claimAuth, tokenSymbol),
           ),
+        ),
       ],
     );
   }
