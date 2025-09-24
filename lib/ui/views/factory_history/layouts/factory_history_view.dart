@@ -57,16 +57,8 @@ class FactoryHistoryView extends ConsumerWidget {
   }
 
   Widget _buildFooter(BuildContext context, WidgetRef ref) {
-    return Row(
+    return const Row(
       mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        BtnPrimary(
-          onTap: () => ref.read(tauriApiClientProvider).openRecordingsFolder(),
-          buttonText: 'Open Recordings Folder',
-          btnPrimaryType: BtnPrimaryType.outlinePrimary,
-        ),
-        const SizedBox(width: 10),
-      ],
     );
   }
 

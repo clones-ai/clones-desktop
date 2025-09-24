@@ -1,4 +1,5 @@
 import 'package:clones_desktop/application/session/provider.dart';
+import 'package:clones_desktop/domain/models/submission/grade_result.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
@@ -37,7 +38,7 @@ class DemoDetailSteps extends ConsumerWidget {
               const SizedBox(height: 10),
               Text(
                 'Steps taken during the demonstration:',
-                style: theme.textTheme.bodyMedium,
+                style: theme.textTheme.titleSmall,
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -45,6 +46,40 @@ class DemoDetailSteps extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       submission.gradeResult?.summary ?? 'No summary provided.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Observations:',
+                style: theme.textTheme.titleSmall,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      submission.gradeResult?.observations ??
+                          'No observations provided.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Reasoning:',
+                style: theme.textTheme.titleSmall,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      submission.gradeResult?.reasoningForUser ??
+                          'No reasoning provided.',
                       style: theme.textTheme.bodyMedium,
                     ),
                   ),

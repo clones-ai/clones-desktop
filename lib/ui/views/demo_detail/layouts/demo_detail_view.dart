@@ -107,19 +107,17 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
     final showTrainingSessionModal = demoDetailState.showTrainingSessionModal;
     final recording = demoDetailState.recording;
 
-    return Stack(
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            return Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Builder(
+                      builder: (context) {
                             if (constraints.maxWidth > Breakpoints.desktop) {
                               return Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,14 +241,12 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
                     ],
                   ),
                 ),
-                _buildFullscreenOverlay(constraints),
-              ],
-            );
-          },
-        ),
-        if (ref.watch(demoDetailNotifierProvider).showTrainingSessionModal)
-          _buildTrainingSessionModal(),
-      ],
+            _buildFullscreenOverlay(constraints),
+            if (ref.watch(demoDetailNotifierProvider).showTrainingSessionModal)
+              _buildTrainingSessionModal(),
+          ],
+        );
+      },
     );
   }
 

@@ -27,7 +27,7 @@ mixin _$ClaimAuthorization {
   String get cumulativeAmount => throw _privateConstructorUsedError;
 
   /// Signature deadline (unix timestamp)
-  int get deadline => throw _privateConstructorUsedError;
+  int? get deadline => throw _privateConstructorUsedError;
 
   /// EIP-712 signature for payWithSig()
   String get signature => throw _privateConstructorUsedError;
@@ -60,7 +60,7 @@ abstract class $ClaimAuthorizationCopyWith<$Res> {
   $Res call(
       {String account,
       String cumulativeAmount,
-      int deadline,
+      int? deadline,
       String signature,
       String publisherUsed,
       String poolAddress,
@@ -84,7 +84,7 @@ class _$ClaimAuthorizationCopyWithImpl<$Res, $Val extends ClaimAuthorization>
   $Res call({
     Object? account = null,
     Object? cumulativeAmount = null,
-    Object? deadline = null,
+    Object? deadline = freezed,
     Object? signature = null,
     Object? publisherUsed = null,
     Object? poolAddress = null,
@@ -99,10 +99,10 @@ class _$ClaimAuthorizationCopyWithImpl<$Res, $Val extends ClaimAuthorization>
           ? _value.cumulativeAmount
           : cumulativeAmount // ignore: cast_nullable_to_non_nullable
               as String,
-      deadline: null == deadline
+      deadline: freezed == deadline
           ? _value.deadline
           : deadline // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       signature: null == signature
           ? _value.signature
           : signature // ignore: cast_nullable_to_non_nullable
@@ -134,7 +134,7 @@ abstract class _$$ClaimAuthorizationImplCopyWith<$Res>
   $Res call(
       {String account,
       String cumulativeAmount,
-      int deadline,
+      int? deadline,
       String signature,
       String publisherUsed,
       String poolAddress,
@@ -156,7 +156,7 @@ class __$$ClaimAuthorizationImplCopyWithImpl<$Res>
   $Res call({
     Object? account = null,
     Object? cumulativeAmount = null,
-    Object? deadline = null,
+    Object? deadline = freezed,
     Object? signature = null,
     Object? publisherUsed = null,
     Object? poolAddress = null,
@@ -171,10 +171,10 @@ class __$$ClaimAuthorizationImplCopyWithImpl<$Res>
           ? _value.cumulativeAmount
           : cumulativeAmount // ignore: cast_nullable_to_non_nullable
               as String,
-      deadline: null == deadline
+      deadline: freezed == deadline
           ? _value.deadline
           : deadline // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       signature: null == signature
           ? _value.signature
           : signature // ignore: cast_nullable_to_non_nullable
@@ -201,7 +201,7 @@ class _$ClaimAuthorizationImpl implements _ClaimAuthorization {
   const _$ClaimAuthorizationImpl(
       {required this.account,
       required this.cumulativeAmount,
-      required this.deadline,
+      this.deadline,
       required this.signature,
       required this.publisherUsed,
       required this.poolAddress,
@@ -220,7 +220,7 @@ class _$ClaimAuthorizationImpl implements _ClaimAuthorization {
 
   /// Signature deadline (unix timestamp)
   @override
-  final int deadline;
+  final int? deadline;
 
   /// EIP-712 signature for payWithSig()
   @override
@@ -289,7 +289,7 @@ abstract class _ClaimAuthorization implements ClaimAuthorization {
   const factory _ClaimAuthorization(
       {required final String account,
       required final String cumulativeAmount,
-      required final int deadline,
+      final int? deadline,
       required final String signature,
       required final String publisherUsed,
       required final String poolAddress,
@@ -308,7 +308,7 @@ abstract class _ClaimAuthorization implements ClaimAuthorization {
 
   /// Signature deadline (unix timestamp)
   @override
-  int get deadline;
+  int? get deadline;
 
   /// EIP-712 signature for payWithSig()
   @override
