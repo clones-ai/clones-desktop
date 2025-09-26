@@ -20,8 +20,6 @@ class Assets {
       '${assetIconsFolder}add_factory_icon.png';
   static const String statsIcon = '${assetIconsFolder}stats_icon.png';
   static const String referralIcon = '${assetIconsFolder}referral_icon.png';
-  static const String skillsTreeIcon =
-      '${assetIconsFolder}skills_tree_icon.png';
   static const String walletToConnectIcon =
       '${assetIconsFolder}wallet_to_connect_icon.png';
   static const String walletToConnectIconWB =
@@ -30,7 +28,6 @@ class Assets {
       '${assetIconsFolder}wallet_connected_icon.png';
   static const String deleteIcon = '${assetIconsFolder}delete_icon.png';
   static const String editIcon = '${assetIconsFolder}edit_icon.png';
-  static const String hubIcon = '${assetIconsFolder}hub_icon.png';
   static const String recordIcon = '${assetIconsFolder}record_icon.png';
   static const String uploadIcon = '${assetIconsFolder}upload_icon.png';
   static const String robotIcon = '${assetIconsFolder}robot_icon.png';
@@ -49,27 +46,6 @@ class ClonesFonts {
 
   // font monospace: 'JetBrains Mono', 'Fira Code', Consolas, monospace
   static const String mono = 'JetBrains Mono, Fira Code, Consolas, monospace';
-
-  // Google Fonts for Flutter Web
-  static TextStyle get primaryGoogleFont => GoogleFonts.inter(
-        fontSize: 16,
-        fontWeight: FontWeight.normal,
-      );
-
-  static TextStyle get primaryGoogleFontBold => GoogleFonts.inter(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-      );
-
-  static TextStyle get monoGoogleFont => GoogleFonts.jetBrainsMono(
-        fontSize: 14,
-        fontWeight: FontWeight.normal,
-      );
-
-  static TextStyle get monoGoogleFontBold => GoogleFonts.jetBrainsMono(
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-      );
 
   static TextStyle getPrimaryFont({
     double? fontSize,

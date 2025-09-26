@@ -4,7 +4,7 @@ logo: "/assets/Logo_Icon.png"
 anchors:
   - title: Telegram
     icon: telegram
-    link: https://t.me/viralmind
+    link: https://t.me/clonesonbase
 sidebar:
   - - Getting Started
     - "/"
