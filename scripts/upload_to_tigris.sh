@@ -218,8 +218,28 @@ EOF
     echo "$manifest_file"
 }
 
+# Clear the 'latest' directory on Tigris
+clear_latest_directory() {
+    log_info "Clearing 'latest' directory on Tigris..."
+
+    # Configure AWS CLI for Tigris
+    export AWS_ACCESS_KEY_ID="$TIGRIS_ACCESS_KEY_ID"
+    export AWS_SECRET_ACCESS_KEY="$TIGRIS_SECRET_ACCESS_KEY"
+    export AWS_ENDPOINT_URL="$TIGRIS_ENDPOINT"
+    export AWS_REGION="auto"
+
+    # The command doesn't fail if the directory is empty or doesn't exist.
+    # We wrap this in an if to prevent script exit on failure due to set -e.
+    if aws s3 rm "s3://$TIGRIS_BUCKET/latest/" --recursive; then
+        log_success "Successfully cleared 'latest' directory."
+    else
+        log_warning "Could not clear 'latest' directory. Proceeding with upload anyway."
+    fi
+}
+
 # Main upload function
 main_upload() {
+    clear_latest_directory
     local build_dir=$(find_latest_build)
     local version=$(get_app_version)
     
