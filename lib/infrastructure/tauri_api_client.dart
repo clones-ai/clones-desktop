@@ -42,6 +42,70 @@ class TauriApiClient {
     }
   }
 
+  Future<String> getRecordingVideoUrl(String recordingId) async {
+    // Client-side validation to prevent malicious input
+    if (recordingId.isEmpty) {
+      throw ArgumentError('Recording ID cannot be empty');
+    }
+
+    if (recordingId.length > 100) {
+      throw ArgumentError('Recording ID too long');
+    }
+
+    // Prevent path traversal attacks
+    if (recordingId.contains('..') ||
+        recordingId.contains('/') ||
+        recordingId.contains(r'\') ||
+        recordingId.contains('\x00')) {
+      throw ArgumentError('Invalid characters in recording ID');
+    }
+
+    // Only allow safe characters
+    final safePattern = RegExp(r'^[a-zA-Z0-9_-]+$');
+    if (!safePattern.hasMatch(recordingId)) {
+      throw ArgumentError('Recording ID contains invalid characters');
+    }
+
+    final response = await _client.get(
+      Uri.parse('$_baseUrl/recordings/$recordingId/video_url'),
+    );
+
+    if (response.statusCode == 200) {
+      try {
+        final jsonResponse = json.decode(response.body);
+        if (jsonResponse is! Map<String, dynamic>) {
+          throw const FormatException(
+            'Invalid response format: expected JSON object',
+          );
+        }
+
+        final url = jsonResponse['url'];
+        if (url == null) {
+          throw const FormatException('Missing URL in response');
+        }
+
+        if (url is! String) {
+          throw const FormatException('Invalid URL format: expected string');
+        }
+
+        // Basic URL validation
+        if (url.isEmpty || !url.startsWith('http')) {
+          throw const FormatException('Invalid URL format');
+        }
+
+        return url;
+      } on FormatException catch (e) {
+        throw FormatException('Failed to parse response: ${e.message}');
+      } catch (e) {
+        throw Exception('Unexpected error parsing response: $e');
+      }
+    } else {
+      throw Exception(
+        'Failed to get recording video url (${response.statusCode}): ${response.body}',
+      );
+    }
+  }
+
   Future<String> getRecordingFile({
     required String recordingId,
     required String filename,
@@ -185,7 +249,9 @@ class TauriApiClient {
     final response =
         await _client.post(Uri.parse('$_baseUrl/permissions/ax/request'));
     if (response.statusCode != 200) {
-      throw Exception('Failed to request accessibility permissions: ${response.body}');
+      throw Exception(
+        'Failed to request accessibility permissions: ${response.body}',
+      );
     }
   }
 

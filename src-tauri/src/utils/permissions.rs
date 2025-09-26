@@ -12,6 +12,7 @@ mod macos_permissions {
     #[link(name = "ApplicationServices", kind = "framework")]
     extern "C" {
         fn AXIsProcessTrusted() -> Boolean;
+        fn CGRequestScreenCaptureAccess() -> Boolean;
     }
 
     /// Checks if the application has accessibility (AX) permissions.
@@ -44,9 +45,30 @@ mod macos_permissions {
     }
 
     /// Prompts the user to grant screen recording permissions.
+    /// Must be called on main thread for macOS 11+
     #[tauri::command]
     pub fn request_record_perms() {
-        ScreenCaptureAccess.request();
+        // Check macOS version - only works on 11.0+
+        let version = std::process::Command::new("sw_vers")
+            .arg("-productVersion")
+            .output()
+            .ok()
+            .and_then(|output| String::from_utf8(output.stdout).ok())
+            .and_then(|version| {
+                let parts: Vec<&str> = version.trim().split('.').collect();
+                parts.get(0).and_then(|major| major.parse::<u32>().ok())
+            })
+            .unwrap_or(10);
+            
+        if version < 11 {
+            eprintln!("Screen recording permission request requires macOS 11.0+");
+            return;
+        }
+
+        // Call directly - Tauri commands run on main thread by default
+        unsafe {
+            CGRequestScreenCaptureAccess();
+        }
     }
 }
 
