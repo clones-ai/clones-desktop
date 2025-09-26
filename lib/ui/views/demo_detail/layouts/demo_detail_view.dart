@@ -56,6 +56,12 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
     });
   }
 
+  Widget _getVideoPreviewWidget({bool showExpandButton = true}) {
+    return DemoDetailVideoPreview(
+      onExpand: showExpandButton ? () => setState(() => _editorFullscreen = true) : null,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(
@@ -136,11 +142,7 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
                                         children: [
                                           Expanded(
                                             flex: 5,
-                                            child: DemoDetailVideoPreview(
-                                              onExpand: () => setState(
-                                                () => _editorFullscreen = true,
-                                              ),
-                                            ),
+                                            child: _getVideoPreviewWidget(),
                                           ),
                                           const SizedBox(width: 20),
                                           Expanded(
@@ -200,11 +202,7 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
                             children: [
                               const DemoDetailInfos(),
                               const SizedBox(height: 20),
-                              DemoDetailVideoPreview(
-                                onExpand: () => setState(
-                                  () => _editorFullscreen = true,
-                                ),
-                              ),
+                              _getVideoPreviewWidget(),
                               const SizedBox(height: 20),
                               const DemoDetailSteps(),
                               const SizedBox(height: 20),
@@ -321,9 +319,9 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Expanded(
+                            Expanded(
                               flex: 2,
-                              child: DemoDetailVideoPreview(),
+                              child: _getVideoPreviewWidget(showExpandButton: false),
                             ),
                             const SizedBox(width: 20),
                             Expanded(

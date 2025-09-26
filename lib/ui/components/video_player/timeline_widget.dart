@@ -39,17 +39,6 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
     // Check if editing is allowed (not submitted yet)
     final canEdit = state.recording?.submission?.status != 'completed';
 
-    // Avoid modifying providers during build: defer initialization
-    if (state.clipSegments.isEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          ref
-              .read(demoDetailNotifierProvider.notifier)
-              .initializeClipsFromDuration();
-        }
-      });
-    }
-
     return Column(
       children: [
         _buildCustomTimeline(context, ref, widget.controller, canEdit),

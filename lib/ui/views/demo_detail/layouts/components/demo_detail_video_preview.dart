@@ -1,11 +1,9 @@
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
+import 'package:clones_desktop/ui/components/video_player/video_player.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
-import 'package:clones_desktop/ui/views/demo_detail/layouts/components/demo_detail_video_preview/widgets/timeline_widget.dart';
-import 'package:clones_desktop/ui/views/demo_detail/layouts/components/demo_detail_video_preview/widgets/transport_controls.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:video_player/video_player.dart';
 
 class DemoDetailVideoPreview extends ConsumerStatefulWidget {
   const DemoDetailVideoPreview({super.key, this.onExpand});
@@ -18,20 +16,19 @@ class DemoDetailVideoPreview extends ConsumerStatefulWidget {
 
 class _DemoDetailVideoPreviewState
     extends ConsumerState<DemoDetailVideoPreview> {
-  Offset? _hoverPosition;
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(demoDetailNotifierProvider);
-    final videoController = state.videoController;
+    final videoSource = state.videoSource;
 
-    final videoLoaded =
-        videoController != null && videoController.value.isInitialized;
+    final videoLoaded = videoSource != null;
 
     final theme = Theme.of(context);
 
     // Avoid modifying providers during build: defer initialization
-    if (videoLoaded && state.clipSegments.isEmpty) {
+    if (videoLoaded &&
+        state.clipSegments.isEmpty &&
+        state.videoController != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ref
@@ -70,9 +67,6 @@ class _DemoDetailVideoPreviewState
               Text('No video found', style: theme.textTheme.bodyMedium)
             else
               MouseRegion(
-                onHover: (event) =>
-                    setState(() => _hoverPosition = event.localPosition),
-                onExit: (_) => setState(() => _hoverPosition = null),
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
@@ -87,73 +81,13 @@ class _DemoDetailVideoPreviewState
                         ),
                       )
                     else
-                      AspectRatio(
-                        aspectRatio: videoController.value.aspectRatio,
-                        child: VideoPlayer(videoController),
-                      ),
+                      VideoPlayer(source: videoSource),
                   ],
                 ),
               ),
-            const SizedBox(height: 16),
-            if (videoLoaded) TimelineWidget(controller: videoController),
-
-            // Transport Controls
-            if (videoLoaded) ...[
-              const SizedBox(height: 16),
-              _buildTransportControls(videoController),
-              const SizedBox(height: 16),
-            ],
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildTransportControls(VideoPlayerController controller) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: ValueListenableBuilder<VideoPlayerValue>(
-        valueListenable: controller,
-        builder: (context, value, child) {
-          return TransportControls(
-            isPlaying: value.isPlaying,
-            isLoading: false,
-            onPlayPause: () {
-              if (value.isPlaying) {
-                controller.pause();
-              } else {
-                controller.play();
-              }
-            },
-            onStop: () {
-              controller
-                ..pause()
-                ..seekTo(Duration.zero);
-            },
-            onSeekBackward: () => _seekBy(const Duration(seconds: -1)),
-            onSeekForward: () => _seekBy(const Duration(seconds: 1)),
-            onSpeedChange: (speed) => controller.setPlaybackSpeed(speed),
-            currentSpeed: value.playbackSpeed,
-            currentPosition: value.position,
-            totalDuration: value.duration,
-          );
-        },
-      ),
-    );
-  }
-
-  void _seekBy(Duration delta) {
-    final controller = ref.read(demoDetailNotifierProvider).videoController;
-    if (controller != null) {
-      final currentPosition = controller.value.position;
-      final newPosition = currentPosition + delta;
-      final clampedPosition = Duration(
-        milliseconds: newPosition.inMilliseconds.clamp(
-          0,
-          controller.value.duration.inMilliseconds,
-        ),
-      );
-      controller.seekTo(clampedPosition);
-    }
   }
 }

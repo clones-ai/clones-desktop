@@ -8,14 +8,12 @@ import 'package:clones_desktop/application/upload/state.dart';
 import 'package:clones_desktop/domain/models/message/deleted_range.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/recording/recording_event.dart';
+import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:video_player/video_player.dart';
 
 part 'provider.g.dart';
 
@@ -71,45 +69,19 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
             asBase64: true,
           );
 
-      // The string is a data URI: "data:video/mp4;base64,...."
-      final parts = videoData.split(',');
-      if (parts.length != 2) {
-        throw Exception('Invalid Base64 data format');
-      }
-      final base64String = parts[1];
-      final videoBytes = base64Decode(base64String);
+      // Create VideoSource for your custom video player system
+      final videoSource = Base64VideoSource(videoData);
 
-      VideoPlayerController controller;
-
-      if (kIsWeb) {
-        // Web: Use data URI
-        final videoUri = Uri.dataFromBytes(
-          videoBytes,
-          mimeType: 'video/mp4',
-        );
-        controller = VideoPlayerController.networkUrl(videoUri);
-      } else {
-        // Desktop: Create temporary file
-        final tempDir = await getTemporaryDirectory();
-        final tempFile = File('${tempDir.path}/temp_video_$recordingId.mp4');
-
-        // Clean up previous temp file if exists
-        _tempVideoFile?.deleteSync();
-
-        // Write video bytes to temporary file
-        await tempFile.writeAsBytes(videoBytes);
-        _tempVideoFile = tempFile;
-
-        // Use file controller for desktop
-        controller = VideoPlayerController.file(tempFile);
-      }
-
-      await controller.initialize();
-
+      // Don't create VideoPlayerController here - let VideoPlayer components handle it
+      // Just store the videoSource for the components to use
       await state.videoController?.dispose();
-      state = state.copyWith(videoController: controller);
+      state = state.copyWith(
+        videoController: null, // No controller in DemoDetailNotifier
+        videoSource: videoSource,
+      );
     } catch (e) {
-      debugPrint('Video file not available for recording $recordingId: $e');
+      debugPrint(
+          'No video file for recording $recordingId (this is normal for recordings without video)');
       // This is expected for recordings without video files
     }
   }
