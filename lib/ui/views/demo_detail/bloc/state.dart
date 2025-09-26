@@ -2,6 +2,7 @@ import 'package:clones_desktop/domain/models/message/deleted_range.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/recording/api_recording.dart';
 import 'package:clones_desktop/domain/models/recording/recording_event.dart';
+import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:video_player/video_player.dart';
@@ -20,6 +21,7 @@ class DemoDetailState with _$DemoDetailState {
     @Default({}) Set<String> enabledEventTypes,
     @Default(0) int startTime,
     @JsonKey(includeIfNull: false) VideoPlayerController? videoController,
+    @JsonKey(includeIfNull: false) VideoSource? videoSource,
     @Default(false) bool showTrainingSessionModal,
 
     // Video editing
