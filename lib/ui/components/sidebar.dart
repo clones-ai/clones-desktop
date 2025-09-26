@@ -154,7 +154,12 @@ class Sidebar extends ConsumerWidget {
               ),
             ),
             loading: () => const SizedBox(),
-            error: (err, stack) => const SizedBox(),
+            error: (err, stack) => Text(
+              'v?',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
+            ),
           ),
         ],
       ),

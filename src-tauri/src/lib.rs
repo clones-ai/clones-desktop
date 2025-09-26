@@ -30,6 +30,7 @@ use crate::commands::transaction::{
     get_transaction_request, handle_transaction_callback, list_pending_transactions,
     prepare_transaction_request, update_transaction_status,
 };
+use crate::commands::updater::{check_for_update, install_update};
 // State to hold the latest deep link URL
 pub struct DeepLinkState(pub Arc<Mutex<Option<String>>>);
 
@@ -103,6 +104,8 @@ pub fn setup_builder() -> tauri::Builder<tauri::Wry> {
             list_pending_transactions,
             cleanup_old_transactions,
             handle_transaction_callback,
+            check_for_update,
+            install_update,
         ])
 }
 

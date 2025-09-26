@@ -446,7 +446,7 @@ class GenerateFactoryModalStep3 extends ConsumerWidget {
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: generateFactory.isCreated
                           ? Colors.green
-                          : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                          : theme.colorScheme.primary.withValues(alpha: 0.7),
                     ),
                   ),
               ],
