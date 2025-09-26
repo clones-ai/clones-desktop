@@ -9,7 +9,6 @@ import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class PermissionsModal extends ConsumerStatefulWidget {
   const PermissionsModal({super.key});
@@ -73,10 +72,7 @@ class _PermissionsModalState extends ConsumerState<PermissionsModal> {
         url =
             'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture';
       }
-
-      if (await canLaunchUrl(Uri.parse(url))) {
-        await launchUrl(Uri.parse(url));
-      }
+      await ref.read(tauriApiClientProvider).openExternalUrl(url);
     } catch (e) {
       debugPrint('Error opening system preferences: $e');
     }
