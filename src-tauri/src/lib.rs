@@ -17,7 +17,7 @@ use utils::permissions::{has_ax_perms, has_record_perms, request_ax_perms, reque
 use crate::commands::general::{greet, list_apps, take_screenshot};
 use crate::commands::record::{
     create_recording_zip, delete_recording, get_app_data_dir, get_current_demonstration,
-    get_recording_file, get_recording_state, list_recordings, open_recording_folder,
+    get_recording_file, get_recording_state, get_video_url, list_recordings, open_recording_folder,
     process_recording, start_recording, stop_recording, write_file, write_recording_file,
 };
 use crate::commands::settings::{
@@ -30,7 +30,6 @@ use crate::commands::transaction::{
     get_transaction_request, handle_transaction_callback, list_pending_transactions,
     prepare_transaction_request, update_transaction_status,
 };
-
 // State to hold the latest deep link URL
 pub struct DeepLinkState(pub Arc<Mutex<Option<String>>>);
 
@@ -93,6 +92,7 @@ pub fn setup_builder() -> tauri::Builder<tauri::Wry> {
             get_upload_data_allowed,
             set_upload_data_allowed,
             delete_recording,
+            get_video_url,
             get_recording_state,
             get_current_demonstration,
             generate_session_token,

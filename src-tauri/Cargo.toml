@@ -79,7 +79,8 @@ uuid = { version = "1.0", features = ["v4"] }
 # Ajouts pour le serveur IPC
 tokio = { version = "1", features = ["full"] }
 axum = "0.7"
-tower-http = { version = "0.5.0", features = ["cors"] }
+tower-http = { version = "0.5.0", features = ["cors", "fs"] }
+urlencoding = "2.1.3"
 
 [dev-dependencies]
 tempfile = "3.10.1"

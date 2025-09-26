@@ -4,8 +4,10 @@
 //! - [`input`]: Input event listening and logging utilities
 //! - [`record`]: Event and data recording logic
 //! - [`archive`]: Archive extraction utilities for binaries
+//! - [`video_server`]: Video server utilities for streaming videos
 
 // Re-export all core modules
 pub mod archive;
 pub mod input;
 pub mod record;
+pub mod video_server;

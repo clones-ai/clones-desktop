@@ -24,8 +24,10 @@ use crate::utils::permissions::has_ax_perms;
 use crate::commands::tools::{check_tools, init_tools};
 // Import functions from `core/record`
 use crate::core::record::{open_recording_folder, process_recording};
+// Import functions from `core/video_server`
+use crate::core::video_server::get_video_url;
 // Import functions from `utils/permissions`
-use crate::utils::permissions::{has_record_perms, request_record_perms};
+use crate::utils::permissions::{has_record_perms, request_ax_perms, request_record_perms};
 // Import functions from `commands/settings`
 use crate::commands::settings::{get_onboarding_complete, set_onboarding_complete};
 // Import functions from `commands/transaction`
@@ -170,6 +172,11 @@ pub async fn init(app_handle: AppHandle) {
             "/recordings/:id/files",
             post(write_recording_file_handler).get(get_recording_file_handler),
         )
+        // Add our new route for streaming video
+        .route(
+            "/recordings/:id/video_url",
+            get(get_recording_video_url_handler),
+        )
         // POST /recordings/start: Initiate a new recording session.
         // This is an action that changes server state, so POST is used.
         .route("/recordings/start", post(start_recording_handler))
@@ -206,6 +213,8 @@ pub async fn init(app_handle: AppHandle) {
             "/permissions/record/request",
             post(request_record_perms_handler),
         )
+        // POST /permissions/ax/request: Trigger a request for accessibility permissions.
+        .route("/permissions/ax/request", post(request_ax_perms_handler))
         // GET & POST /onboarding/complete: GET to read, POST to update onboarding status.
         .route(
             "/onboarding/complete",
@@ -317,7 +326,17 @@ async fn write_recording_file_handler(
     }
 }
 
-// Handler to get a recording file
+// Handler to get a recording video URL
+async fn get_recording_video_url_handler(
+    State(_state): State<AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> impl IntoResponse {
+    // BASIC VERSION THAT WORKS - NO FANCY SHIT
+    let url = format!("http://127.0.0.1:8080/{}/recording.mp4", id);
+    (StatusCode::OK, Json(serde_json::json!({ "url": url })))
+}
+
+// Handler to get a recording file (simplified)
 async fn get_recording_file_handler(
     State(state): State<AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -471,6 +490,11 @@ async fn has_record_perms_handler() -> impl IntoResponse {
 
 async fn request_record_perms_handler() -> StatusCode {
     request_record_perms();
+    StatusCode::OK
+}
+
+async fn request_ax_perms_handler() -> StatusCode {
+    request_ax_perms();
     StatusCode::OK
 }
 

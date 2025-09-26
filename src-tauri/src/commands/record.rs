@@ -4,6 +4,7 @@
 
 use crate::{
     core::record::{self, Demonstration, DemonstrationState, RecordingMeta},
+    core::video_server,
     utils::settings::get_custom_app_local_data_dir,
 };
 use tauri::{AppHandle, State};
@@ -194,6 +195,19 @@ pub async fn delete_recording(app: AppHandle, recording_id: String) -> Result<()
 pub async fn create_recording_zip(app: AppHandle, recording_id: String) -> Result<Vec<u8>, String> {
     validate_id(&recording_id)?;
     record::create_recording_zip(app, recording_id).await
+}
+
+/// Gets the video URL for a recording.
+///
+/// # Arguments
+/// * `app` - The Tauri `AppHandle`.
+/// * `recording_id` - The recording ID.
+///
+/// # Returns
+/// * `Ok(String)` with the video URL, or `Err(String)` if failed.
+#[tauri::command]
+pub fn get_video_url(app: AppHandle, recording_id: String) -> Result<String, String> {
+    video_server::get_video_url(app, &recording_id)
 }
 
 /// Gets the application data directory path.
