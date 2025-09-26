@@ -40,6 +40,7 @@ mixin _$TrainingSessionState {
   List<SftMessage> get availableSftData => throw _privateConstructorUsedError;
   AppInfo? get app => throw _privateConstructorUsedError;
   int get scrollToBottomNonce => throw _privateConstructorUsedError;
+  bool get hasGivenUp => throw _privateConstructorUsedError;
 
   /// Create a copy of TrainingSessionState
   /// with the given fields replaced by the non-null parameter values.
@@ -76,7 +77,8 @@ abstract class $TrainingSessionStateCopyWith<$Res> {
       List<SftMessage>? originalSftData,
       List<SftMessage> availableSftData,
       AppInfo? app,
-      int scrollToBottomNonce});
+      int scrollToBottomNonce,
+      bool hasGivenUp});
 
   $FactoryCopyWith<$Res>? get factory;
   $DemonstrationCopyWith<$Res>? get recordedDemonstration;
@@ -123,6 +125,7 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
     Object? availableSftData = null,
     Object? app = freezed,
     Object? scrollToBottomNonce = null,
+    Object? hasGivenUp = null,
   }) {
     return _then(_value.copyWith(
       prompt: freezed == prompt
@@ -213,6 +216,10 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
           ? _value.scrollToBottomNonce
           : scrollToBottomNonce // ignore: cast_nullable_to_non_nullable
               as int,
+      hasGivenUp: null == hasGivenUp
+          ? _value.hasGivenUp
+          : hasGivenUp // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 
@@ -318,7 +325,8 @@ abstract class _$$TrainingSessionStateImplCopyWith<$Res>
       List<SftMessage>? originalSftData,
       List<SftMessage> availableSftData,
       AppInfo? app,
-      int scrollToBottomNonce});
+      int scrollToBottomNonce,
+      bool hasGivenUp});
 
   @override
   $FactoryCopyWith<$Res>? get factory;
@@ -367,6 +375,7 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
     Object? availableSftData = null,
     Object? app = freezed,
     Object? scrollToBottomNonce = null,
+    Object? hasGivenUp = null,
   }) {
     return _then(_$TrainingSessionStateImpl(
       prompt: freezed == prompt
@@ -457,6 +466,10 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
           ? _value.scrollToBottomNonce
           : scrollToBottomNonce // ignore: cast_nullable_to_non_nullable
               as int,
+      hasGivenUp: null == hasGivenUp
+          ? _value.hasGivenUp
+          : hasGivenUp // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -486,7 +499,8 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
       final List<SftMessage>? originalSftData = null,
       final List<SftMessage> availableSftData = const [],
       this.app,
-      this.scrollToBottomNonce = 0})
+      this.scrollToBottomNonce = 0,
+      this.hasGivenUp = false})
       : _chatMessages = chatMessages,
         _deletedRanges = deletedRanges,
         _originalSftData = originalSftData,
@@ -579,10 +593,13 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
   @override
   @JsonKey()
   final int scrollToBottomNonce;
+  @override
+  @JsonKey()
+  final bool hasGivenUp;
 
   @override
   String toString() {
-    return 'TrainingSessionState(prompt: $prompt, factory: $factory, recordedDemonstration: $recordedDemonstration, recordingDemonstration: $recordingDemonstration, recordingLoading: $recordingLoading, recordingProcessing: $recordingProcessing, showUploadConfirmModal: $showUploadConfirmModal, showUploadBlock: $showUploadBlock, currentRecordingId: $currentRecordingId, isUploading: $isUploading, originalWindowSize: $originalWindowSize, loadingSftData: $loadingSftData, recordingState: $recordingState, chatMessages: $chatMessages, typingMessage: $typingMessage, isWaitingForResponse: $isWaitingForResponse, hoveredMessageIndex: $hoveredMessageIndex, deletedRanges: $deletedRanges, originalSftData: $originalSftData, availableSftData: $availableSftData, app: $app, scrollToBottomNonce: $scrollToBottomNonce)';
+    return 'TrainingSessionState(prompt: $prompt, factory: $factory, recordedDemonstration: $recordedDemonstration, recordingDemonstration: $recordingDemonstration, recordingLoading: $recordingLoading, recordingProcessing: $recordingProcessing, showUploadConfirmModal: $showUploadConfirmModal, showUploadBlock: $showUploadBlock, currentRecordingId: $currentRecordingId, isUploading: $isUploading, originalWindowSize: $originalWindowSize, loadingSftData: $loadingSftData, recordingState: $recordingState, chatMessages: $chatMessages, typingMessage: $typingMessage, isWaitingForResponse: $isWaitingForResponse, hoveredMessageIndex: $hoveredMessageIndex, deletedRanges: $deletedRanges, originalSftData: $originalSftData, availableSftData: $availableSftData, app: $app, scrollToBottomNonce: $scrollToBottomNonce, hasGivenUp: $hasGivenUp)';
   }
 
   @override
@@ -630,7 +647,9 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
                 .equals(other._availableSftData, _availableSftData) &&
             (identical(other.app, app) || other.app == app) &&
             (identical(other.scrollToBottomNonce, scrollToBottomNonce) ||
-                other.scrollToBottomNonce == scrollToBottomNonce));
+                other.scrollToBottomNonce == scrollToBottomNonce) &&
+            (identical(other.hasGivenUp, hasGivenUp) ||
+                other.hasGivenUp == hasGivenUp));
   }
 
   @override
@@ -657,7 +676,8 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
         const DeepCollectionEquality().hash(_originalSftData),
         const DeepCollectionEquality().hash(_availableSftData),
         app,
-        scrollToBottomNonce
+        scrollToBottomNonce,
+        hasGivenUp
       ]);
 
   /// Create a copy of TrainingSessionState
@@ -694,7 +714,8 @@ abstract class _TrainingSessionState extends TrainingSessionState {
       final List<SftMessage>? originalSftData,
       final List<SftMessage> availableSftData,
       final AppInfo? app,
-      final int scrollToBottomNonce}) = _$TrainingSessionStateImpl;
+      final int scrollToBottomNonce,
+      final bool hasGivenUp}) = _$TrainingSessionStateImpl;
   const _TrainingSessionState._() : super._();
 
   @override
@@ -741,6 +762,8 @@ abstract class _TrainingSessionState extends TrainingSessionState {
   AppInfo? get app;
   @override
   int get scrollToBottomNonce;
+  @override
+  bool get hasGivenUp;
 
   /// Create a copy of TrainingSessionState
   /// with the given fields replaced by the non-null parameter values.

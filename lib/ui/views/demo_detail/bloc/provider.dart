@@ -9,6 +9,7 @@ import 'package:clones_desktop/domain/models/message/deleted_range.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/recording/recording_event.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,9 +36,19 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
   Future<void> loadRecording(String recordingId) async {
     state = state.copyWith(isLoading: true);
     try {
-      final recordings = await ref.read(mergedRecordingsProvider.future);
-      final recording =
-          recordings.firstWhere((element) => element.id == recordingId);
+      var recordings = await ref.read(mergedRecordingsProvider.future);
+      var recording =
+          recordings.firstWhereOrNull((element) => element.id == recordingId);
+
+      // If recording not found, refresh providers and try again
+      if (recording == null) {
+        ref
+          ..invalidate(listRecordingsProvider)
+          ..invalidate(mergedRecordingsProvider);
+        recordings = await ref.read(mergedRecordingsProvider.future);
+        recording =
+            recordings.firstWhere((element) => element.id == recordingId);
+      }
 
       state = state.copyWith(
         isLoading: false,
@@ -48,9 +59,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       await loadEvents(recordingId);
       await loadSftData(recordingId);
       await initializeVideoPlayer(recordingId);
-    } catch (e) {
-      // TODO(reddwarf03): Handle error
-    }
+    } catch (_) {}
     state = state.copyWith(isLoading: false);
   }
 
@@ -559,7 +568,13 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     // Close modal and load the new recording
     state = state.copyWith(showTrainingSessionModal: false);
 
+    // Invalidate recording providers to force refresh
+    ref
+      ..invalidate(listRecordingsProvider)
+      ..invalidate(mergedRecordingsProvider);
+
     // Small delay to ensure files are written to disk
+    await Future.delayed(const Duration(milliseconds: 100));
     await loadRecording(recordingId);
   }
 

@@ -87,42 +87,16 @@ class _DemoDetailVideoPreviewState
                         ),
                       )
                     else
-                      Opacity(
-                        opacity: _hoverPosition != null ||
-                                videoController.value.isPlaying
-                            ? 1
-                            : 0.5,
-                        child: AspectRatio(
-                          aspectRatio: videoController.value.aspectRatio,
-                          child: VideoPlayer(videoController),
-                        ),
-                      ),
-                    if (videoLoaded && _hoverPosition != null)
-                      ValueListenableBuilder<VideoPlayerValue>(
-                        valueListenable: videoController,
-                        builder: (context, value, child) {
-                          return IconButton(
-                            icon: Icon(
-                              value.isPlaying ? Icons.pause : Icons.play_arrow,
-                              color: Colors.white,
-                              size: 50,
-                            ),
-                            onPressed: () {
-                              if (value.isPlaying) {
-                                videoController.pause();
-                              } else {
-                                videoController.play();
-                              }
-                            },
-                          );
-                        },
+                      AspectRatio(
+                        aspectRatio: videoController.value.aspectRatio,
+                        child: VideoPlayer(videoController),
                       ),
                   ],
                 ),
               ),
-            if (videoLoaded)
-              TimelineWidget(controller: videoController),
-            
+            const SizedBox(height: 16),
+            if (videoLoaded) TimelineWidget(controller: videoController),
+
             // Transport Controls
             if (videoLoaded) ...[
               const SizedBox(height: 16),
@@ -182,5 +156,4 @@ class _DemoDetailVideoPreviewState
       controller.seekTo(clampedPosition);
     }
   }
-
 }

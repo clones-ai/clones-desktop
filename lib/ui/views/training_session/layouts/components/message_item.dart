@@ -2,7 +2,6 @@ import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/message/message.dart';
 import 'package:clones_desktop/ui/components/design_widget/message_box/message_box.dart';
 import 'package:clones_desktop/ui/components/pfp.dart';
-import 'package:clones_desktop/ui/components/recording_panel.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/training_session/layouts/components/base64_image_message.dart';
 import 'package:clones_desktop/ui/views/training_session/layouts/components/message_content.dart';
@@ -196,8 +195,7 @@ class MessageItem extends ConsumerWidget {
         return actionWidget;
       }
       if (message.type == MessageType.recording) {
-        final id = message.content;
-        return RecordingPanel(recordingId: id);
+        return const SizedBox.shrink();
       }
       if (message.type == MessageType.loading) {
         return const Center(
