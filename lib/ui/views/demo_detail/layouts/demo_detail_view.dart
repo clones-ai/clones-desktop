@@ -118,129 +118,124 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
                   Expanded(
                     child: Builder(
                       builder: (context) {
-                            if (constraints.maxWidth > Breakpoints.desktop) {
-                              return Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    flex: 9,
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const DemoDetailInfos(),
-                                        const SizedBox(height: 20),
-                                        Expanded(
-                                          child: Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Expanded(
-                                                flex: 5,
-                                                child: DemoDetailVideoPreview(
-                                                  onExpand: () => setState(
-                                                    () => _editorFullscreen =
-                                                        true,
-                                                  ),
-                                                ),
+                        if (constraints.maxWidth > Breakpoints.desktop) {
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 9,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const DemoDetailInfos(),
+                                    const SizedBox(height: 20),
+                                    Expanded(
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            flex: 5,
+                                            child: DemoDetailVideoPreview(
+                                              onExpand: () => setState(
+                                                () => _editorFullscreen = true,
                                               ),
-                                              const SizedBox(width: 20),
-                                              Expanded(
-                                                flex: 4,
-                                                child: SingleChildScrollView(
-                                                  child: Column(
-                                                    children: [
-                                                      if (submission == null &&
-                                                          recording != null &&
-                                                          !showTrainingSessionModal)
-                                                        CardWidget(
-                                                          child: SizedBox(
-                                                            width:
-                                                                MediaQuery.of(
-                                                              context,
-                                                            ).size.width,
-                                                            child:
-                                                                const PreUploadMessages(),
-                                                          ),
-                                                        )
-                                                      else
-                                                        const DemoDetailSubmissionResult(),
-                                                      const SizedBox(
-                                                        height: 20,
-                                                      ),
-                                                      if (submission !=
-                                                          null) ...[
-                                                        const DemoDetailSteps(),
-                                                        const SizedBox(
-                                                          height: 20,
-                                                        ),
-                                                      ],
-                                                      if (submission !=
-                                                          null) ...[
-                                                        const DemoDetailRewards(),
-                                                        const SizedBox(
-                                                          height: 20,
-                                                        ),
-                                                      ],
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 20),
-                                  Expanded(
-                                    flex: 3,
-                                    child: _buildEditorTabs(),
-                                  ),
-                                ],
-                              );
-                            }
-                            return SingleChildScrollView(
-                              child: Column(
-                                children: [
-                                  const DemoDetailInfos(),
-                                  const SizedBox(height: 20),
-                                  DemoDetailVideoPreview(
-                                    onExpand: () => setState(
-                                      () => _editorFullscreen = true,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  const DemoDetailSteps(),
-                                  const SizedBox(height: 20),
-                                  if (submission == null &&
-                                      recording != null &&
-                                      !showTrainingSessionModal)
-                                    CardWidget(
-                                      child: SizedBox(
-                                        width: MediaQuery.of(
-                                          context,
-                                        ).size.width,
-                                        child: const PreUploadMessages(),
+                                          const SizedBox(width: 20),
+                                          Expanded(
+                                            flex: 4,
+                                            child: SingleChildScrollView(
+                                              child: Column(
+                                                children: [
+                                                  if (submission == null &&
+                                                      recording != null &&
+                                                      !showTrainingSessionModal)
+                                                    CardWidget(
+                                                      child: SizedBox(
+                                                        width: MediaQuery.of(
+                                                          context,
+                                                        ).size.width,
+                                                        child:
+                                                            const PreUploadMessages(),
+                                                      ),
+                                                    )
+                                                  else
+                                                    const DemoDetailSubmissionResult(),
+                                                  const SizedBox(
+                                                    height: 20,
+                                                  ),
+                                                  if (submission != null) ...[
+                                                    const DemoDetailSteps(),
+                                                    const SizedBox(
+                                                      height: 20,
+                                                    ),
+                                                  ],
+                                                  if (submission != null) ...[
+                                                    const DemoDetailRewards(),
+                                                    const SizedBox(
+                                                      height: 20,
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    )
-                                  else
-                                    const DemoDetailSubmissionResult(),
-                                  const SizedBox(height: 20),
-                                  const DemoDetailRewards(),
-                                  const SizedBox(height: 20),
-                                  _buildEditorTabs(),
-                                ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      const DemoDetailFooter(),
-                    ],
+                              const SizedBox(width: 20),
+                              Expanded(
+                                flex: 3,
+                                child: _buildEditorTabs(),
+                              ),
+                            ],
+                          );
+                        }
+                        return SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              const DemoDetailInfos(),
+                              const SizedBox(height: 20),
+                              DemoDetailVideoPreview(
+                                onExpand: () => setState(
+                                  () => _editorFullscreen = true,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              const DemoDetailSteps(),
+                              const SizedBox(height: 20),
+                              if (submission == null &&
+                                  recording != null &&
+                                  !showTrainingSessionModal)
+                                CardWidget(
+                                  child: SizedBox(
+                                    width: MediaQuery.of(
+                                      context,
+                                    ).size.width,
+                                    child: const PreUploadMessages(),
+                                  ),
+                                )
+                              else
+                                const DemoDetailSubmissionResult(),
+                              const SizedBox(height: 20),
+                              const DemoDetailRewards(),
+                              const SizedBox(height: 20),
+                              _buildEditorTabs(),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 10),
+                  const DemoDetailFooter(),
+                ],
+              ),
+            ),
             _buildFullscreenOverlay(constraints),
             if (ref.watch(demoDetailNotifierProvider).showTrainingSessionModal)
               _buildTrainingSessionModal(),
@@ -299,7 +294,7 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
                 BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.3),
+                    color: Colors.black.withValues(alpha: 0.8),
                   ),
                 ),
                 Padding(

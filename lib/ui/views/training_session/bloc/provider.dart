@@ -594,6 +594,9 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
 
         setRecordingDemonstration(null);
         setRecordingState(RecordingState.off);
+        
+        // Mark that user has given up to skip confirmation on close
+        state = state.copyWith(hasGivenUp: true);
 
         await addMessage(
           Message(
@@ -604,11 +607,11 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
         );
 
         await addMessage(
-          generateUserMessage('I give up on this task.'),
+          generateUserMessage('I’ve stopped this task.'),
         );
         await addMessage(
           generateAssistantMessage(
-            "That's okay! Not every task is for everyone. Let me know if you'd like to try something else.",
+            'This task has been stopped. Feel free to choose a different one.',
           ),
         );
       } catch (e) {

@@ -216,6 +216,15 @@ class _TrainingSessionViewState extends ConsumerState<TrainingSessionView> {
                   padding: const EdgeInsets.only(right: 8),
                   child: IconButton(
                     onPressed: () {
+                      final trainingSessionState = ref.read(trainingSessionNotifierProvider);
+                      
+                      // Skip confirmation if not recording or user has given up
+                      if (trainingSessionState.recordingState != RecordingState.recording || 
+                          trainingSessionState.hasGivenUp) {
+                        context.go(FactoryView.routeName);
+                        return;
+                      }
+                      
                       AppDialogs.showConfirmDialog(
                         context,
                         ref,

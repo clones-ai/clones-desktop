@@ -5,7 +5,6 @@ import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/message/deleted_range.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/ui/components/card.dart';
-import 'package:clones_desktop/ui/components/design_widget/message_box/message_box.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:clones_desktop/utils/format_time.dart';
@@ -72,34 +71,10 @@ class DemoDetailEditor extends ConsumerWidget {
     }
     combinedData.sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
-    final submissionStatus = demoDetail.recording?.submission?.status;
     final privateRanges = demoDetail.privateRanges;
 
     return Column(
       children: [
-        if (submissionStatus == 'completed')
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10, top: 10),
-            child: SizedBox(
-              width: double.infinity,
-              child: MessageBox(
-                messageBoxType: MessageBoxType.warning,
-                content: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Recording already submitted',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    Text(
-                      'New privacy masks will not be included',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
         if (privateRanges.isNotEmpty)
           Container(
             width: double.infinity,
@@ -179,6 +154,8 @@ class DemoDetailEditor extends ConsumerWidget {
     VideoPlayerController? videoController,
     int startTime,
   ) {
+    final demoDetail = ref.watch(demoDetailNotifierProvider);
+    final submissionStatus = demoDetail.recording?.submission?.status;
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -234,17 +211,22 @@ class DemoDetailEditor extends ConsumerWidget {
                         message.role.toUpperCase(),
                         style: theme.textTheme.bodySmall,
                       ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.visibility_off_outlined,
-                          size: 16,
-                          color: ClonesColors.primary,
+                      if (submissionStatus != 'completed')
+                        IconButton(
+                          icon: const Icon(
+                            Icons.visibility_off_outlined,
+                            size: 16,
+                            color: ClonesColors.primary,
+                          ),
+                          tooltip: 'Add privacy range',
+                          onPressed: () => ref
+                              .read(demoDetailNotifierProvider.notifier)
+                              .addPrivateRangeAroundMessage(message),
+                        )
+                      else
+                        const SizedBox(
+                          height: 30,
                         ),
-                        tooltip: 'Add privacy range',
-                        onPressed: () => ref
-                            .read(demoDetailNotifierProvider.notifier)
-                            .addPrivateRangeAroundMessage(message),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 10),

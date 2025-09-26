@@ -37,6 +37,7 @@ class TrainingSessionState with _$TrainingSessionState {
     @Default([]) List<SftMessage> availableSftData,
     AppInfo? app,
     @Default(0) int scrollToBottomNonce,
+    @Default(false) bool hasGivenUp,
   }) = _TrainingSessionState;
   const TrainingSessionState._();
 }
