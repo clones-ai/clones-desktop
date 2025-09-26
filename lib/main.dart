@@ -1,6 +1,7 @@
 import 'package:clones_desktop/application/deeplink_provider.dart';
 import 'package:clones_desktop/application/route_provider.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
+import 'package:clones_desktop/application/update_modal_provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/main_layout.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/demo_detail_view.dart';
@@ -176,7 +177,16 @@ class _ClonesAppState extends ConsumerState<ClonesApp> {
         _initializeWindow();
       }
       _updateRoute();
+      _checkForUpdates();
     });
+  }
+
+  Future<void> _checkForUpdates() async {
+    // Delay to ensure app is fully initialized
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted) {
+      await ref.read(updateModalProvider.notifier).checkForUpdate();
+    }
   }
 
   Future<void> _initializeWindow() async {

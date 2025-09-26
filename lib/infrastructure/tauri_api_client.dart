@@ -377,6 +377,17 @@ class TauriApiClient {
     }
   }
 
+  Future<String> getAppVersion() async {
+    final response = await _client.get(Uri.parse('$_baseUrl/app/version'));
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      return data['version'] as String;
+    } else {
+      throw Exception('Failed to get app version: ${response.body}');
+    }
+  }
+
   Future<Uint8List> fetchImageViaProxy(String imageUrl) async {
     final response = await _client.get(
       Uri.parse('$_baseUrl/proxy-image?url=$imageUrl'),
@@ -465,6 +476,27 @@ class TauriApiClient {
       return json.decode(response.body);
     } else {
       throw Exception('Failed to generate session token: ${response.body}');
+    }
+  }
+
+  // --- Secure Tauri Updater ---
+
+  /// Check for updates using Tauri's secure updater
+  Future<Map<String, dynamic>?> checkForUpdate() async {
+    final response = await _client.get(Uri.parse('$_baseUrl/updater/check'));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['update_available'] == true ? data : null;
+    } else {
+      throw Exception('Failed to check for update: ${response.body}');
+    }
+  }
+
+  /// Download and install update using Tauri's secure updater
+  Future<void> installUpdate() async {
+    final response = await _client.post(Uri.parse('$_baseUrl/updater/install'));
+    if (response.statusCode != 200) {
+      throw Exception('Failed to install update: ${response.body}');
     }
   }
 }

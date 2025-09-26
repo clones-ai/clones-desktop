@@ -135,7 +135,119 @@ upload_file() {
     fi
 }
 
-# Create version manifest
+# Sign file for Tauri updater
+sign_file() {
+    local file_path="$1"
+    
+    if [ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
+        log_error "TAURI_SIGNING_PRIVATE_KEY not found"
+        return 1
+    fi
+    
+    # Use tauri CLI to sign the file
+    if command -v tauri &> /dev/null; then
+        tauri signer sign "$file_path" -k "$TAURI_SIGNING_PRIVATE_KEY" --silent 2>/dev/null
+    else
+        log_warning "Tauri CLI not found, skipping signature"
+        return 1
+    fi
+}
+
+# Create Tauri updater manifest (different from our custom manifest)
+create_tauri_manifest() {
+    local version="$1"
+    local build_dir="$2"
+    
+    local manifest_file=$(mktemp)
+    local upload_date=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    
+    # Find .tar.gz files (Tauri updater format)
+    local arm64_url=""
+    local intel_url=""
+    local arm64_signature=""
+    local intel_signature=""
+    
+    # Look for .tar.gz files and generate signatures
+    while IFS= read -r -d '' targz_file; do
+        local filename=$(basename "$targz_file")
+        local arch=""
+        local url="$BUCKET_URL/latest/$filename"
+        
+        if [[ "$filename" == *"aarch64"* ]] || [[ "$filename" == *"arm64"* ]]; then
+            arch="aarch64"
+            arm64_url="$url"
+            # Generate signature for arm64
+            if [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ] && command -v tauri &> /dev/null; then
+                arm64_signature=$(tauri signer sign "$targz_file" -k "$TAURI_SIGNING_PRIVATE_KEY" --silent 2>/dev/null | tail -n1 || echo "")
+            fi
+        elif [[ "$filename" == *"x64"* ]] || [[ "$filename" == *"intel"* ]] || [[ "$filename" == *"x86_64"* ]]; then
+            arch="x86_64"
+            intel_url="$url"
+            # Generate signature for intel
+            if [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ] && command -v tauri &> /dev/null; then
+                intel_signature=$(tauri signer sign "$targz_file" -k "$TAURI_SIGNING_PRIVATE_KEY" --silent 2>/dev/null | tail -n1 || echo "")
+            fi
+        fi
+        
+    done < <(find "$build_dir" -name "*.tar.gz" -print0)
+    
+    # If no .tar.gz found, create manifest without platforms (will cause updater to report no update)
+    if [ -z "$arm64_url" ] && [ -z "$intel_url" ]; then
+        log_warning "No .tar.gz files found - creating empty manifest"
+        cat > "$manifest_file" <<EOF
+{
+  "version": "$version",
+  "notes": "Update to version $version",
+  "pub_date": "$upload_date",
+  "platforms": {}
+}
+EOF
+    else
+        # Create proper Tauri updater manifest format
+        cat > "$manifest_file" <<EOF
+{
+  "version": "$version",
+  "notes": "Update to version $version",
+  "pub_date": "$upload_date",
+  "platforms": {
+EOF
+        
+        local platform_entries=()
+        
+        if [ -n "$intel_url" ]; then
+            platform_entries+=("    \"darwin-x86_64\": {
+      \"signature\": \"$intel_signature\",
+      \"url\": \"$intel_url\"
+    }")
+        fi
+        
+        if [ -n "$arm64_url" ]; then
+            platform_entries+=("    \"darwin-aarch64\": {
+      \"signature\": \"$arm64_signature\",
+      \"url\": \"$arm64_url\"
+    }")
+        fi
+        
+        # Join platform entries with commas
+        local first=true
+        for entry in "${platform_entries[@]}"; do
+            if [ "$first" = false ]; then
+                echo "," >> "$manifest_file"
+            fi
+            echo "$entry" >> "$manifest_file"
+            first=false
+        done
+        
+        cat >> "$manifest_file" <<EOF
+  }
+}
+EOF
+    fi
+
+    echo "$manifest_file"
+}
+
+# Create version manifest (our custom format)
 create_version_manifest() {
     local version="$1"
     local build_dir="$2"
@@ -293,6 +405,25 @@ main_upload() {
         rm "$temp_zip"
     done
     
+    # Upload .tar.gz files (for Tauri updater)
+    find "$build_dir" -name "*.tar.gz" | while read targz_file; do
+        if [[ "$targz_file" == *"aarch64"* ]] || [[ "$targz_file" == *"arm64"* ]]; then
+            arch="arm64"
+        elif [[ "$targz_file" == *"x64"* ]] || [[ "$targz_file" == *"intel"* ]] || [[ "$targz_file" == *"x86_64"* ]]; then
+            arch="intel"
+        else
+            arch="universal"
+        fi
+        
+        local filename=$(basename "$targz_file")
+        
+        # Upload to versioned path
+        upload_file "$targz_file" "versions/$version/macos/$filename" "$version" "$arch" "targz"
+        
+        # Upload to latest path (required for Tauri updater)
+        upload_file "$targz_file" "latest/$filename" "$version" "$arch" "targz"
+    done
+    
     # Create and upload version manifest
     log_info "Creating version manifest..."
     local manifest_file=$(create_version_manifest "$version" "$build_dir")
@@ -309,6 +440,23 @@ main_upload() {
     upload_file "$manifest_file" "latest/version.json" "$version" "all" "manifest"
     upload_file "$manifest_file" "versions/$version/version.json" "$version" "all" "manifest"
     rm "$manifest_file"
+    
+    # Create and upload Tauri updater manifest (secure format with signatures)
+    log_info "Creating Tauri updater manifest..."
+    local tauri_manifest_file=$(create_tauri_manifest "$version" "$build_dir")
+    
+    if [ ! -f "$tauri_manifest_file" ]; then
+        log_warning "Failed to create Tauri manifest, updater will not work"
+    else
+        log_info "Created Tauri manifest file: $tauri_manifest_file"
+        log_info "Tauri manifest content:"
+        cat "$tauri_manifest_file"
+        
+        # Upload Tauri manifest to match the endpoint in tauri.conf.json
+        upload_file "$tauri_manifest_file" "latest/latest.json" "$version" "all" "tauri_manifest"
+        upload_file "$tauri_manifest_file" "versions/$version/latest.json" "$version" "all" "tauri_manifest"
+        rm "$tauri_manifest_file"
+    fi
     
     log_success "🎉 Upload completed successfully!"
     echo ""

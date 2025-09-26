@@ -2,7 +2,7 @@ name: clones_desktop
 description: "A desktop application for contributing to the world's largest dataset for multimodal computer-use agents."
 publish_to: 'none'
 
-version: 0.0.10+1
+version: 0.0.15+1
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
@@ -34,7 +34,6 @@ dependencies:
   intl: ^0.20.2
   json_annotation: ^4.8.1
   lucide_icons_flutter: ^3.0.5
-  package_info_plus: ^9.0.0
   path_provider: ^2.1.4
   percent_indicator: ^4.2.5
   riverpod: any

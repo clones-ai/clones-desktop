@@ -9,3 +9,4 @@ pub mod recordings;
 pub mod settings;
 pub mod tools;
 pub mod transaction;
+pub mod updater;
