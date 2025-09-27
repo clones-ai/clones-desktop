@@ -19,11 +19,17 @@ class VideoPlayer extends ConsumerStatefulWidget {
 class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
     with VideoControllerMixin {
   late NativeVideoControllerImpl _controller;
+  late String _videoId;
+
+  @override
+  String get videoId => _videoId;
 
   @override
   void initState() {
     super.initState();
-    _controller = NativeVideoControllerImpl(widget.source, ref);
+    // Generate unique video ID based on source and timestamp
+    _videoId = '${widget.source.hashCode}-${DateTime.now().microsecondsSinceEpoch}';
+    _controller = NativeVideoControllerImpl(widget.source, ref, _videoId);
     // Delay initialization to after widget tree is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeVideo();
@@ -35,6 +41,7 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
       () => _controller.initialize(),
       'initialize video',
       ref,
+      _videoId,
     );
   }
 
@@ -68,32 +75,32 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
   }
 
   @override
-  void videoPause() => safeExecute(() => _controller.pause(), 'pause', ref);
+  void videoPause() => safeExecute(() => _controller.pause(), 'pause', ref, _videoId);
 
   @override
-  void videoPlay() => safeExecute(() => _controller.play(), 'play', ref);
+  void videoPlay() => safeExecute(() => _controller.play(), 'play', ref, _videoId);
 
   @override
   void videoSeekBackward() {
-    final currentPos = ref.read(videoStateNotifierProvider).currentPosition;
+    final currentPos = ref.read(videoStateNotifierProvider(_videoId)).currentPosition;
     final newPosition = currentPos - const Duration(seconds: 1);
     final seekTo = newPosition < Duration.zero ? Duration.zero : newPosition;
-    safeExecute(() => _controller.seekTo(seekTo), 'seek backward', ref);
+    safeExecute(() => _controller.seekTo(seekTo), 'seek backward', ref, _videoId);
   }
 
   @override
   void videoSeekForward() {
-    final state = ref.read(videoStateNotifierProvider);
+    final state = ref.read(videoStateNotifierProvider(_videoId));
     final newPosition = state.currentPosition + const Duration(seconds: 1);
     if (newPosition < state.totalDuration) {
-      safeExecute(() => _controller.seekTo(newPosition), 'seek forward', ref);
+      safeExecute(() => _controller.seekTo(newPosition), 'seek forward', ref, _videoId);
     }
   }
 
   @override
   void videoSetSpeed(double speed) =>
-      safeExecute(() => _controller.setSpeed(speed), 'set speed', ref);
+      safeExecute(() => _controller.setSpeed(speed), 'set speed', ref, _videoId);
 
   @override
-  void videoStop() => safeExecute(() => _controller.stop(), 'stop', ref);
+  void videoStop() => safeExecute(() => _controller.stop(), 'stop', ref, _videoId);
 }

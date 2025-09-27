@@ -47,12 +47,14 @@ class VideoState {
 
 class VideoStateNotifier extends StateNotifier<VideoState> {
   VideoStateNotifier()
-      : super(const VideoState(
-          status: VideoPlayerStatus.loading,
-          currentPosition: Duration.zero,
-          totalDuration: Duration.zero,
-          currentSpeed: 1.0,
-        ));
+      : super(
+          const VideoState(
+            status: VideoPlayerStatus.loading,
+            currentPosition: Duration.zero,
+            totalDuration: Duration.zero,
+            currentSpeed: 1,
+          ),
+        );
   DateTime? _lastPositionUpdate;
   StreamSubscription? _positionSubscription;
 
@@ -122,8 +124,8 @@ class VideoStateNotifier extends StateNotifier<VideoState> {
   }
 }
 
-// Provider for the video state
+// Provider for the video state - now scoped per video instance
 final videoStateNotifierProvider =
-    StateNotifierProvider<VideoStateNotifier, VideoState>(
-  (ref) => VideoStateNotifier(),
+    StateNotifierProvider.family<VideoStateNotifier, VideoState, String>(
+  (ref, videoId) => VideoStateNotifier(),
 );

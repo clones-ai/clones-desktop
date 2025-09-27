@@ -58,8 +58,9 @@ mixin VideoControllerMixin {
   Future<void> safeExecute(
     Future<void> Function() operation,
     String operationName,
-    dynamic ref,
-  ) async {
+    dynamic ref, [
+    String? videoId,
+  ]) async {
     try {
       await operation();
     } catch (e) {
@@ -74,7 +75,10 @@ mixin VideoControllerMixin {
         }
       }
 
-      ref.read(videoStateNotifierProvider.notifier).setError(message);
+      // Only set error if videoId is provided (new scoped approach)
+      if (videoId != null) {
+        ref.read(videoStateNotifierProvider(videoId).notifier).setError(message);
+      }
     }
   }
 

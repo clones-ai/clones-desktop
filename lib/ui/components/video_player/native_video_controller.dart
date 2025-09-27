@@ -9,11 +9,13 @@ import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart' as video_player;
 
 class NativeVideoControllerImpl extends NativeVideoController {
-  NativeVideoControllerImpl(super.source, super.ref);
+  NativeVideoControllerImpl(super.source, super.ref, this._videoId);
+  final String _videoId;
   video_player.VideoPlayerController? _controller;
   StreamSubscription? _positionSubscription;
   Timer? _fallbackTimer;
   String? _tempFilePath;
+  bool _isDisposed = false;
 
   video_player.VideoPlayerController? get videoPlayerController => _controller;
 
@@ -42,7 +44,7 @@ class NativeVideoControllerImpl extends NativeVideoController {
   Future<void> initialize() async {
     try {
       ref
-          .read(videoStateNotifierProvider.notifier)
+          .read(videoStateNotifierProvider(_videoId).notifier)
           .setStatus(VideoPlayerStatus.loading);
 
       _controller = switch (source) {
@@ -81,13 +83,13 @@ class NativeVideoControllerImpl extends NativeVideoController {
       _fallbackTimer?.cancel();
 
       final duration = _controller!.value.duration;
-      ref.read(videoStateNotifierProvider.notifier).setReady(duration);
+      ref.read(videoStateNotifierProvider(_videoId).notifier).setReady(duration);
 
       // Setup position listener with throttling
       _positionSubscription =
           Stream.periodic(const Duration(milliseconds: 33)).listen((_) {
         if (_controller?.value.isInitialized == true) {
-          final notifier = ref.read(videoStateNotifierProvider.notifier);
+          final notifier = ref.read(videoStateNotifierProvider(_videoId).notifier);
           notifier.updatePosition(_controller!.value.position);
 
           if (_controller!.value.isPlaying) {
@@ -107,7 +109,7 @@ class NativeVideoControllerImpl extends NativeVideoController {
 
       // Fallback: try to create a simple error state
       ref
-          .read(videoStateNotifierProvider.notifier)
+          .read(videoStateNotifierProvider(_videoId).notifier)
           .setError('Failed to initialize video: ${e.toString()}');
 
       // Graceful degradation - show error widget instead of crashing
@@ -126,7 +128,7 @@ class NativeVideoControllerImpl extends NativeVideoController {
         _controller!.play(),
         'play video',
       );
-      ref.read(videoStateNotifierProvider.notifier).setPlaying();
+      ref.read(videoStateNotifierProvider(_videoId).notifier).setPlaying();
     } else {
       throw VideoControllerException('Cannot play: video not initialized');
     }
@@ -139,7 +141,7 @@ class NativeVideoControllerImpl extends NativeVideoController {
         _controller!.pause(),
         'pause video',
       );
-      ref.read(videoStateNotifierProvider.notifier).setPaused();
+      ref.read(videoStateNotifierProvider(_videoId).notifier).setPaused();
     } else {
       throw VideoControllerException('Cannot pause: video not initialized');
     }
@@ -155,7 +157,7 @@ class NativeVideoControllerImpl extends NativeVideoController {
         ]),
         'stop video',
       );
-      ref.read(videoStateNotifierProvider.notifier).setStopped();
+      ref.read(videoStateNotifierProvider(_videoId).notifier).setStopped();
     } else {
       throw VideoControllerException('Cannot stop: video not initialized');
     }
@@ -168,7 +170,7 @@ class NativeVideoControllerImpl extends NativeVideoController {
         _controller!.seekTo(position),
         'seek to position',
       );
-      ref.read(videoStateNotifierProvider.notifier).updatePosition(position);
+      ref.read(videoStateNotifierProvider(_videoId).notifier).updatePosition(position);
     } else {
       throw VideoControllerException('Cannot seek: video not initialized');
     }
@@ -181,7 +183,7 @@ class NativeVideoControllerImpl extends NativeVideoController {
         _controller!.setPlaybackSpeed(speed),
         'set playback speed',
       );
-      ref.read(videoStateNotifierProvider.notifier).setSpeed(speed);
+      ref.read(videoStateNotifierProvider(_videoId).notifier).setSpeed(speed);
     } else {
       throw VideoControllerException('Cannot set speed: video not initialized');
     }
@@ -189,8 +191,14 @@ class NativeVideoControllerImpl extends NativeVideoController {
 
   @override
   void dispose() {
+    if (_isDisposed) return;
+    _isDisposed = true;
+
+    // Cancel all timers and subscriptions first
     _fallbackTimer?.cancel();
     _positionSubscription?.cancel();
+    
+    // Dispose video controller properly
     _controller?.dispose();
     _controller = null;
 
