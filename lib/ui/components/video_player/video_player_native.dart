@@ -28,7 +28,8 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
   void initState() {
     super.initState();
     // Generate unique video ID based on source and timestamp
-    _videoId = '${widget.source.hashCode}-${DateTime.now().microsecondsSinceEpoch}';
+    _videoId =
+        '${widget.source.hashCode}-${DateTime.now().microsecondsSinceEpoch}';
     _controller = NativeVideoControllerImpl(widget.source, ref, _videoId);
     // Delay initialization to after widget tree is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -61,12 +62,12 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
               height: double.infinity,
               color: Colors.black,
               child: FittedBox(
-                fit: BoxFit.contain,
                 child: SizedBox(
                   width: _controller.videoPlayerController!.value.size.width,
                   height: _controller.videoPlayerController!.value.size.height,
                   child: video_player.VideoPlayer(
-                      _controller.videoPlayerController!),
+                    _controller.videoPlayerController!,
+                  ),
                 ),
               ),
             ),
@@ -75,17 +76,25 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
   }
 
   @override
-  void videoPause() => safeExecute(() => _controller.pause(), 'pause', ref, _videoId);
+  void videoPause() =>
+      safeExecute(() => _controller.pause(), 'pause', ref, _videoId);
 
   @override
-  void videoPlay() => safeExecute(() => _controller.play(), 'play', ref, _videoId);
+  void videoPlay() =>
+      safeExecute(() => _controller.play(), 'play', ref, _videoId);
 
   @override
   void videoSeekBackward() {
-    final currentPos = ref.read(videoStateNotifierProvider(_videoId)).currentPosition;
+    final currentPos =
+        ref.read(videoStateNotifierProvider(_videoId)).currentPosition;
     final newPosition = currentPos - const Duration(seconds: 1);
     final seekTo = newPosition < Duration.zero ? Duration.zero : newPosition;
-    safeExecute(() => _controller.seekTo(seekTo), 'seek backward', ref, _videoId);
+    safeExecute(
+      () => _controller.seekTo(seekTo),
+      'seek backward',
+      ref,
+      _videoId,
+    );
   }
 
   @override
@@ -93,14 +102,43 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
     final state = ref.read(videoStateNotifierProvider(_videoId));
     final newPosition = state.currentPosition + const Duration(seconds: 1);
     if (newPosition < state.totalDuration) {
-      safeExecute(() => _controller.seekTo(newPosition), 'seek forward', ref, _videoId);
+      safeExecute(
+        () => _controller.seekTo(newPosition),
+        'seek forward',
+        ref,
+        _videoId,
+      );
     }
   }
 
   @override
-  void videoSetSpeed(double speed) =>
-      safeExecute(() => _controller.setSpeed(speed), 'set speed', ref, _videoId);
+  void videoSeek(Duration position) {
+    final state = ref.read(videoStateNotifierProvider(_videoId));
+    Duration clampedPosition;
+    if (position < Duration.zero) {
+      clampedPosition = Duration.zero;
+    } else if (position > state.totalDuration) {
+      clampedPosition = state.totalDuration;
+    } else {
+      clampedPosition = position;
+    }
+    safeExecute(
+      () => _controller.seekTo(clampedPosition),
+      'seek',
+      ref,
+      _videoId,
+    );
+  }
 
   @override
-  void videoStop() => safeExecute(() => _controller.stop(), 'stop', ref, _videoId);
+  void videoSetSpeed(double speed) => safeExecute(
+        () => _controller.setSpeed(speed),
+        'set speed',
+        ref,
+        _videoId,
+      );
+
+  @override
+  void videoStop() =>
+      safeExecute(() => _controller.stop(), 'stop', ref, _videoId);
 }

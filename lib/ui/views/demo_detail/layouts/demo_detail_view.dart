@@ -1,7 +1,9 @@
 import 'dart:ui';
+
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
+import 'package:clones_desktop/ui/components/video_player/video_player.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/components/demo_detail_editor.dart';
@@ -33,6 +35,7 @@ class DemoDetailView extends ConsumerStatefulWidget {
 
 class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
   bool _editorFullscreen = false;
+  Widget? _videoPlayerWidget;
 
   @override
   void initState() {
@@ -56,9 +59,30 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
     });
   }
 
-  Widget _getVideoPreviewWidget({bool showExpandButton = true}) {
+  Widget _buildVideoPreview({bool showExpandButton = true}) {
+    // Create video player widget once and reuse it
+    final demoDetail = ref.watch(demoDetailNotifierProvider);
+    final videoSource = demoDetail.videoSource;
+
+    if (videoSource == null) {
+      return DemoDetailVideoPreview(
+        onExpand: showExpandButton
+            ? () => setState(() => _editorFullscreen = true)
+            : null,
+      );
+    }
+
+    // Create or reuse the video player widget
+    _videoPlayerWidget ??= Hero(
+      tag: 'demo-video-player',
+      child: VideoPlayer(source: videoSource),
+    );
+
     return DemoDetailVideoPreview(
-      onExpand: showExpandButton ? () => setState(() => _editorFullscreen = true) : null,
+      videoWidget: _videoPlayerWidget,
+      onExpand: showExpandButton
+          ? () => setState(() => _editorFullscreen = true)
+          : null,
     );
   }
 
@@ -142,7 +166,7 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
                                         children: [
                                           Expanded(
                                             flex: 5,
-                                            child: _getVideoPreviewWidget(),
+                                            child: _buildVideoPreview(),
                                           ),
                                           const SizedBox(width: 20),
                                           Expanded(
@@ -202,7 +226,7 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
                             children: [
                               const DemoDetailInfos(),
                               const SizedBox(height: 20),
-                              _getVideoPreviewWidget(),
+                              _buildVideoPreview(),
                               const SizedBox(height: 20),
                               const DemoDetailSteps(),
                               const SizedBox(height: 20),
@@ -321,7 +345,8 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
                           children: [
                             Expanded(
                               flex: 2,
-                              child: _getVideoPreviewWidget(showExpandButton: false),
+                              child:
+                                  _buildVideoPreview(showExpandButton: false),
                             ),
                             const SizedBox(width: 20),
                             Expanded(

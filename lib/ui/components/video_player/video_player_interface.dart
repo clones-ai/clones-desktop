@@ -1,3 +1,4 @@
+import 'package:clones_desktop/ui/components/video_player/timeline_widget.dart';
 import 'package:clones_desktop/ui/components/video_player/transport_controls.dart';
 import 'package:clones_desktop/ui/components/video_player/video_state.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +18,8 @@ abstract class ConsumerVideoPlayerState<T extends ConsumerStatefulWidget>
   void videoSeekBackward();
   @protected
   void videoSeekForward();
+  @protected
+  void videoSeek(Duration position);
   @protected
   void videoSetSpeed(double speed);
   @protected
@@ -41,6 +44,11 @@ abstract class ConsumerVideoPlayerState<T extends ConsumerStatefulWidget>
 
   void _handleSeekForward() {
     videoSeekForward();
+  }
+
+  void _handleSeek(Duration position) {
+    final seekTo = position < Duration.zero ? Duration.zero : position;
+    videoSeek(seekTo);
   }
 
   void _handleSpeedChange(double speed) {
@@ -92,6 +100,10 @@ abstract class ConsumerVideoPlayerState<T extends ConsumerStatefulWidget>
           ),
         ),
         const SizedBox(height: 16),
+        TimelineWidget(
+          videoId: videoId,
+          onSeek: _handleSeek,
+        ),
         const SizedBox(height: 16),
         TransportControls(
           videoId: videoId,

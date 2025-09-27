@@ -33,10 +33,7 @@ class NativeVideoControllerImpl extends NativeVideoController {
 
     return video_player.VideoPlayerController.file(
       tempFile,
-      videoPlayerOptions: video_player.VideoPlayerOptions(
-        mixWithOthers: false,
-        allowBackgroundPlayback: false,
-      ),
+      videoPlayerOptions: video_player.VideoPlayerOptions(),
     );
   }
 
@@ -51,18 +48,12 @@ class NativeVideoControllerImpl extends NativeVideoController {
         AssetVideoSource(path: final path) =>
           video_player.VideoPlayerController.asset(
             path,
-            videoPlayerOptions: video_player.VideoPlayerOptions(
-              mixWithOthers: false,
-              allowBackgroundPlayback: false,
-            ),
+            videoPlayerOptions: video_player.VideoPlayerOptions(),
           ),
         FileVideoSource(path: final path) =>
           video_player.VideoPlayerController.file(
             File(path),
-            videoPlayerOptions: video_player.VideoPlayerOptions(
-              mixWithOthers: false,
-              allowBackgroundPlayback: false,
-            ),
+            videoPlayerOptions: video_player.VideoPlayerOptions(),
           ),
         Base64VideoSource() => await _createVideoControllerFromBase64(),
       };
@@ -71,7 +62,8 @@ class NativeVideoControllerImpl extends NativeVideoController {
       _fallbackTimer = Timer(const Duration(seconds: 35), () {
         if (_controller?.value.isInitialized != true) {
           throw VideoControllerException(
-              'Video initialization timeout - fallback triggered');
+            'Video initialization timeout - fallback triggered',
+          );
         }
       });
 
@@ -83,13 +75,16 @@ class NativeVideoControllerImpl extends NativeVideoController {
       _fallbackTimer?.cancel();
 
       final duration = _controller!.value.duration;
-      ref.read(videoStateNotifierProvider(_videoId).notifier).setReady(duration);
+      ref
+          .read(videoStateNotifierProvider(_videoId).notifier)
+          .setReady(duration);
 
       // Setup position listener with throttling
       _positionSubscription =
           Stream.periodic(const Duration(milliseconds: 33)).listen((_) {
         if (_controller?.value.isInitialized == true) {
-          final notifier = ref.read(videoStateNotifierProvider(_videoId).notifier);
+          final notifier =
+              ref.read(videoStateNotifierProvider(_videoId).notifier);
           notifier.updatePosition(_controller!.value.position);
 
           if (_controller!.value.isPlaying) {
@@ -101,21 +96,19 @@ class NativeVideoControllerImpl extends NativeVideoController {
           notifier.setSpeed(_controller!.value.playbackSpeed);
         }
       });
-
-      // Auto-play after initialization
-      await play();
     } catch (e) {
       _fallbackTimer?.cancel();
 
       // Fallback: try to create a simple error state
       ref
           .read(videoStateNotifierProvider(_videoId).notifier)
-          .setError('Failed to initialize video: ${e.toString()}');
+          .setError('Failed to initialize video: $e');
 
       // Graceful degradation - show error widget instead of crashing
       if (kDebugMode) {
         print(
-            'Native video initialization failed, graceful degradation activated');
+          'Native video initialization failed, graceful degradation activated',
+        );
       }
       rethrow;
     }
@@ -170,7 +163,9 @@ class NativeVideoControllerImpl extends NativeVideoController {
         _controller!.seekTo(position),
         'seek to position',
       );
-      ref.read(videoStateNotifierProvider(_videoId).notifier).updatePosition(position);
+      ref
+          .read(videoStateNotifierProvider(_videoId).notifier)
+          .updatePosition(position);
     } else {
       throw VideoControllerException('Cannot seek: video not initialized');
     }
@@ -197,7 +192,7 @@ class NativeVideoControllerImpl extends NativeVideoController {
     // Cancel all timers and subscriptions first
     _fallbackTimer?.cancel();
     _positionSubscription?.cancel();
-    
+
     // Dispose video controller properly
     _controller?.dispose();
     _controller = null;

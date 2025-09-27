@@ -82,20 +82,13 @@ class WebVideoControllerImpl extends WebVideoController {
         ..preload = 'auto' // Preload more for better quality
         ..setAttribute('playsinline', 'true')
         ..setAttribute('webkit-playsinline', 'true')
-        // Quality optimization attributes
-        ..setAttribute('disablePictureInPicture', 'false')
-        ..setAttribute('disableRemotePlayback', 'false')
         // Video scaling and rendering
         ..style.width = '100%'
         ..style.height = '100%'
         ..style.backgroundColor = 'black'
-        ..style.objectFit = 'contain' // Maintain aspect ratio
-        ..style.imageRendering = 'crisp-edges' // Better scaling
-        // Performance optimizations
-        ..style.transform = 'translateZ(0)' // Hardware acceleration
-        ..style.willChange = 'transform'
+        ..style.objectFit = 'cover'
         ..muted = true
-        ..autoplay = true;
+        ..autoplay = false;
 
       // Setup event listeners with error handling
       _setupEventListeners();
@@ -115,25 +108,16 @@ class WebVideoControllerImpl extends WebVideoController {
 
       final duration =
           Duration(milliseconds: (_video!.duration * 1000).round());
-      ref.read(videoStateNotifierProvider(_videoId).notifier).setReady(duration);
-
-      // Setup throttled position updates (30fps = ~33ms)
-      _positionUpdateSubscription =
-          Stream.periodic(const Duration(milliseconds: 33)).listen((_) {
-        if (_video?.readyState == 4) {
-          final notifier = ref.read(videoStateNotifierProvider(_videoId).notifier);
-          final position =
-              Duration(milliseconds: (_video!.currentTime * 1000).round());
-          notifier.updatePosition(position);
-        }
-      });
+      ref
+          .read(videoStateNotifierProvider(_videoId).notifier)
+          .setReady(duration);
     } catch (e) {
       _fallbackTimer?.cancel();
 
       // Graceful degradation
       ref
           .read(videoStateNotifierProvider(_videoId).notifier)
-          .setError('Failed to initialize web video: ${e.toString()}');
+          .setError('Failed to initialize web video: $e');
 
       if (kDebugMode) {
         print(
@@ -179,7 +163,8 @@ class WebVideoControllerImpl extends WebVideoController {
     });
 
     _onCanPlaySubscription = _video!.onCanPlay.listen((_) {
-      final currentStatus = ref.read(videoStateNotifierProvider(_videoId)).status;
+      final currentStatus =
+          ref.read(videoStateNotifierProvider(_videoId)).status;
       if (currentStatus == VideoPlayerStatus.loading) {
         ref
             .read(videoStateNotifierProvider(_videoId).notifier)
@@ -190,7 +175,15 @@ class WebVideoControllerImpl extends WebVideoController {
     _onRateChangeSubscription = _video!.onRateChange.listen((_) {
       ref
           .read(videoStateNotifierProvider(_videoId).notifier)
-          .setSpeed(_video!.playbackRate.toDouble());
+          .setSpeed(_video!.playbackRate);
+    });
+
+    _onTimeUpdateSubscription = _video!.onTimeUpdate.listen((_) {
+      final position =
+          Duration(milliseconds: (_video!.currentTime * 1000).round());
+      ref
+          .read(videoStateNotifierProvider(_videoId).notifier)
+          .updatePosition(position);
     });
   }
 
@@ -235,7 +228,9 @@ class WebVideoControllerImpl extends WebVideoController {
     }
 
     _video!.currentTime = position.inMilliseconds / 1000.0;
-    ref.read(videoStateNotifierProvider(_videoId).notifier).updatePosition(position);
+    ref
+        .read(videoStateNotifierProvider(_videoId).notifier)
+        .updatePosition(position);
   }
 
   @override
@@ -276,7 +271,7 @@ class WebVideoControllerImpl extends WebVideoController {
     // Unregister platform view to prevent memory leaks
     if (_viewType != null) {
       try {
-        // Note: Flutter web doesn't provide unregisterViewFactory, 
+        // Note: Flutter web doesn't provide unregisterViewFactory,
         // but setting video to null should clean up the reference
         _video = null;
       } catch (e) {
