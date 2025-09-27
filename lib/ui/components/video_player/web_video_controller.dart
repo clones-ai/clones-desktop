@@ -10,11 +10,14 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:web/web.dart' as web;
 
 class WebVideoControllerImpl extends WebVideoController {
+  WebVideoControllerImpl(super.source, super.ref, this._videoId);
+  final String _videoId;
   web.HTMLVideoElement? _video;
   String? _objectUrl;
   String? _viewType;
   Timer? _fallbackTimer;
   StreamSubscription? _positionUpdateSubscription;
+  bool _isDisposed = false;
 
   // Event listeners
   StreamSubscription? _onPlaySubscription;
@@ -25,8 +28,6 @@ class WebVideoControllerImpl extends WebVideoController {
   StreamSubscription? _onCanPlaySubscription;
   StreamSubscription? _onRateChangeSubscription;
 
-  WebVideoControllerImpl(super.source, super.ref);
-
   String? get viewType => _viewType;
   web.HTMLVideoElement? get videoElement => _video;
 
@@ -34,7 +35,7 @@ class WebVideoControllerImpl extends WebVideoController {
   Future<void> initialize() async {
     try {
       ref
-          .read(videoStateNotifierProvider.notifier)
+          .read(videoStateNotifierProvider(_videoId).notifier)
           .setStatus(VideoPlayerStatus.loading);
 
       // Fallback timer for initialization
@@ -42,7 +43,8 @@ class WebVideoControllerImpl extends WebVideoController {
         if (_video?.readyState != 4) {
           // HAVE_ENOUGH_DATA
           throw VideoControllerException(
-              'Web video initialization timeout - fallback triggered');
+            'Web video initialization timeout - fallback triggered',
+          );
         }
       });
 
@@ -51,13 +53,15 @@ class WebVideoControllerImpl extends WebVideoController {
 
       switch (source) {
         case AssetVideoSource(path: final path):
-          final ByteData data = await withInitializationTimeout(
+          final data = await withInitializationTimeout(
             rootBundle.load(path),
             'load video asset',
           );
           final bytes = data.buffer.asUint8List();
-          final blob = web.Blob([bytes.buffer].jsify() as JSArray<web.BlobPart>,
-              web.BlobPropertyBag(type: 'video/mp4'));
+          final blob = web.Blob(
+            [bytes.buffer].jsify()! as JSArray<web.BlobPart>,
+            web.BlobPropertyBag(type: 'video/mp4'),
+          );
           srcUrl = web.URL.createObjectURL(blob);
           _objectUrl = srcUrl;
 
@@ -67,7 +71,8 @@ class WebVideoControllerImpl extends WebVideoController {
 
         case FileVideoSource():
           throw VideoControllerException(
-              'FileVideoSource is not supported on the web');
+            'FileVideoSource is not supported on the web',
+          );
       }
 
       // Create video element with quality optimizations
@@ -110,13 +115,13 @@ class WebVideoControllerImpl extends WebVideoController {
 
       final duration =
           Duration(milliseconds: (_video!.duration * 1000).round());
-      ref.read(videoStateNotifierProvider.notifier).setReady(duration);
+      ref.read(videoStateNotifierProvider(_videoId).notifier).setReady(duration);
 
       // Setup throttled position updates (30fps = ~33ms)
       _positionUpdateSubscription =
           Stream.periodic(const Duration(milliseconds: 33)).listen((_) {
         if (_video?.readyState == 4) {
-          final notifier = ref.read(videoStateNotifierProvider.notifier);
+          final notifier = ref.read(videoStateNotifierProvider(_videoId).notifier);
           final position =
               Duration(milliseconds: (_video!.currentTime * 1000).round());
           notifier.updatePosition(position);
@@ -127,12 +132,13 @@ class WebVideoControllerImpl extends WebVideoController {
 
       // Graceful degradation
       ref
-          .read(videoStateNotifierProvider.notifier)
+          .read(videoStateNotifierProvider(_videoId).notifier)
           .setError('Failed to initialize web video: ${e.toString()}');
 
       if (kDebugMode) {
         print(
-            'Web video initialization failed, graceful degradation activated');
+          'Web video initialization failed, graceful degradation activated',
+        );
       }
       rethrow;
     }
@@ -159,31 +165,31 @@ class WebVideoControllerImpl extends WebVideoController {
 
   void _setupEventListeners() {
     _onPlaySubscription = _video!.onPlay.listen((_) {
-      ref.read(videoStateNotifierProvider.notifier).setPlaying();
+      ref.read(videoStateNotifierProvider(_videoId).notifier).setPlaying();
     });
 
     _onPauseSubscription = _video!.onPause.listen((_) {
-      ref.read(videoStateNotifierProvider.notifier).setPaused();
+      ref.read(videoStateNotifierProvider(_videoId).notifier).setPaused();
     });
 
     _onWaitingSubscription = _video!.onWaiting.listen((_) {
       ref
-          .read(videoStateNotifierProvider.notifier)
+          .read(videoStateNotifierProvider(_videoId).notifier)
           .setStatus(VideoPlayerStatus.loading);
     });
 
     _onCanPlaySubscription = _video!.onCanPlay.listen((_) {
-      final currentStatus = ref.read(videoStateNotifierProvider).status;
+      final currentStatus = ref.read(videoStateNotifierProvider(_videoId)).status;
       if (currentStatus == VideoPlayerStatus.loading) {
         ref
-            .read(videoStateNotifierProvider.notifier)
+            .read(videoStateNotifierProvider(_videoId).notifier)
             .setStatus(VideoPlayerStatus.ready);
       }
     });
 
     _onRateChangeSubscription = _video!.onRateChange.listen((_) {
       ref
-          .read(videoStateNotifierProvider.notifier)
+          .read(videoStateNotifierProvider(_videoId).notifier)
           .setSpeed(_video!.playbackRate.toDouble());
     });
   }
@@ -198,7 +204,7 @@ class WebVideoControllerImpl extends WebVideoController {
       _video!.play().toDart,
       'play web video',
     );
-    ref.read(videoStateNotifierProvider.notifier).setPlaying();
+    ref.read(videoStateNotifierProvider(_videoId).notifier).setPlaying();
   }
 
   @override
@@ -208,7 +214,7 @@ class WebVideoControllerImpl extends WebVideoController {
     }
 
     _video!.pause();
-    ref.read(videoStateNotifierProvider.notifier).setPaused();
+    ref.read(videoStateNotifierProvider(_videoId).notifier).setPaused();
   }
 
   @override
@@ -219,7 +225,7 @@ class WebVideoControllerImpl extends WebVideoController {
 
     _video!.pause();
     _video!.currentTime = 0;
-    ref.read(videoStateNotifierProvider.notifier).setStopped();
+    ref.read(videoStateNotifierProvider(_videoId).notifier).setStopped();
   }
 
   @override
@@ -229,7 +235,7 @@ class WebVideoControllerImpl extends WebVideoController {
     }
 
     _video!.currentTime = position.inMilliseconds / 1000.0;
-    ref.read(videoStateNotifierProvider.notifier).updatePosition(position);
+    ref.read(videoStateNotifierProvider(_videoId).notifier).updatePosition(position);
   }
 
   @override
@@ -239,11 +245,15 @@ class WebVideoControllerImpl extends WebVideoController {
     }
 
     _video!.playbackRate = speed;
-    ref.read(videoStateNotifierProvider.notifier).setSpeed(speed);
+    ref.read(videoStateNotifierProvider(_videoId).notifier).setSpeed(speed);
   }
 
   @override
   void dispose() {
+    if (_isDisposed) return;
+    _isDisposed = true;
+
+    // Cancel all timers and subscriptions first
     _fallbackTimer?.cancel();
     _positionUpdateSubscription?.cancel();
 
@@ -256,13 +266,30 @@ class WebVideoControllerImpl extends WebVideoController {
     _onCanPlaySubscription?.cancel();
     _onRateChangeSubscription?.cancel();
 
-    // Clean up video element and blob URL
-    _video?.pause();
-    _video = null;
+    // Clean up video element properly
+    if (_video != null) {
+      _video!.pause();
+      _video!.removeAttribute('src');
+      _video!.load(); // This clears the video buffer
+    }
 
+    // Unregister platform view to prevent memory leaks
+    if (_viewType != null) {
+      try {
+        // Note: Flutter web doesn't provide unregisterViewFactory, 
+        // but setting video to null should clean up the reference
+        _video = null;
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+    }
+
+    // Clean up blob URL
     if (_objectUrl != null) {
       web.URL.revokeObjectURL(_objectUrl!);
       _objectUrl = null;
     }
+
+    _viewType = null;
   }
 }

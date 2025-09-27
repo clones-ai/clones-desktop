@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 abstract class ConsumerVideoPlayerState<T extends ConsumerStatefulWidget>
     extends ConsumerState<T> {
   @protected
+  String get videoId;
+  @protected
   void videoPlay();
   @protected
   void videoPause();
@@ -21,7 +23,7 @@ abstract class ConsumerVideoPlayerState<T extends ConsumerStatefulWidget>
   Widget buildVideoPlayer(BuildContext context);
 
   void _handlePlayPause() {
-    final isPlaying = ref.read(videoStateNotifierProvider).isPlaying;
+    final isPlaying = ref.read(videoStateNotifierProvider(videoId)).isPlaying;
     if (isPlaying) {
       videoPause();
     } else {
@@ -47,7 +49,7 @@ abstract class ConsumerVideoPlayerState<T extends ConsumerStatefulWidget>
 
   @override
   Widget build(BuildContext context) {
-    final videoState = ref.watch(videoStateNotifierProvider);
+    final videoState = ref.watch(videoStateNotifierProvider(videoId));
 
     return Column(
       children: [
@@ -92,16 +94,12 @@ abstract class ConsumerVideoPlayerState<T extends ConsumerStatefulWidget>
         const SizedBox(height: 16),
         const SizedBox(height: 16),
         TransportControls(
-          isPlaying: videoState.isPlaying,
-          isLoading: videoState.isLoading,
+          videoId: videoId,
           onPlayPause: _handlePlayPause,
           onStop: _handleStop,
           onSeekBackward: _handleSeekBackward,
           onSeekForward: _handleSeekForward,
           onSpeedChange: _handleSpeedChange,
-          currentSpeed: videoState.currentSpeed,
-          currentPosition: videoState.currentPosition,
-          totalDuration: videoState.totalDuration,
         ),
       ],
     );

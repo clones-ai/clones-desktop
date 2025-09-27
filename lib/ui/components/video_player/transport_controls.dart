@@ -1,5 +1,6 @@
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
+import 'package:clones_desktop/ui/components/video_player/video_state.dart';
 import 'package:clones_desktop/utils/format_time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,33 +8,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class TransportControls extends ConsumerWidget {
   const TransportControls({
     super.key,
-    required this.isPlaying,
-    required this.isLoading,
+    required this.videoId,
     required this.onPlayPause,
     required this.onStop,
     required this.onSeekBackward,
     required this.onSeekForward,
     required this.onSpeedChange,
-    this.currentSpeed = 1.0,
     this.showSpeedControls = true,
-    this.currentPosition,
-    this.totalDuration,
   });
 
-  final bool isPlaying;
-  final bool isLoading;
+  final String videoId;
   final VoidCallback onPlayPause;
   final VoidCallback onStop;
   final VoidCallback onSeekBackward;
   final VoidCallback onSeekForward;
   final ValueChanged<double> onSpeedChange;
-  final double currentSpeed;
   final bool showSpeedControls;
-  final Duration? currentPosition;
-  final Duration? totalDuration;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final videoState = ref.watch(videoStateNotifierProvider(videoId));
+
     return CardWidget(
       variant: CardVariant.secondary,
       child: Container(
@@ -47,7 +42,7 @@ class TransportControls extends ConsumerWidget {
               children: [
                 if (showSpeedControls) ...[
                   _SpeedButton(
-                    speed: currentSpeed,
+                    speed: videoState.currentSpeed,
                     onSpeedChange: onSpeedChange,
                   ),
                   const SizedBox(width: 16),
@@ -66,11 +61,12 @@ class TransportControls extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 _TransportButton(
-                  icon: isLoading
+                  icon: videoState.isLoading
                       ? Icons.hourglass_empty
-                      : (isPlaying ? Icons.pause : Icons.play_arrow),
-                  onPressed: isLoading ? null : onPlayPause,
-                  tooltip: isPlaying ? 'Pause (Space)' : 'Play (Space)',
+                      : (videoState.isPlaying ? Icons.pause : Icons.play_arrow),
+                  onPressed: videoState.isLoading ? null : onPlayPause,
+                  tooltip:
+                      videoState.isPlaying ? 'Pause (Space)' : 'Play (Space)',
                   isPrimary: true,
                   size: 36,
                 ),
@@ -92,13 +88,7 @@ class TransportControls extends ConsumerWidget {
             ),
 
             // Time indicator (right side)
-            if (currentPosition != null && totalDuration != null)
-              _TimeIndicator(
-                currentPosition: currentPosition!,
-                totalDuration: totalDuration!,
-              )
-            else
-              const SizedBox(width: 80), // Placeholder to maintain layout
+            _TimeIndicator(videoId: videoId)
           ],
         ),
       ),
@@ -229,17 +219,14 @@ class __SpeedButtonState extends State<_SpeedButton> {
   }
 }
 
-class _TimeIndicator extends StatelessWidget {
-  const _TimeIndicator({
-    required this.currentPosition,
-    required this.totalDuration,
-  });
-
-  final Duration currentPosition;
-  final Duration totalDuration;
+class _TimeIndicator extends ConsumerWidget {
+  const _TimeIndicator({required this.videoId});
+  
+  final String videoId;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final videoState = ref.watch(videoStateNotifierProvider(videoId));
     final theme = Theme.of(context);
 
     return Container(
@@ -249,7 +236,7 @@ class _TimeIndicator extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        '${formatVideoTime(currentPosition)} / ${formatVideoTime(totalDuration)}',
+        '${formatVideoTime(videoState.currentPosition)} / ${formatVideoTime(videoState.totalDuration)}',
         style: theme.textTheme.bodySmall?.copyWith(
           fontFamily: 'monospace',
           fontWeight: FontWeight.w600,
