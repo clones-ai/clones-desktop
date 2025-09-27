@@ -91,6 +91,20 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
   }
 
   @override
+  void videoSeek(Duration position) {
+    final state = ref.read(videoStateNotifierProvider(_videoId));
+    Duration clampedPosition;
+    if (position < Duration.zero) {
+      clampedPosition = Duration.zero;
+    } else if (position > state.totalDuration) {
+      clampedPosition = state.totalDuration;
+    } else {
+      clampedPosition = position;
+    }
+    safeExecute(() => _controller.seekTo(clampedPosition), 'seek', ref, _videoId);
+  }
+
+  @override
   void videoSetSpeed(double speed) =>
       safeExecute(() => _controller.setSpeed(speed), 'set speed', ref, _videoId);
 

@@ -1,13 +1,13 @@
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
-import 'package:clones_desktop/ui/components/video_player/video_player.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DemoDetailVideoPreview extends ConsumerStatefulWidget {
-  const DemoDetailVideoPreview({super.key, this.onExpand});
+  const DemoDetailVideoPreview({super.key, this.onExpand, this.videoWidget});
   final VoidCallback? onExpand;
+  final Widget? videoWidget;
 
   @override
   ConsumerState<DemoDetailVideoPreview> createState() =>
@@ -63,7 +63,7 @@ class _DemoDetailVideoPreviewState
               ],
             ),
             const SizedBox(height: 10),
-            if (!videoLoaded)
+            if (widget.videoWidget == null)
               Text('No video found', style: theme.textTheme.bodyMedium)
             else
               MouseRegion(
@@ -81,7 +81,7 @@ class _DemoDetailVideoPreviewState
                         ),
                       )
                     else
-                      VideoPlayer(source: videoSource),
+                      widget.videoWidget!,
                   ],
                 ),
               ),

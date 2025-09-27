@@ -1,19 +1,24 @@
 import 'package:clones_desktop/assets.dart';
+import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
+import 'package:clones_desktop/ui/components/video_player/video_state.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:clones_desktop/utils/format_time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:video_player/video_player.dart';
 
 class TimelineWidget extends ConsumerStatefulWidget {
   const TimelineWidget({
+    required this.videoId,
+    this.enableEditing = false,
+    this.onSeek,
     super.key,
-    required this.controller,
   });
 
-  final VideoPlayerController controller;
+  final String videoId;
+  final bool enableEditing;
+  final void Function(Duration)? onSeek;
 
   @override
   ConsumerState<TimelineWidget> createState() => _TimelineWidgetState();
@@ -34,59 +39,72 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(demoDetailNotifierProvider);
+    if (!widget.enableEditing) {
+      return CardWidget(
+        variant: CardVariant.transparent,
+        child: _buildCustomTimeline(context, ref),
+      );
+    }
 
-    // Check if editing is allowed (not submitted yet)
+    // With editing enabled, show additional controls
+    final state = ref.watch(demoDetailNotifierProvider);
     final canEdit = state.recording?.submission?.status != 'completed';
 
-    return Column(
-      children: [
-        _buildCustomTimeline(context, ref, widget.controller, canEdit),
-        if (canEdit &&
-            (state.deletedSegments.isNotEmpty || state.clipSegments.isNotEmpty))
-          Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: BtnPrimary(
-              onTap: ref.read(demoDetailNotifierProvider.notifier).applyEdits,
-              icon: Icons.check,
-              buttonText: 'Apply Edits',
-              btnPrimaryType: BtnPrimaryType.outlinePrimary,
-              isLoading: state.isApplyingEdits,
-              isLocked: state.isApplyingEdits,
+    return CardWidget(
+      variant: CardVariant.secondary,
+      child: Column(
+        children: [
+          _buildCustomTimeline(context, ref),
+          if (canEdit &&
+              (state.deletedSegments.isNotEmpty ||
+                  state.clipSegments.isNotEmpty))
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: BtnPrimary(
+                onTap: ref.read(demoDetailNotifierProvider.notifier).applyEdits,
+                icon: Icons.check,
+                buttonText: 'Apply Edits',
+                btnPrimaryType: BtnPrimaryType.outlinePrimary,
+                isLoading: state.isApplyingEdits,
+                isLocked: state.isApplyingEdits,
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildCustomTimeline(
     BuildContext context,
     WidgetRef ref,
-    VideoPlayerController controller,
-    bool canEdit,
   ) {
-    final state = ref.watch(demoDetailNotifierProvider);
-    final duration = controller.value.duration;
+    final videoState = ref.watch(videoStateNotifierProvider(widget.videoId));
+
+    final duration = videoState.totalDuration;
     final durationMs = duration.inMilliseconds.toDouble();
 
     return KeyboardListener(
       focusNode: _timelineFocus,
       onKeyEvent: (KeyEvent event) {
         if (event is! KeyDownEvent) return;
-        final isCtrlOrCmd = HardwareKeyboard.instance.isControlPressed ||
-            HardwareKeyboard.instance.isMetaPressed;
         final key = event.logicalKey;
-        final notifier = ref.read(demoDetailNotifierProvider.notifier);
-        final playheadMs = controller.value.position.inMilliseconds.toDouble();
+        final videoStateNotifier =
+            ref.read(videoStateNotifierProvider(widget.videoId).notifier);
 
         if (key == LogicalKeyboardKey.space) {
-          if (controller.value.isPlaying) {
-            controller.pause();
+          if (videoState.isPlaying) {
+            videoStateNotifier.setPaused();
           } else {
-            controller.play();
+            videoStateNotifier.setPlaying();
           }
-        } else if (canEdit) {
+        } else if (widget.enableEditing) {
           // Only allow editing shortcuts if editing is enabled
+          final isCtrlOrCmd = HardwareKeyboard.instance.isControlPressed ||
+              HardwareKeyboard.instance.isMetaPressed;
+          final notifier = ref.read(demoDetailNotifierProvider.notifier);
+          final playheadMs =
+              videoState.currentPosition.inMilliseconds.toDouble();
+
           if (key == LogicalKeyboardKey.keyB ||
               (isCtrlOrCmd && key == LogicalKeyboardKey.keyB)) {
             notifier.splitClipAt(playheadMs);
@@ -117,11 +135,19 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
                 final clickPosition = details.localPosition.dx;
                 final seekTime =
                     (clickPosition / timelineWidth * durationMs).round();
-                controller.seekTo(Duration(milliseconds: seekTime));
+                final seekDuration = Duration(milliseconds: seekTime);
+                if (widget.onSeek != null) {
+                  widget.onSeek!(seekDuration);
+                } else {
+                  // Fallback - just update position state
+                  ref
+                      .read(videoStateNotifierProvider(widget.videoId).notifier)
+                      .updatePosition(seekDuration);
+                }
                 _timelineFocus.requestFocus();
 
-                // Left-click selects the clip under the cursor (iMovie-like) - only if editing is allowed
-                if (canEdit) {
+                // Left-click selects the clip under the cursor (iMovie-like) - only if editing is enabled
+                if (widget.enableEditing) {
                   final clips =
                       ref.read(demoDetailNotifierProvider).clipSegments;
                   final ms = clickPosition / timelineWidth * durationMs;
@@ -134,7 +160,7 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
                   }
                 }
               },
-              onHorizontalDragStart: canEdit
+              onHorizontalDragStart: widget.enableEditing
                   ? (details) {
                       final clickTime =
                           details.localPosition.dx / timelineWidth * durationMs;
@@ -143,7 +169,7 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
                       });
                     }
                   : null,
-              onHorizontalDragUpdate: canEdit
+              onHorizontalDragUpdate: widget.enableEditing
                   ? (details) {
                       if (_previewSegment == null) return;
                       final dragEnd = (details.localPosition.dx /
@@ -156,7 +182,7 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
                       });
                     }
                   : null,
-              onHorizontalDragEnd: canEdit
+              onHorizontalDragEnd: widget.enableEditing
                   ? (_) {
                       if (_previewSegment != null) {
                         final start =
@@ -176,29 +202,29 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
                       setState(() => _previewSegment = null);
                     }
                   : null,
-              onSecondaryTapDown: (details) {
-                // Remember where the context menu should open
-                final global = details.globalPosition;
-                setState(() => _lastRightClickGlobal = global);
+              onSecondaryTapDown: widget.enableEditing
+                  ? (details) {
+                      // Remember where the context menu should open
+                      final global = details.globalPosition;
+                      setState(() => _lastRightClickGlobal = global);
 
-                // Compute playhead time at click
-                final box = context.findRenderObject() as RenderBox?;
-                final local = box?.globalToLocal(global);
-                if (local != null) {
-                  _lastRightClickTimeMs =
-                      (local.dx / timelineWidth * durationMs)
-                          .clamp(0.0, durationMs);
-                }
-                _timelineFocus.requestFocus();
-                _openContextMenu(
-                  context,
-                  ref,
-                  controller,
-                  durationMs,
-                  timelineWidth,
-                  canEdit,
-                );
-              },
+                      // Compute playhead time at click
+                      final box = context.findRenderObject() as RenderBox?;
+                      final local = box?.globalToLocal(global);
+                      if (local != null) {
+                        _lastRightClickTimeMs =
+                            (local.dx / timelineWidth * durationMs)
+                                .clamp(0.0, durationMs);
+                      }
+                      _timelineFocus.requestFocus();
+                      _openContextMenu(
+                        context,
+                        ref,
+                        durationMs,
+                        timelineWidth,
+                      );
+                    }
+                  : null,
               child: MouseRegion(
                 onHover: (event) =>
                     setState(() => _hoverPosition = event.localPosition),
@@ -207,44 +233,21 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
                   alignment: Alignment.center,
                   clipBehavior: Clip.none,
                   children: [
-                    _buildTimeLabels(context, controller, timelineWidth),
+                    _buildTimeLabels(context, videoState, timelineWidth),
                     _buildBaseTrack(context),
-                    _buildProgressBar(context, controller, timelineWidth),
-                    _buildEventMarkers(context, ref, controller, timelineWidth),
-                    _buildPlayhead(context, controller, timelineWidth),
+                    _buildProgressBar(context, videoState, timelineWidth),
+                    if (widget.enableEditing)
+                      _buildEventMarkers(context, ref, timelineWidth),
+                    _buildPlayhead(context, videoState, timelineWidth),
 
-                    // Render committed deleted segments with handles
-                    for (int i = 0; i < state.deletedSegments.length; i++)
-                      ..._buildSegment(
-                        i,
-                        state.deletedSegments[i],
-                        durationMs,
-                        timelineWidth,
-                        ref,
-                        canEdit,
-                      ),
-
-                    // Render clips (iMovie-like) as lighter bands on top
-                    if (state.clipSegments.isNotEmpty)
-                      ..._buildClipsOverlay(
-                        context,
-                        state.clipSegments,
-                        state.selectedClipIndexes,
-                        durationMs,
-                        timelineWidth,
-                      ),
-
-                    // Render preview segment
-                    if (canEdit && _previewSegment != null)
-                      _buildPreviewSegment(
-                        _previewSegment!,
-                        durationMs,
-                        timelineWidth,
-                      ),
+                    // Render editing elements if enabled
+                    if (widget.enableEditing)
+                      ..._buildEditingElements(
+                          context, ref, durationMs, timelineWidth),
 
                     _buildHoverPositionLineAndTimeLabel(
                       context,
-                      controller,
+                      videoState,
                       timelineWidth,
                     ),
                   ],
@@ -259,10 +262,10 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
 
   Widget _buildTimeLabels(
     BuildContext context,
-    VideoPlayerController controller,
+    VideoState videoState,
     double timelineWidth,
   ) {
-    final durationMs = controller.value.duration.inMilliseconds.toDouble();
+    final durationMs = videoState.totalDuration.inMilliseconds.toDouble();
     final theme = Theme.of(context);
 
     if (durationMs <= 0) return const SizedBox.shrink();
@@ -341,15 +344,15 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
 
   Widget _buildProgressBar(
     BuildContext context,
-    VideoPlayerController controller,
+    VideoState videoState,
     double timelineWidth,
   ) {
-    final durationMs = controller.value.duration.inMilliseconds.toDouble();
+    final durationMs = videoState.totalDuration.inMilliseconds.toDouble();
     if (durationMs > 0) {
       return Align(
         alignment: Alignment.centerLeft,
         child: Container(
-          width: (controller.value.position.inMilliseconds / durationMs) *
+          width: (videoState.currentPosition.inMilliseconds / durationMs) *
               timelineWidth,
           height: 4,
           decoration: BoxDecoration(
@@ -362,13 +365,127 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
     return const SizedBox.shrink();
   }
 
+  Widget _buildHoverPositionLineAndTimeLabel(
+    BuildContext context,
+    VideoState videoState,
+    double timelineWidth,
+  ) {
+    final theme = Theme.of(context);
+    final durationMs = videoState.totalDuration.inMilliseconds.toDouble();
+
+    final children = <Widget>[];
+
+    if (_hoverPosition != null) {
+      children.add(
+        Positioned(
+          left: _hoverPosition!.dx.clamp(0, timelineWidth),
+          top: 0,
+          bottom: 0,
+          child: Container(
+            width: 2,
+            color: ClonesColors.primary.withValues(alpha: 0.8),
+          ),
+        ),
+      );
+    }
+    if (_hoverPosition != null && durationMs > 0) {
+      children.add(
+        Positioned(
+          top: -25,
+          left: (_hoverPosition!.dx - 20).clamp(0.0, timelineWidth - 40),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 6,
+              vertical: 2,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              formatVideoTime(
+                Duration(
+                  milliseconds:
+                      ((_hoverPosition!.dx / timelineWidth) * durationMs)
+                          .toInt(),
+                ),
+              ),
+              style: theme.textTheme.bodySmall?.copyWith(color: Colors.white),
+            ),
+          ),
+        ),
+      );
+    }
+    return Stack(children: children);
+  }
+
+  Widget _buildPlayhead(
+    BuildContext context,
+    VideoState videoState,
+    double timelineWidth,
+  ) {
+    final durationMs = videoState.totalDuration.inMilliseconds.toDouble();
+
+    if (durationMs <= 0) return const SizedBox.shrink();
+
+    final currentMs = videoState.currentPosition.inMilliseconds.toDouble();
+    final playheadPosition = (currentMs / durationMs) * timelineWidth;
+
+    return Positioned(
+      left: playheadPosition.clamp(0.0, timelineWidth),
+      top: -10,
+      bottom: -10,
+      child: Container(
+        width: 2,
+        decoration: BoxDecoration(
+          color: ClonesColors.primary,
+          boxShadow: [
+            BoxShadow(
+              color: ClonesColors.primary.withValues(alpha: 0.3),
+              blurRadius: 3,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            // Playhead handle at the top
+            Positioned(
+              top: -5,
+              child: Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: ClonesColors.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildEventMarkers(
     BuildContext context,
     WidgetRef ref,
-    VideoPlayerController controller,
     double timelineWidth,
   ) {
-    final durationMs = controller.value.duration.inMilliseconds.toDouble();
+    final videoState = ref.watch(videoStateNotifierProvider(widget.videoId));
+    final durationMs = videoState.totalDuration.inMilliseconds.toDouble();
     final events = ref.watch(demoDetailNotifierProvider).events;
     final enabledEventTypes =
         ref.watch(demoDetailNotifierProvider).enabledEventTypes;
@@ -403,6 +520,49 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
       );
     }
     return const SizedBox.shrink();
+  }
+
+  List<Widget> _buildEditingElements(
+    BuildContext context,
+    WidgetRef ref,
+    double durationMs,
+    double timelineWidth,
+  ) {
+    final state = ref.watch(demoDetailNotifierProvider);
+    final widgets = <Widget>[];
+
+    // Render committed deleted segments with handles
+    for (int i = 0; i < state.deletedSegments.length; i++) {
+      widgets.addAll(_buildSegment(
+        i,
+        state.deletedSegments[i],
+        durationMs,
+        timelineWidth,
+        ref,
+      ));
+    }
+
+    // Render clips (iMovie-like) as lighter bands on top
+    if (state.clipSegments.isNotEmpty) {
+      widgets.addAll(_buildClipsOverlay(
+        context,
+        state.clipSegments,
+        state.selectedClipIndexes,
+        durationMs,
+        timelineWidth,
+      ));
+    }
+
+    // Render preview segment
+    if (_previewSegment != null) {
+      widgets.add(_buildPreviewSegment(
+        _previewSegment!,
+        durationMs,
+        timelineWidth,
+      ));
+    }
+
+    return widgets;
   }
 
   List<Widget> _buildClipsOverlay(
@@ -473,7 +633,6 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
     double durationMs,
     double timelineWidth,
     WidgetRef ref,
-    bool canEdit,
   ) {
     const handleWidth = 8.0;
     const touchWidth = 20.0;
@@ -491,208 +650,81 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
       ),
     ];
 
-    if (canEdit) {
-      widgets.addAll([
-        // Start handle
-        Positioned(
-          left: (segment.start / durationMs) * timelineWidth - touchWidth / 2,
-          top: 0,
-          bottom: 0,
-          width: touchWidth,
-          child: GestureDetector(
-            onHorizontalDragUpdate: (details) {
-              final newStart = (segment.start +
-                      (details.delta.dx / timelineWidth) * durationMs)
-                  .clamp(0.0, segment.end);
-              ref
-                  .read(demoDetailNotifierProvider.notifier)
-                  .updateDeletedSegment(
-                    index,
-                    RangeValues(newStart, segment.end),
-                  );
-            },
-            child: MouseRegion(
-              cursor: SystemMouseCursors.resizeLeftRight,
-              child: Center(
-                child: Container(
-                  width: handleWidth,
-                  color: Colors.yellowAccent,
-                ),
+    widgets.addAll([
+      // Start handle
+      Positioned(
+        left: (segment.start / durationMs) * timelineWidth - touchWidth / 2,
+        top: 0,
+        bottom: 0,
+        width: touchWidth,
+        child: GestureDetector(
+          onHorizontalDragUpdate: (details) {
+            final newStart = (segment.start +
+                    (details.delta.dx / timelineWidth) * durationMs)
+                .clamp(0.0, segment.end);
+            ref.read(demoDetailNotifierProvider.notifier).updateDeletedSegment(
+                  index,
+                  RangeValues(newStart, segment.end),
+                );
+          },
+          child: MouseRegion(
+            cursor: SystemMouseCursors.resizeLeftRight,
+            child: Center(
+              child: Container(
+                width: handleWidth,
+                color: Colors.yellowAccent,
               ),
             ),
           ),
         ),
-        // End handle
-        Positioned(
-          left: (segment.end / durationMs) * timelineWidth - touchWidth / 2,
-          top: 0,
-          bottom: 0,
-          width: touchWidth,
-          child: GestureDetector(
-            onHorizontalDragUpdate: (details) {
-              final newEnd = (segment.end +
-                      (details.delta.dx / timelineWidth) * durationMs)
-                  .clamp(segment.start, durationMs);
-              ref
-                  .read(demoDetailNotifierProvider.notifier)
-                  .updateDeletedSegment(
-                    index,
-                    RangeValues(segment.start, newEnd),
-                  );
-            },
-            child: MouseRegion(
-              cursor: SystemMouseCursors.resizeLeftRight,
-              child: Center(
-                child: Container(
-                  width: handleWidth,
-                  color: Colors.yellowAccent,
-                ),
+      ),
+      // End handle
+      Positioned(
+        left: (segment.end / durationMs) * timelineWidth - touchWidth / 2,
+        top: 0,
+        bottom: 0,
+        width: touchWidth,
+        child: GestureDetector(
+          onHorizontalDragUpdate: (details) {
+            final newEnd =
+                (segment.end + (details.delta.dx / timelineWidth) * durationMs)
+                    .clamp(segment.start, durationMs);
+            ref.read(demoDetailNotifierProvider.notifier).updateDeletedSegment(
+                  index,
+                  RangeValues(segment.start, newEnd),
+                );
+          },
+          child: MouseRegion(
+            cursor: SystemMouseCursors.resizeLeftRight,
+            child: Center(
+              child: Container(
+                width: handleWidth,
+                color: Colors.yellowAccent,
               ),
             ),
           ),
         ),
-        // Delete button
-        Positioned(
-          left: (segment.start / durationMs) * timelineWidth + 2,
-          top: 2,
-          child: InkWell(
-            onTap: () => ref
-                .read(demoDetailNotifierProvider.notifier)
-                .removeDeletedSegment(index),
-            child: const Icon(Icons.close, color: Colors.white, size: 14),
-          ),
+      ),
+      // Delete button
+      Positioned(
+        left: (segment.start / durationMs) * timelineWidth + 2,
+        top: 2,
+        child: InkWell(
+          onTap: () => ref
+              .read(demoDetailNotifierProvider.notifier)
+              .removeDeletedSegment(index),
+          child: const Icon(Icons.close, color: Colors.white, size: 14),
         ),
-      ]);
-    }
+      ),
+    ]);
     return widgets;
-  }
-
-  Widget _buildHoverPositionLineAndTimeLabel(
-    BuildContext context,
-    VideoPlayerController controller,
-    double timelineWidth,
-  ) {
-    final theme = Theme.of(context);
-    final durationMs = controller.value.duration.inMilliseconds.toDouble();
-
-    final children = <Widget>[];
-
-    if (_hoverPosition != null) {
-      children.add(
-        Positioned(
-          left: _hoverPosition!.dx.clamp(0, timelineWidth),
-          top: 0,
-          bottom: 0,
-          child: Container(
-            width: 2,
-            color: ClonesColors.primary.withValues(alpha: 0.8),
-          ),
-        ),
-      );
-    }
-    if (_hoverPosition != null && durationMs > 0) {
-      children.add(
-        Positioned(
-          top: -25,
-          left: (_hoverPosition!.dx - 20).clamp(0.0, timelineWidth - 40),
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 6,
-              vertical: 2,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.7),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              formatVideoTime(
-                Duration(
-                  milliseconds:
-                      ((_hoverPosition!.dx / timelineWidth) * durationMs)
-                          .toInt(),
-                ),
-              ),
-              style: theme.textTheme.bodySmall?.copyWith(color: Colors.white),
-            ),
-          ),
-        ),
-      );
-    }
-    return Stack(children: children);
-  }
-
-  Widget _buildPlayhead(
-    BuildContext context,
-    VideoPlayerController controller,
-    double timelineWidth,
-  ) {
-    final durationMs = controller.value.duration.inMilliseconds.toDouble();
-
-    if (durationMs <= 0) return const SizedBox.shrink();
-
-    return ValueListenableBuilder<VideoPlayerValue>(
-      valueListenable: controller,
-      builder: (context, value, child) {
-        final currentMs = value.position.inMilliseconds.toDouble();
-        final playheadPosition = (currentMs / durationMs) * timelineWidth;
-
-        return Positioned(
-          left: playheadPosition.clamp(0.0, timelineWidth),
-          top: -10,
-          bottom: -10,
-          child: Container(
-            width: 2,
-            decoration: BoxDecoration(
-              color: ClonesColors.primary,
-              boxShadow: [
-                BoxShadow(
-                  color: ClonesColors.primary.withValues(alpha: 0.3),
-                  blurRadius: 3,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-            child: Stack(
-              alignment: Alignment.topCenter,
-              children: [
-                // Playhead handle at the top
-                Positioned(
-                  top: -5,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: ClonesColors.primary,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 2,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   Future<void> _openContextMenu(
     BuildContext context,
     WidgetRef ref,
-    VideoPlayerController controller,
     double durationMs,
     double timelineWidth,
-    bool canEdit,
   ) async {
     final globalPos = _lastRightClickGlobal;
     if (globalPos == null) return;
@@ -731,79 +763,88 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
             textStyle: textStyle,
           ),
         ),
-        // Only show editing options if editing is allowed
-        if (canEdit) ...[
-          PopupMenuItem<int>(
-            value: 1,
-            height: 36,
-            child: _ContextMenuItem(
-              icon: Icons.content_cut,
-              text: 'Split clip (B)',
-              textStyle: textStyle,
-            ),
+        // Show editing options
+        PopupMenuItem<int>(
+          value: 1,
+          height: 36,
+          child: _ContextMenuItem(
+            icon: Icons.content_cut,
+            text: 'Split clip (B)',
+            textStyle: textStyle,
           ),
-          PopupMenuItem<int>(
-            value: 2,
-            height: 36,
-            child: _ContextMenuItem(
-              icon: Icons.delete_outline,
-              text: 'Delete (Del)',
-              textStyle: textStyle,
-            ),
+        ),
+        PopupMenuItem<int>(
+          value: 2,
+          height: 36,
+          child: _ContextMenuItem(
+            icon: Icons.delete_outline,
+            text: 'Delete (Del)',
+            textStyle: textStyle,
           ),
-          PopupMenuItem<int>(
-            value: 3,
-            height: 36,
-            child: _ContextMenuItem(
-              icon: Icons.content_copy,
-              text: 'Copy (Cmd/Ctrl+C)',
-              textStyle: textStyle,
-            ),
+        ),
+        PopupMenuItem<int>(
+          value: 3,
+          height: 36,
+          child: _ContextMenuItem(
+            icon: Icons.content_copy,
+            text: 'Copy (Cmd/Ctrl+C)',
+            textStyle: textStyle,
           ),
-          PopupMenuItem<int>(
-            value: 4,
-            height: 36,
-            child: _ContextMenuItem(
-              icon: Icons.content_paste,
-              text: 'Paste (Cmd/Ctrl+V)',
-              textStyle: textStyle,
-            ),
+        ),
+        PopupMenuItem<int>(
+          value: 4,
+          height: 36,
+          child: _ContextMenuItem(
+            icon: Icons.content_paste,
+            text: 'Paste (Cmd/Ctrl+V)',
+            textStyle: textStyle,
           ),
-          const PopupMenuDivider(height: 8),
-          PopupMenuItem<int>(
-            value: 5,
-            height: 36,
-            child: _ContextMenuItem(
-              icon: Icons.content_cut,
-              text: 'Trim to playhead (T)',
-              textStyle: textStyle,
-            ),
+        ),
+        const PopupMenuDivider(height: 8),
+        PopupMenuItem<int>(
+          value: 5,
+          height: 36,
+          child: _ContextMenuItem(
+            icon: Icons.content_cut,
+            text: 'Trim to playhead (T)',
+            textStyle: textStyle,
           ),
-          const PopupMenuDivider(height: 4),
-          PopupMenuItem<int>(
-            value: 6,
-            height: 36,
-            child: _ContextMenuItem(
-              icon: Icons.check_circle_outline,
-              text: 'Select this clip',
-              textStyle: textStyle,
-            ),
+        ),
+        const PopupMenuDivider(height: 4),
+        PopupMenuItem<int>(
+          value: 6,
+          height: 36,
+          child: _ContextMenuItem(
+            icon: Icons.check_circle_outline,
+            text: 'Select this clip',
+            textStyle: textStyle,
           ),
-          PopupMenuItem<int>(
-            value: 7,
-            height: 36,
-            child: _ContextMenuItem(
-              icon: Icons.radio_button_unchecked,
-              text: 'Clear selection',
-              textStyle: textStyle,
-            ),
+        ),
+        PopupMenuItem<int>(
+          value: 7,
+          height: 36,
+          child: _ContextMenuItem(
+            icon: Icons.radio_button_unchecked,
+            text: 'Clear selection',
+            textStyle: textStyle,
           ),
-        ],
+        ),
       ],
       elevation: 0,
     ).then((value) {
       final notifier = ref.read(demoDetailNotifierProvider.notifier);
-      if (value == 1) {
+      final videoStateNotifier =
+          ref.read(videoStateNotifierProvider(widget.videoId).notifier);
+
+      if (value == 100) {
+        // Play/Pause
+        final videoState = ref.read(videoStateNotifierProvider(widget.videoId));
+        if (videoState.isPlaying) {
+          videoStateNotifier.setPaused();
+        } else {
+          videoStateNotifier.setPlaying();
+        }
+      } else if (value == 1) {
         notifier.splitClipAt(clickTime);
       } else if (value == 2) {
         notifier.deleteSelectedClips();

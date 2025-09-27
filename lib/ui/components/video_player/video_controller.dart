@@ -1,8 +1,9 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:clones_desktop/ui/components/video_player/video_state.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 abstract class VideoController {
   Future<void> initialize();
@@ -15,10 +16,9 @@ abstract class VideoController {
 }
 
 class VideoControllerException implements Exception {
+  VideoControllerException(this.message, [this.originalException]);
   final String message;
   final Object? originalException;
-
-  VideoControllerException(this.message, [this.originalException]);
 
   @override
   String toString() => 'VideoControllerException: $message';
@@ -43,7 +43,9 @@ mixin VideoControllerMixin {
     } catch (e) {
       if (e is VideoControllerException) rethrow;
       throw VideoControllerException(
-          'Failed to $operation: ${e.toString()}', e);
+        'Failed to $operation: $e',
+        e,
+      );
     }
   }
 
@@ -66,7 +68,7 @@ mixin VideoControllerMixin {
     } catch (e) {
       final message = e is VideoControllerException
           ? e.message
-          : 'Unexpected error during $operationName: ${e.toString()}';
+          : 'Unexpected error during $operationName: $e';
 
       if (kDebugMode) {
         print('VideoController Error [$operationName]: $message');
@@ -77,7 +79,9 @@ mixin VideoControllerMixin {
 
       // Only set error if videoId is provided (new scoped approach)
       if (videoId != null) {
-        ref.read(videoStateNotifierProvider(videoId).notifier).setError(message);
+        ref
+            .read(videoStateNotifierProvider(videoId).notifier)
+            .setError(message);
       }
     }
   }
@@ -111,10 +115,9 @@ final videoControllerProvider = Provider.family<VideoController, VideoSource>(
 
 // We'll implement these in the respective platform files
 class WebVideoController extends VideoController with VideoControllerMixin {
+  WebVideoController(this.source, this.ref);
   final VideoSource source;
   final dynamic ref;
-
-  WebVideoController(this.source, this.ref);
 
   @override
   Future<void> initialize() async {
@@ -154,10 +157,9 @@ class WebVideoController extends VideoController with VideoControllerMixin {
 }
 
 class NativeVideoController extends VideoController with VideoControllerMixin {
+  NativeVideoController(this.source, this.ref);
   final VideoSource source;
   final dynamic ref;
-
-  NativeVideoController(this.source, this.ref);
 
   @override
   Future<void> initialize() async {

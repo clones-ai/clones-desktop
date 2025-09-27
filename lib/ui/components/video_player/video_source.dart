@@ -20,10 +20,10 @@ class Base64VideoSource extends VideoSource {
   final String dataUri;
 
   static Future<Base64VideoSource> fromAsset(String assetPath) async {
-    final ByteData data = await rootBundle.load(assetPath);
+    final data = await rootBundle.load(assetPath);
     final bytes = data.buffer.asUint8List();
     final base64String = base64Encode(bytes);
-    final dataUri = "data:video/mp4;base64,$base64String";
+    final dataUri = 'data:video/mp4;base64,$base64String';
     return Base64VideoSource(dataUri);
   }
 
