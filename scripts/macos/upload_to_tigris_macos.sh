@@ -171,7 +171,7 @@ create_tauri_manifest() {
     while IFS= read -r -d '' targz_file; do
         local filename=$(basename "$targz_file")
         local arch=""
-        local url="$BUCKET_URL/latest/$filename"
+        local url="$BUCKET_URL/latest/macos/$filename"
         
         if [[ "$filename" == *"aarch64"* ]] || [[ "$filename" == *"arm64"* ]]; then
             arch="aarch64"
@@ -280,7 +280,7 @@ EOF
         
         entries+=("    \"macos_${arch}_dmg\": {
       \"filename\": \"$filename\",
-      \"url\": \"$BUCKET_URL/latest/$filename\",
+      \"url\": \"$BUCKET_URL/latest/macos/$filename\",
       \"size\": $size,
       \"arch\": \"$arch\",
       \"type\": \"dmg\"
@@ -304,7 +304,7 @@ EOF
         
         entries+=("    \"macos_${arch}_app\": {
       \"filename\": \"$zip_name\",
-      \"url\": \"$BUCKET_URL/latest/$zip_name\",
+      \"url\": \"$BUCKET_URL/latest/macos/$zip_name\",
       \"size\": $size,
       \"arch\": \"$arch\",
       \"type\": \"app\"
@@ -330,9 +330,9 @@ EOF
     echo "$manifest_file"
 }
 
-# Clear the 'latest' directory on Tigris
+# Clear the 'latest/macos' directory on Tigris
 clear_latest_directory() {
-    log_info "Clearing 'latest' directory on Tigris..."
+    log_info "Clearing 'latest/macos' directory on Tigris..."
 
     # Configure AWS CLI for Tigris
     export AWS_ACCESS_KEY_ID="$TIGRIS_ACCESS_KEY_ID"
@@ -342,10 +342,10 @@ clear_latest_directory() {
 
     # The command doesn't fail if the directory is empty or doesn't exist.
     # We wrap this in an if to prevent script exit on failure due to set -e.
-    if aws s3 rm "s3://$TIGRIS_BUCKET/latest/" --recursive; then
-        log_success "Successfully cleared 'latest' directory."
+    if aws s3 rm "s3://$TIGRIS_BUCKET/latest/macos/" --recursive; then
+        log_success "Successfully cleared 'latest/macos' directory."
     else
-        log_warning "Could not clear 'latest' directory. Proceeding with upload anyway."
+        log_warning "Could not clear 'latest/macos' directory. Proceeding with upload anyway."
     fi
 }
 
@@ -374,7 +374,7 @@ main_upload() {
         upload_file "$dmg_file" "versions/$version/macos/$filename" "$version" "$arch" "dmg"
         
         # Upload to latest path (for easy access)
-        upload_file "$dmg_file" "latest/$filename" "$version" "$arch" "dmg"
+        upload_file "$dmg_file" "latest/macos/$filename" "$version" "$arch" "dmg"
     done
     
     # Upload APP bundles (zipped for transport)
@@ -400,7 +400,7 @@ main_upload() {
         upload_file "$temp_zip" "versions/$version/macos/$zip_name" "$version" "$arch" "app"
         
         # Upload to latest path
-        upload_file "$temp_zip" "latest/$zip_name" "$version" "$arch" "app"
+        upload_file "$temp_zip" "latest/macos/$zip_name" "$version" "$arch" "app"
         
         rm "$temp_zip"
     done
@@ -437,8 +437,8 @@ main_upload() {
     log_info "Manifest content preview:"
     head -10 "$manifest_file"
     
-    upload_file "$manifest_file" "latest/version.json" "$version" "all" "manifest"
-    upload_file "$manifest_file" "versions/$version/version.json" "$version" "all" "manifest"
+    upload_file "$manifest_file" "latest/macos/version.json" "$version" "all" "manifest"
+    upload_file "$manifest_file" "versions/$version/macos/version.json" "$version" "all" "manifest"
     rm "$manifest_file"
     
     # Create and upload Tauri updater manifest (secure format with signatures)
@@ -453,16 +453,16 @@ main_upload() {
         cat "$tauri_manifest_file"
         
         # Upload Tauri manifest to match the endpoint in tauri.conf.json
-        upload_file "$tauri_manifest_file" "latest/latest.json" "$version" "all" "tauri_manifest"
-        upload_file "$tauri_manifest_file" "versions/$version/latest.json" "$version" "all" "tauri_manifest"
+        upload_file "$tauri_manifest_file" "latest/macos/latest.json" "$version" "all" "tauri_manifest"
+        upload_file "$tauri_manifest_file" "versions/$version/macos/latest.json" "$version" "all" "tauri_manifest"
         rm "$tauri_manifest_file"
     fi
     
     log_success "🎉 Upload completed successfully!"
     echo ""
     log_info "Files available at:"
-    echo "  📦 Latest builds: $BUCKET_URL/latest/"
-    echo "  📋 Version manifest: $BUCKET_URL/latest/version.json"
+    echo "  📦 Latest builds: $BUCKET_URL/latest/macos/"
+    echo "  📋 Version manifest: $BUCKET_URL/latest/macos/version.json"
     echo "  📚 All versions: $BUCKET_URL/versions/"
 }
 

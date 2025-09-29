@@ -41,7 +41,7 @@ main() {
     log_success "Build completed successfully!"
     
     log_info "Step 2/2: Uploading to Tigris..."
-    ./scripts/upload_to_tigris.sh
+    ./scripts/macos/upload_to_tigris_macos.sh
     
     if [ $? -ne 0 ]; then
         log_error "Upload failed"
@@ -50,7 +50,7 @@ main() {
     
     log_success "🎉 Complete deployment finished!"
     log_info "Your app is now available for download at:"
-    echo "  🌐 https://releases-test.clones-ai.com/latest/"
+    echo "  🌐 https://releases-test.clones-ai.com/latest/macos/"
 }
 
 # Run if executed directly
