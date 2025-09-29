@@ -63,7 +63,7 @@ function Main {
 
     Write-Success "🎉 Complete deployment finished!"
     Write-Info "Your app is now available for download at:"
-    Write-Host "  🌐 https://releases-test.clones-ai.com/latest/" -ForegroundColor Cyan
+    Write-Host "  🌐 https://releases-test.clones-ai.com/latest/windows/" -ForegroundColor Cyan
 }
 
 # Run if executed directly
