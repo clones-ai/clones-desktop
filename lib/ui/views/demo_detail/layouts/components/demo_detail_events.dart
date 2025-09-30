@@ -1,3 +1,5 @@
+// ignore_for_file: use_decorated_box
+
 import 'dart:convert';
 
 import 'package:clones_desktop/application/session/provider.dart';
@@ -85,6 +87,13 @@ class DemoDetailEvents extends ConsumerWidget {
             itemCount: filteredEvents.length,
             itemBuilder: (context, index) {
               final event = filteredEvents[index];
+              final notifier = ref.read(demoDetailNotifierProvider.notifier);
+
+              // Check if event is in a deleted zone
+              final relativeTime = event.time - startTime;
+              final isInDeletedZone =
+                  notifier.isPositionInDeletedZone(relativeTime.toDouble());
+
               return Stack(
                 children: [
                   Positioned(
@@ -96,8 +105,13 @@ class DemoDetailEvents extends ConsumerWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: ClonesColors.rewardInfo.withValues(alpha: 0.3),
+                        color: isInDeletedZone
+                            ? Colors.redAccent.withValues(alpha: 0.4)
+                            : ClonesColors.rewardInfo.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(16),
+                        border: isInDeletedZone
+                            ? Border.all(color: Colors.redAccent)
+                            : null,
                         boxShadow: [
                           BoxShadow(
                             color: const Color(0xFF000000).withAlpha(60),
@@ -112,7 +126,9 @@ class DemoDetailEvents extends ConsumerWidget {
                       child: Text(
                         event.event,
                         style: theme.textTheme.bodySmall!.copyWith(
-                          color: ClonesColors.rewardInfo,
+                          color: isInDeletedZone
+                              ? Colors.redAccent
+                              : ClonesColors.rewardInfo,
                         ),
                       ),
                     ),
@@ -123,7 +139,6 @@ class DemoDetailEvents extends ConsumerWidget {
                     child: GestureDetector(
                       onTap: () {
                         if (videoController != null && startTime > 0) {
-                          final relativeTime = event.time - startTime;
                           videoController
                               .seekTo(Duration(milliseconds: relativeTime));
                         }
@@ -134,9 +149,14 @@ class DemoDetailEvents extends ConsumerWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: ClonesColors.getEventTypeColor(event.event)
-                              .withValues(alpha: 0.3),
+                          color: isInDeletedZone
+                              ? Colors.redAccent.withValues(alpha: 0.4)
+                              : ClonesColors.getEventTypeColor(event.event)
+                                  .withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(16),
+                          border: isInDeletedZone
+                              ? Border.all(color: Colors.redAccent)
+                              : null,
                           boxShadow: [
                             BoxShadow(
                               color: const Color(0xFF000000).withAlpha(60),
@@ -151,7 +171,9 @@ class DemoDetailEvents extends ConsumerWidget {
                         child: Text(
                           formatTimeMs(event.time - startTime),
                           style: theme.textTheme.bodySmall!.copyWith(
-                            color: ClonesColors.getEventTypeColor(event.event),
+                            color: isInDeletedZone
+                                ? Colors.redAccent
+                                : ClonesColors.getEventTypeColor(event.event),
                           ),
                         ),
                       ),
@@ -159,42 +181,53 @@ class DemoDetailEvents extends ConsumerWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(10),
-                    child: CardWidget(
-                      padding: CardPadding.small,
-                      variant: CardVariant.secondary,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  const JsonEncoder.withIndent('  ')
-                                      .convert(event.data),
-                                  style: theme.textTheme.bodySmall!.copyWith(
-                                    fontFamily: 'monospace',
+                    child: Container(
+                      decoration: isInDeletedZone
+                          ? BoxDecoration(
+                              color: Colors.redAccent.withValues(alpha: 0.12),
+                              border: Border.all(
+                                color: Colors.redAccent.withValues(alpha: 0.3),
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            )
+                          : null,
+                      child: CardWidget(
+                        padding: CardPadding.small,
+                        variant: CardVariant.secondary,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    const JsonEncoder.withIndent('  ')
+                                        .convert(event.data),
+                                    style: theme.textTheme.bodySmall!.copyWith(
+                                      fontFamily: 'monospace',
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          BtnPrimary(
-                            btnPrimaryType: BtnPrimaryType.outlinePrimary,
-                            onTap: () async {
-                              await Clipboard.setData(
-                                ClipboardData(text: jsonEncode(event.data)),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Data copied!'),
-                                ),
-                              );
-                            },
-                            buttonText: 'Copy',
-                          ),
-                        ],
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            BtnPrimary(
+                              btnPrimaryType: BtnPrimaryType.outlinePrimary,
+                              onTap: () async {
+                                await Clipboard.setData(
+                                  ClipboardData(text: jsonEncode(event.data)),
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Data copied!'),
+                                  ),
+                                );
+                              },
+                              buttonText: 'Copy',
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

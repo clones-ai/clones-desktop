@@ -1,3 +1,5 @@
+// ignore_for_file: use_decorated_box
+
 import 'dart:convert';
 
 import 'package:clones_desktop/application/session/provider.dart';
@@ -157,6 +159,30 @@ class DemoDetailEditor extends ConsumerWidget {
     final demoDetail = ref.watch(demoDetailNotifierProvider);
     final submissionStatus = demoDetail.recording?.submission?.status;
     final theme = Theme.of(context);
+
+    // Check if message is in a deleted zone
+    // Convert absolute timestamp to relative (same as events do)
+    final relativeTime = message.timestamp - startTime;
+    var isInDeletedZone = false;
+
+    try {
+      // Only check if we have deleted history (clips are always initialized)
+      if (demoDetail.deletedClipsHistory.isNotEmpty) {
+        final notifier = ref.read(demoDetailNotifierProvider.notifier);
+
+        final absoluteCheck =
+            notifier.isPositionInDeletedZone(message.timestamp.toDouble());
+        final relativeCheck = relativeTime >= 0 &&
+            notifier.isPositionInDeletedZone(relativeTime.toDouble());
+
+        // Use whichever works (prefer relative like events)
+        isInDeletedZone = relativeTime >= 0 ? relativeCheck : absoluteCheck;
+      }
+    } catch (e) {
+      // If there's an error, just don't mark as deleted
+      debugPrint('❌ Error checking deleted zone for message: $e');
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Stack(
@@ -167,7 +193,6 @@ class DemoDetailEditor extends ConsumerWidget {
             child: GestureDetector(
               onTap: () {
                 if (videoController != null && startTime > 0) {
-                  final relativeTime = message.timestamp - startTime;
                   videoController.seekTo(Duration(milliseconds: relativeTime));
                 }
               },
@@ -177,8 +202,13 @@ class DemoDetailEditor extends ConsumerWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: ClonesColors.secondaryText.withValues(alpha: 0.3),
+                  color: isInDeletedZone
+                      ? Colors.redAccent.withValues(alpha: 0.4)
+                      : ClonesColors.secondaryText.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(16),
+                  border: isInDeletedZone
+                      ? Border.all(color: Colors.redAccent)
+                      : null,
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFF000000).withAlpha(60),
@@ -199,66 +229,79 @@ class DemoDetailEditor extends ConsumerWidget {
           ),
           Padding(
             padding: const EdgeInsets.all(5),
-            child: CardWidget(
-              variant: CardVariant.secondary,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        message.role.toUpperCase(),
-                        style: theme.textTheme.bodySmall,
+            child: Container(
+              decoration: isInDeletedZone
+                  ? BoxDecoration(
+                      color: Colors.redAccent.withValues(alpha: 0.12),
+                      border: Border.all(
+                        color: Colors.redAccent.withValues(alpha: 0.3),
                       ),
-                      if (submissionStatus != 'completed')
-                        IconButton(
-                          icon: const Icon(
-                            Icons.visibility_off_outlined,
-                            size: 16,
-                            color: ClonesColors.primary,
-                          ),
-                          tooltip: 'Add privacy range',
-                          onPressed: () => ref
-                              .read(demoDetailNotifierProvider.notifier)
-                              .addPrivateRangeAroundMessage(message),
-                        )
-                      else
-                        const SizedBox(
-                          height: 30,
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  if (message.content is String)
-                    Row(
-                      children: [
-                        Icon(
-                          message.content.toLowerCase().contains('click')
-                              ? Icons.ads_click
-                              : message.content.toLowerCase().contains('scroll')
-                                  ? Icons.swap_vert
-                                  : Icons.keyboard,
-                          color: ClonesColors.tertiary,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: SelectableText(
-                            message.content
-                                .replaceAll('```python', '')
-                                .replaceAll('```', ''),
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ),
-                      ],
+                      borderRadius: BorderRadius.circular(12),
                     )
-                  else
-                    Image.memory(
-                      base64Decode(message.content['data']),
-                      fit: BoxFit.contain,
+                  : null,
+              child: CardWidget(
+                variant: CardVariant.secondary,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          message.role.toUpperCase(),
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        if (submissionStatus != 'completed')
+                          IconButton(
+                            icon: const Icon(
+                              Icons.visibility_off_outlined,
+                              size: 16,
+                              color: ClonesColors.primary,
+                            ),
+                            tooltip: 'Add privacy range',
+                            onPressed: () => ref
+                                .read(demoDetailNotifierProvider.notifier)
+                                .addPrivateRangeAroundMessage(message),
+                          )
+                        else
+                          const SizedBox(
+                            height: 30,
+                          ),
+                      ],
                     ),
-                ],
+                    const SizedBox(height: 10),
+                    if (message.content is String)
+                      Row(
+                        children: [
+                          Icon(
+                            message.content.toLowerCase().contains('click')
+                                ? Icons.ads_click
+                                : message.content
+                                        .toLowerCase()
+                                        .contains('scroll')
+                                    ? Icons.swap_vert
+                                    : Icons.keyboard,
+                            color: ClonesColors.tertiary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: SelectableText(
+                              message.content
+                                  .replaceAll('```python', '')
+                                  .replaceAll('```', ''),
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      Image.memory(
+                        base64Decode(message.content['data']),
+                        fit: BoxFit.contain,
+                      ),
+                  ],
+                ),
               ),
             ),
           ),

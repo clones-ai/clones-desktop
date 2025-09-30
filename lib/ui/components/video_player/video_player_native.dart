@@ -3,6 +3,7 @@ import 'package:clones_desktop/ui/components/video_player/video_controller.dart'
 import 'package:clones_desktop/ui/components/video_player/video_player_interface.dart';
 import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:clones_desktop/ui/components/video_player/video_state.dart';
+import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart' as video_player;
@@ -87,8 +88,14 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
   void videoSeekBackward() {
     final currentPos =
         ref.read(videoStateNotifierProvider(_videoId)).currentPosition;
-    final newPosition = currentPos - const Duration(seconds: 1);
-    final seekTo = newPosition < Duration.zero ? Duration.zero : newPosition;
+    var newPosition = currentPos - const Duration(seconds: 1);
+    newPosition = newPosition < Duration.zero ? Duration.zero : newPosition;
+
+    // Adjust position to skip deleted zones
+    final adjustedMs =
+        _adjustSeekPositionToValidZone(newPosition.inMilliseconds.toDouble());
+    final seekTo = Duration(milliseconds: adjustedMs.round());
+
     safeExecute(
       () => _controller.seekTo(seekTo),
       'seek backward',
@@ -102,8 +109,13 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
     final state = ref.read(videoStateNotifierProvider(_videoId));
     final newPosition = state.currentPosition + const Duration(seconds: 1);
     if (newPosition < state.totalDuration) {
+      // Adjust position to skip deleted zones
+      final adjustedMs =
+          _adjustSeekPositionToValidZone(newPosition.inMilliseconds.toDouble());
+      final seekTo = Duration(milliseconds: adjustedMs.round());
+
       safeExecute(
-        () => _controller.seekTo(newPosition),
+        () => _controller.seekTo(seekTo),
         'seek forward',
         ref,
         _videoId,
@@ -122,12 +134,30 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
     } else {
       clampedPosition = position;
     }
+
+    // Adjust position to skip deleted zones
+    final adjustedMs = _adjustSeekPositionToValidZone(
+      clampedPosition.inMilliseconds.toDouble(),
+    );
+    final seekTo = Duration(milliseconds: adjustedMs.round());
+
     safeExecute(
-      () => _controller.seekTo(clampedPosition),
+      () => _controller.seekTo(seekTo),
       'seek',
       ref,
       _videoId,
     );
+  }
+
+  /// Adjust seek position to avoid deleted zones
+  double _adjustSeekPositionToValidZone(double positionMs) {
+    try {
+      final notifier = ref.read(demoDetailNotifierProvider.notifier);
+      return notifier.adjustSeekPositionToValidZone(positionMs);
+    } catch (e) {
+      // If provider not available (e.g., not in demo detail page), return original position
+      return positionMs;
+    }
   }
 
   @override

@@ -2,6 +2,7 @@ import 'package:clones_desktop/domain/models/message/deleted_range.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/recording/api_recording.dart';
 import 'package:clones_desktop/domain/models/recording/recording_event.dart';
+import 'package:clones_desktop/domain/models/video_clip.dart';
 import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -25,10 +26,15 @@ class DemoDetailState with _$DemoDetailState {
     @Default(false) bool showTrainingSessionModal,
 
     // Video editing
-    @Default([]) List<RangeValues> deletedSegments,
+    @Default([]) List<VideoClip> clips,
+    @Default({}) Set<String> selectedClipIds,
+    @JsonKey(includeIfNull: false) VideoClip? clipboardClip,
+    // Each deletion operation is stored as a separate list of clips
+    @Default([]) List<List<VideoClip>> deletedClipsHistory,
+    
+    // Legacy support for RangeValues (deprecated)
     @Default([]) List<RangeValues> clipSegments,
     @Default({}) Set<int> selectedClipIndexes,
-    @JsonKey(includeIfNull: false) RangeValues? clipboardClip,
     @Default(false) bool isApplyingEdits,
 
     // New states for button handling

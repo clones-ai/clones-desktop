@@ -31,11 +31,15 @@ mixin _$DemoDetailState {
   VideoSource? get videoSource => throw _privateConstructorUsedError;
   bool get showTrainingSessionModal =>
       throw _privateConstructorUsedError; // Video editing
-  List<RangeValues> get deletedSegments => throw _privateConstructorUsedError;
+  List<VideoClip> get clips => throw _privateConstructorUsedError;
+  Set<String> get selectedClipIds => throw _privateConstructorUsedError;
+  @JsonKey(includeIfNull: false)
+  VideoClip? get clipboardClip =>
+      throw _privateConstructorUsedError; // Each deletion operation is stored as a separate list of clips
+  List<List<VideoClip>> get deletedClipsHistory =>
+      throw _privateConstructorUsedError; // Legacy support for RangeValues (deprecated)
   List<RangeValues> get clipSegments => throw _privateConstructorUsedError;
   Set<int> get selectedClipIndexes => throw _privateConstructorUsedError;
-  @JsonKey(includeIfNull: false)
-  RangeValues? get clipboardClip => throw _privateConstructorUsedError;
   bool get isApplyingEdits =>
       throw _privateConstructorUsedError; // New states for button handling
   bool get isProcessing => throw _privateConstructorUsedError;
@@ -71,10 +75,12 @@ abstract class $DemoDetailStateCopyWith<$Res> {
       @JsonKey(includeIfNull: false) VideoPlayerController? videoController,
       @JsonKey(includeIfNull: false) VideoSource? videoSource,
       bool showTrainingSessionModal,
-      List<RangeValues> deletedSegments,
+      List<VideoClip> clips,
+      Set<String> selectedClipIds,
+      @JsonKey(includeIfNull: false) VideoClip? clipboardClip,
+      List<List<VideoClip>> deletedClipsHistory,
       List<RangeValues> clipSegments,
       Set<int> selectedClipIndexes,
-      @JsonKey(includeIfNull: false) RangeValues? clipboardClip,
       bool isApplyingEdits,
       bool isProcessing,
       bool isExporting,
@@ -85,6 +91,7 @@ abstract class $DemoDetailStateCopyWith<$Res> {
       String? uploadError});
 
   $ApiRecordingCopyWith<$Res>? get recording;
+  $VideoClipCopyWith<$Res>? get clipboardClip;
 }
 
 /// @nodoc
@@ -113,10 +120,12 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
     Object? videoController = freezed,
     Object? videoSource = freezed,
     Object? showTrainingSessionModal = null,
-    Object? deletedSegments = null,
+    Object? clips = null,
+    Object? selectedClipIds = null,
+    Object? clipboardClip = freezed,
+    Object? deletedClipsHistory = null,
     Object? clipSegments = null,
     Object? selectedClipIndexes = null,
-    Object? clipboardClip = freezed,
     Object? isApplyingEdits = null,
     Object? isProcessing = null,
     Object? isExporting = null,
@@ -171,10 +180,22 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
           ? _value.showTrainingSessionModal
           : showTrainingSessionModal // ignore: cast_nullable_to_non_nullable
               as bool,
-      deletedSegments: null == deletedSegments
-          ? _value.deletedSegments
-          : deletedSegments // ignore: cast_nullable_to_non_nullable
-              as List<RangeValues>,
+      clips: null == clips
+          ? _value.clips
+          : clips // ignore: cast_nullable_to_non_nullable
+              as List<VideoClip>,
+      selectedClipIds: null == selectedClipIds
+          ? _value.selectedClipIds
+          : selectedClipIds // ignore: cast_nullable_to_non_nullable
+              as Set<String>,
+      clipboardClip: freezed == clipboardClip
+          ? _value.clipboardClip
+          : clipboardClip // ignore: cast_nullable_to_non_nullable
+              as VideoClip?,
+      deletedClipsHistory: null == deletedClipsHistory
+          ? _value.deletedClipsHistory
+          : deletedClipsHistory // ignore: cast_nullable_to_non_nullable
+              as List<List<VideoClip>>,
       clipSegments: null == clipSegments
           ? _value.clipSegments
           : clipSegments // ignore: cast_nullable_to_non_nullable
@@ -183,10 +204,6 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
           ? _value.selectedClipIndexes
           : selectedClipIndexes // ignore: cast_nullable_to_non_nullable
               as Set<int>,
-      clipboardClip: freezed == clipboardClip
-          ? _value.clipboardClip
-          : clipboardClip // ignore: cast_nullable_to_non_nullable
-              as RangeValues?,
       isApplyingEdits: null == isApplyingEdits
           ? _value.isApplyingEdits
           : isApplyingEdits // ignore: cast_nullable_to_non_nullable
@@ -235,6 +252,20 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
       return _then(_value.copyWith(recording: value) as $Val);
     });
   }
+
+  /// Create a copy of DemoDetailState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $VideoClipCopyWith<$Res>? get clipboardClip {
+    if (_value.clipboardClip == null) {
+      return null;
+    }
+
+    return $VideoClipCopyWith<$Res>(_value.clipboardClip!, (value) {
+      return _then(_value.copyWith(clipboardClip: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -257,10 +288,12 @@ abstract class _$$DemoDetailStateImplCopyWith<$Res>
       @JsonKey(includeIfNull: false) VideoPlayerController? videoController,
       @JsonKey(includeIfNull: false) VideoSource? videoSource,
       bool showTrainingSessionModal,
-      List<RangeValues> deletedSegments,
+      List<VideoClip> clips,
+      Set<String> selectedClipIds,
+      @JsonKey(includeIfNull: false) VideoClip? clipboardClip,
+      List<List<VideoClip>> deletedClipsHistory,
       List<RangeValues> clipSegments,
       Set<int> selectedClipIndexes,
-      @JsonKey(includeIfNull: false) RangeValues? clipboardClip,
       bool isApplyingEdits,
       bool isProcessing,
       bool isExporting,
@@ -272,6 +305,8 @@ abstract class _$$DemoDetailStateImplCopyWith<$Res>
 
   @override
   $ApiRecordingCopyWith<$Res>? get recording;
+  @override
+  $VideoClipCopyWith<$Res>? get clipboardClip;
 }
 
 /// @nodoc
@@ -298,10 +333,12 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
     Object? videoController = freezed,
     Object? videoSource = freezed,
     Object? showTrainingSessionModal = null,
-    Object? deletedSegments = null,
+    Object? clips = null,
+    Object? selectedClipIds = null,
+    Object? clipboardClip = freezed,
+    Object? deletedClipsHistory = null,
     Object? clipSegments = null,
     Object? selectedClipIndexes = null,
-    Object? clipboardClip = freezed,
     Object? isApplyingEdits = null,
     Object? isProcessing = null,
     Object? isExporting = null,
@@ -356,10 +393,22 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
           ? _value.showTrainingSessionModal
           : showTrainingSessionModal // ignore: cast_nullable_to_non_nullable
               as bool,
-      deletedSegments: null == deletedSegments
-          ? _value._deletedSegments
-          : deletedSegments // ignore: cast_nullable_to_non_nullable
-              as List<RangeValues>,
+      clips: null == clips
+          ? _value._clips
+          : clips // ignore: cast_nullable_to_non_nullable
+              as List<VideoClip>,
+      selectedClipIds: null == selectedClipIds
+          ? _value._selectedClipIds
+          : selectedClipIds // ignore: cast_nullable_to_non_nullable
+              as Set<String>,
+      clipboardClip: freezed == clipboardClip
+          ? _value.clipboardClip
+          : clipboardClip // ignore: cast_nullable_to_non_nullable
+              as VideoClip?,
+      deletedClipsHistory: null == deletedClipsHistory
+          ? _value._deletedClipsHistory
+          : deletedClipsHistory // ignore: cast_nullable_to_non_nullable
+              as List<List<VideoClip>>,
       clipSegments: null == clipSegments
           ? _value._clipSegments
           : clipSegments // ignore: cast_nullable_to_non_nullable
@@ -368,10 +417,6 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
           ? _value._selectedClipIndexes
           : selectedClipIndexes // ignore: cast_nullable_to_non_nullable
               as Set<int>,
-      clipboardClip: freezed == clipboardClip
-          ? _value.clipboardClip
-          : clipboardClip // ignore: cast_nullable_to_non_nullable
-              as RangeValues?,
       isApplyingEdits: null == isApplyingEdits
           ? _value.isApplyingEdits
           : isApplyingEdits // ignore: cast_nullable_to_non_nullable
@@ -423,10 +468,12 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
       @JsonKey(includeIfNull: false) this.videoController,
       @JsonKey(includeIfNull: false) this.videoSource,
       this.showTrainingSessionModal = false,
-      final List<RangeValues> deletedSegments = const [],
+      final List<VideoClip> clips = const [],
+      final Set<String> selectedClipIds = const {},
+      @JsonKey(includeIfNull: false) this.clipboardClip,
+      final List<List<VideoClip>> deletedClipsHistory = const [],
       final List<RangeValues> clipSegments = const [],
       final Set<int> selectedClipIndexes = const {},
-      @JsonKey(includeIfNull: false) this.clipboardClip,
       this.isApplyingEdits = false,
       this.isProcessing = false,
       this.isExporting = false,
@@ -440,7 +487,9 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
         _privateRanges = privateRanges,
         _eventTypes = eventTypes,
         _enabledEventTypes = enabledEventTypes,
-        _deletedSegments = deletedSegments,
+        _clips = clips,
+        _selectedClipIds = selectedClipIds,
+        _deletedClipsHistory = deletedClipsHistory,
         _clipSegments = clipSegments,
         _selectedClipIndexes = selectedClipIndexes,
         super._();
@@ -509,17 +558,43 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
   @JsonKey()
   final bool showTrainingSessionModal;
 // Video editing
-  final List<RangeValues> _deletedSegments;
+  final List<VideoClip> _clips;
 // Video editing
   @override
   @JsonKey()
-  List<RangeValues> get deletedSegments {
-    if (_deletedSegments is EqualUnmodifiableListView) return _deletedSegments;
+  List<VideoClip> get clips {
+    if (_clips is EqualUnmodifiableListView) return _clips;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_deletedSegments);
+    return EqualUnmodifiableListView(_clips);
   }
 
+  final Set<String> _selectedClipIds;
+  @override
+  @JsonKey()
+  Set<String> get selectedClipIds {
+    if (_selectedClipIds is EqualUnmodifiableSetView) return _selectedClipIds;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableSetView(_selectedClipIds);
+  }
+
+  @override
+  @JsonKey(includeIfNull: false)
+  final VideoClip? clipboardClip;
+// Each deletion operation is stored as a separate list of clips
+  final List<List<VideoClip>> _deletedClipsHistory;
+// Each deletion operation is stored as a separate list of clips
+  @override
+  @JsonKey()
+  List<List<VideoClip>> get deletedClipsHistory {
+    if (_deletedClipsHistory is EqualUnmodifiableListView)
+      return _deletedClipsHistory;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_deletedClipsHistory);
+  }
+
+// Legacy support for RangeValues (deprecated)
   final List<RangeValues> _clipSegments;
+// Legacy support for RangeValues (deprecated)
   @override
   @JsonKey()
   List<RangeValues> get clipSegments {
@@ -538,9 +613,6 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
     return EqualUnmodifiableSetView(_selectedClipIndexes);
   }
 
-  @override
-  @JsonKey(includeIfNull: false)
-  final RangeValues? clipboardClip;
   @override
   @JsonKey()
   final bool isApplyingEdits;
@@ -566,7 +638,7 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
 
   @override
   String toString() {
-    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, privateRanges: $privateRanges, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoController: $videoController, videoSource: $videoSource, showTrainingSessionModal: $showTrainingSessionModal, deletedSegments: $deletedSegments, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, clipboardClip: $clipboardClip, isApplyingEdits: $isApplyingEdits, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, showUploadConfirmModal: $showUploadConfirmModal, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError)';
+    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, privateRanges: $privateRanges, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoController: $videoController, videoSource: $videoSource, showTrainingSessionModal: $showTrainingSessionModal, clips: $clips, selectedClipIds: $selectedClipIds, clipboardClip: $clipboardClip, deletedClipsHistory: $deletedClipsHistory, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, isApplyingEdits: $isApplyingEdits, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, showUploadConfirmModal: $showUploadConfirmModal, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError)';
   }
 
   @override
@@ -596,14 +668,17 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
             (identical(
                     other.showTrainingSessionModal, showTrainingSessionModal) ||
                 other.showTrainingSessionModal == showTrainingSessionModal) &&
+            const DeepCollectionEquality().equals(other._clips, _clips) &&
             const DeepCollectionEquality()
-                .equals(other._deletedSegments, _deletedSegments) &&
+                .equals(other._selectedClipIds, _selectedClipIds) &&
+            (identical(other.clipboardClip, clipboardClip) ||
+                other.clipboardClip == clipboardClip) &&
+            const DeepCollectionEquality()
+                .equals(other._deletedClipsHistory, _deletedClipsHistory) &&
             const DeepCollectionEquality()
                 .equals(other._clipSegments, _clipSegments) &&
             const DeepCollectionEquality()
                 .equals(other._selectedClipIndexes, _selectedClipIndexes) &&
-            (identical(other.clipboardClip, clipboardClip) ||
-                other.clipboardClip == clipboardClip) &&
             (identical(other.isApplyingEdits, isApplyingEdits) ||
                 other.isApplyingEdits == isApplyingEdits) &&
             (identical(other.isProcessing, isProcessing) ||
@@ -636,10 +711,12 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
         videoController,
         videoSource,
         showTrainingSessionModal,
-        const DeepCollectionEquality().hash(_deletedSegments),
+        const DeepCollectionEquality().hash(_clips),
+        const DeepCollectionEquality().hash(_selectedClipIds),
+        clipboardClip,
+        const DeepCollectionEquality().hash(_deletedClipsHistory),
         const DeepCollectionEquality().hash(_clipSegments),
         const DeepCollectionEquality().hash(_selectedClipIndexes),
-        clipboardClip,
         isApplyingEdits,
         isProcessing,
         isExporting,
@@ -674,10 +751,12 @@ abstract class _DemoDetailState extends DemoDetailState {
       final VideoPlayerController? videoController,
       @JsonKey(includeIfNull: false) final VideoSource? videoSource,
       final bool showTrainingSessionModal,
-      final List<RangeValues> deletedSegments,
+      final List<VideoClip> clips,
+      final Set<String> selectedClipIds,
+      @JsonKey(includeIfNull: false) final VideoClip? clipboardClip,
+      final List<List<VideoClip>> deletedClipsHistory,
       final List<RangeValues> clipSegments,
       final Set<int> selectedClipIndexes,
-      @JsonKey(includeIfNull: false) final RangeValues? clipboardClip,
       final bool isApplyingEdits,
       final bool isProcessing,
       final bool isExporting,
@@ -713,14 +792,20 @@ abstract class _DemoDetailState extends DemoDetailState {
   @override
   bool get showTrainingSessionModal; // Video editing
   @override
-  List<RangeValues> get deletedSegments;
+  List<VideoClip> get clips;
+  @override
+  Set<String> get selectedClipIds;
+  @override
+  @JsonKey(includeIfNull: false)
+  VideoClip?
+      get clipboardClip; // Each deletion operation is stored as a separate list of clips
+  @override
+  List<List<VideoClip>>
+      get deletedClipsHistory; // Legacy support for RangeValues (deprecated)
   @override
   List<RangeValues> get clipSegments;
   @override
   Set<int> get selectedClipIndexes;
-  @override
-  @JsonKey(includeIfNull: false)
-  RangeValues? get clipboardClip;
   @override
   bool get isApplyingEdits; // New states for button handling
   @override

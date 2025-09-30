@@ -19,24 +19,8 @@ class _DemoDetailVideoPreviewState
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(demoDetailNotifierProvider);
-    final videoSource = state.videoSource;
-
-    final videoLoaded = videoSource != null;
 
     final theme = Theme.of(context);
-
-    // Avoid modifying providers during build: defer initialization
-    if (videoLoaded &&
-        state.clipSegments.isEmpty &&
-        state.videoController != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          ref
-              .read(demoDetailNotifierProvider.notifier)
-              .initializeClipsFromDuration();
-        }
-      });
-    }
 
     return CardWidget(
       child: SingleChildScrollView(
