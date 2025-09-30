@@ -8,6 +8,7 @@ import 'package:clones_desktop/application/upload/state.dart';
 import 'package:clones_desktop/domain/models/message/deleted_range.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/recording/recording_event.dart';
+import 'package:clones_desktop/domain/models/video_clip.dart';
 import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
 import 'package:collection/collection.dart';
@@ -63,11 +64,15 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
 
   Future<void> initializeVideoPlayer(String recordingId) async {
     try {
+      debugPrint('🎥 initializeVideoPlayer: Loading video for $recordingId');
       final videoData = await ref.read(tauriApiClientProvider).getRecordingFile(
             recordingId: recordingId,
             filename: 'recording.mp4',
             asBase64: true,
           );
+
+      debugPrint(
+          '🎥 initializeVideoPlayer: Video data loaded (${videoData.length} bytes)');
 
       // Create VideoSource for your custom video player system
       final videoSource = Base64VideoSource(videoData);
@@ -75,13 +80,26 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       // Don't create VideoPlayerController here - let VideoPlayer components handle it
       // Just store the videoSource for the components to use
       await state.videoController?.dispose();
+
+      // Force a complete refresh by setting videoSource to null first
+      state = state.copyWith(
+        videoController: null,
+        videoSource: null,
+      );
+
+      // Small delay to ensure UI detects the change
+      await Future.delayed(const Duration(milliseconds: 100));
+
       state = state.copyWith(
         videoController: null, // No controller in DemoDetailNotifier
         videoSource: videoSource,
       );
+
+      debugPrint('🎥 initializeVideoPlayer: VideoSource updated');
     } catch (e) {
       debugPrint(
-          'No video file for recording $recordingId (this is normal for recordings without video)');
+          '❌ initializeVideoPlayer: No video file for recording $recordingId (this is normal for recordings without video)');
+      debugPrint('Error: $e');
       // This is expected for recordings without video files
     }
   }
@@ -193,115 +211,152 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
   }
 
   // --- Video Editing Logic ---
-  void addDeletedSegment(RangeValues segment) {
-    final newSegments = [...state.deletedSegments, segment];
-    _updateDeletedSegments(newSegments);
-  }
-
-  void updateDeletedSegment(int index, RangeValues segment) {
-    final newSegments = [...state.deletedSegments];
-    newSegments[index] = segment;
-    _updateDeletedSegments(newSegments);
-  }
-
-  void removeDeletedSegment(int index) {
-    final newSegments = [...state.deletedSegments]..removeAt(index);
-    state = state.copyWith(deletedSegments: newSegments);
-  }
-
-  void _updateDeletedSegments(List<RangeValues> segments) {
-    // Sort by start time
-    segments.sort((a, b) => a.start.compareTo(b.start));
-
-    // Merge overlapping segments
-    if (segments.isEmpty) {
-      state = state.copyWith(deletedSegments: []);
-      return;
-    }
-
-    final merged = <RangeValues>[segments.first];
-    for (var i = 1; i < segments.length; i++) {
-      final last = merged.last;
-      final current = segments[i];
-      if (current.start < last.end) {
-        final newEnd = last.end > current.end ? last.end : current.end;
-        merged[merged.length - 1] = RangeValues(last.start, newEnd);
-      } else {
-        merged.add(current);
-      }
-    }
-    state = state.copyWith(deletedSegments: merged);
-  }
 
   // Build clips from current video duration when first requested
-  void initializeClipsFromDuration() {
-    if (state.videoController == null) return;
-    if (state.clipSegments.isNotEmpty) return;
-    final durationMs =
-        state.videoController!.value.duration.inMilliseconds.toDouble();
+  void initializeClips(Duration totalDuration) {
+    if (state.clips.isNotEmpty) return;
+    final durationMs = totalDuration.inMilliseconds.toDouble();
     if (durationMs <= 0) return;
+
+    final initialClip = VideoClip.create(start: 0, end: durationMs);
+
     state = state.copyWith(
+      clips: [initialClip],
+      selectedClipIds: <String>{},
+      // Keep legacy compatibility
       clipSegments: [RangeValues(0, durationMs)],
       selectedClipIndexes: <int>{},
     );
   }
 
   void selectClip(int index, {bool toggle = false, bool additive = false}) {
-    if (index < 0 || index >= state.clipSegments.length) return;
-    final current = Set<int>.from(state.selectedClipIndexes);
+    if (index < 0 || index >= state.clips.length) return;
+
+    final clipId = state.clips[index].id;
+    final current = Set<String>.from(state.selectedClipIds);
+    final currentIndexes = Set<int>.from(state.selectedClipIndexes);
+
     if (toggle) {
-      if (current.contains(index)) {
-        current.remove(index);
+      if (current.contains(clipId)) {
+        current.remove(clipId);
+        currentIndexes.remove(index);
       } else {
-        current.add(index);
+        current.add(clipId);
+        currentIndexes.add(index);
       }
     } else if (additive) {
-      current.add(index);
+      current.add(clipId);
+      currentIndexes.add(index);
     } else {
       current
         ..clear()
+        ..add(clipId);
+      currentIndexes
+        ..clear()
         ..add(index);
     }
-    state = state.copyWith(selectedClipIndexes: current);
+
+    state = state.copyWith(
+      selectedClipIds: current,
+      selectedClipIndexes: currentIndexes, // Keep legacy
+    );
   }
 
   void clearSelection() {
-    if (state.selectedClipIndexes.isEmpty) return;
-    state = state.copyWith(selectedClipIndexes: <int>{});
+    if (state.selectedClipIds.isEmpty) return;
+    state = state.copyWith(
+      selectedClipIds: <String>{},
+      selectedClipIndexes: <int>{}, // Keep legacy
+    );
   }
 
   void splitClipAt(double positionMs) {
-    // Ensure clips are initialized
-    initializeClipsFromDuration();
-    final clips = [...state.clipSegments];
-    if (clips.isEmpty) return;
+    final clips = [...state.clips];
+    if (clips.isEmpty) {
+      return;
+    }
+
     // Find the clip that contains position
-    final idx =
-        clips.indexWhere((c) => positionMs > c.start && positionMs < c.end);
-    if (idx == -1) return;
-    final clip = clips[idx];
-    // Avoid tiny splits
-    if ((positionMs - clip.start) < 50 || (clip.end - positionMs) < 50) return;
+    final clipIndex = clips.indexWhere((c) => c.contains(positionMs));
+    if (clipIndex == -1) return;
+
+    final clip = clips[clipIndex];
+    if (!clip.canSplitAt(positionMs)) return;
+
+    // Split the clip
+    final (leftClip, rightClip) = clip.splitAt(positionMs);
+
+    // Replace the original clip with the two new clips
     clips
-      ..removeAt(idx)
-      ..insertAll(idx, [
-        RangeValues(clip.start, positionMs),
-        RangeValues(positionMs, clip.end),
-      ]);
-    state = state.copyWith(clipSegments: clips);
-    // Select the right-side clip after split
-    state = state.copyWith(selectedClipIndexes: {idx + 1});
+      ..removeAt(clipIndex)
+      ..insertAll(clipIndex, [leftClip, rightClip]);
+
+    state = state.copyWith(
+      clips: clips,
+      selectedClipIds: {rightClip.id}, // Select the right-side clip
+      // Keep legacy compatibility
+      clipSegments: clips.map((c) => c.toRangeValues()).toList(),
+      selectedClipIndexes: {clipIndex + 1}, // Select right clip index
+    );
   }
 
   void deleteSelectedClips() {
-    if (state.selectedClipIndexes.isEmpty) return;
-    final indexes = state.selectedClipIndexes.toList()..sort();
-    final remaining = <RangeValues>[];
-    for (var i = 0; i < state.clipSegments.length; i++) {
-      if (!indexes.contains(i)) remaining.add(state.clipSegments[i]);
+    if (state.selectedClipIds.isEmpty) return;
+
+    // Save deleted clips for undo as a new operation
+    final deletedClips = <VideoClip>[];
+    final remaining = <VideoClip>[];
+
+    for (final clip in state.clips) {
+      if (state.selectedClipIds.contains(clip.id)) {
+        deletedClips.add(clip);
+      } else {
+        remaining.add(clip);
+      }
     }
-    state =
-        state.copyWith(clipSegments: remaining, selectedClipIndexes: <int>{});
+
+    // Add this deletion operation to the history stack
+    final newHistory = [...state.deletedClipsHistory, deletedClips];
+
+    state = state.copyWith(
+      clips: remaining,
+      selectedClipIds: <String>{},
+      deletedClipsHistory: newHistory,
+      // Keep legacy for compatibility
+      clipSegments: remaining.map((c) => c.toRangeValues()).toList(),
+      selectedClipIndexes: <int>{},
+    );
+  }
+
+  void undoDelete(double clickTimeMs) {
+    if (state.deletedClipsHistory.isEmpty) return;
+
+    // Find which deletion operation contains the clicked position
+    int operationIndex = -1;
+    for (var i = 0; i < state.deletedClipsHistory.length; i++) {
+      final operation = state.deletedClipsHistory[i];
+      if (operation.any((clip) => clip.contains(clickTimeMs))) {
+        operationIndex = i;
+        break;
+      }
+    }
+
+    if (operationIndex == -1) return;
+
+    // Restore only the clips from this specific operation
+    final clipsToRestore = state.deletedClipsHistory[operationIndex];
+    final restoredClips = [...state.clips, ...clipsToRestore]
+      ..sort((a, b) => a.start.compareTo(b.start));
+
+    // Remove this operation from history
+    final newHistory = [...state.deletedClipsHistory]..removeAt(operationIndex);
+
+    state = state.copyWith(
+      clips: restoredClips,
+      deletedClipsHistory: newHistory,
+      // Keep legacy for compatibility
+      clipSegments: restoredClips.map((c) => c.toRangeValues()).toList(),
+    );
   }
 
   void mergeAdjacentClips() {
@@ -321,6 +376,51 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     state = state.copyWith(clipSegments: merged);
   }
 
+  // --- Deleted Zone Helpers (for skip logic) ---
+
+  /// Check if a position is in a deleted zone
+  bool isPositionInDeletedZone(double positionMs) {
+    return state.deletedClipsHistory.any(
+      (operation) => operation.any((clip) => clip.contains(positionMs)),
+    );
+  }
+
+  /// Find the next valid (non-deleted) position after the given position
+  /// Returns null if there's no valid position after (end of video)
+  double? getNextValidPosition(double positionMs) {
+    if (state.clips.isEmpty) return null;
+
+    // Find the first clip that starts after the current position
+    final nextClip =
+        state.clips.where((clip) => clip.start > positionMs).fold<VideoClip?>(
+              null,
+              (min, clip) => min == null || clip.start < min.start ? clip : min,
+            );
+
+    return nextClip?.start;
+  }
+
+  /// Adjust a seek position to avoid deleted zones
+  /// If the position is in a deleted zone, move to the start of the next valid clip
+  double adjustSeekPositionToValidZone(double positionMs) {
+    if (!isPositionInDeletedZone(positionMs)) {
+      return positionMs;
+    }
+
+    // Position is in a deleted zone, find the next valid position
+    final nextValid = getNextValidPosition(positionMs);
+    if (nextValid != null) {
+      return nextValid;
+    }
+
+    // No valid position after, go to the start of the last valid clip
+    if (state.clips.isNotEmpty) {
+      return state.clips.last.start;
+    }
+
+    return positionMs; // Fallback
+  }
+
   // Clipboard operations for clips
   void cutSelectedClips() {
     if (state.selectedClipIndexes.isEmpty) return;
@@ -332,7 +432,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     state = state.copyWith(
       clipSegments: remaining,
       selectedClipIndexes: <int>{},
-      clipboardClip: clip,
+      clipboardClip: VideoClip.fromRangeValues(clip),
     );
   }
 
@@ -341,7 +441,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     final idx = state.selectedClipIndexes.first;
     if (idx < 0 || idx >= state.clipSegments.length) return;
     final clip = state.clipSegments[idx];
-    state = state.copyWith(clipboardClip: clip);
+    state = state.copyWith(clipboardClip: VideoClip.fromRangeValues(clip));
   }
 
   void pasteClipboardAt(double positionMs) {
@@ -375,31 +475,22 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
 
   Future<void> applyEdits() async {
     final recordingId = state.recording?.id;
-    if (recordingId == null || state.videoController == null) return;
+    if (recordingId == null || state.videoSource == null) {
+      debugPrint('❌ applyEdits: recordingId or videoSource is null');
+      return;
+    }
 
+    // Check if there are clips to apply
+    if (state.clipSegments.isEmpty) {
+      debugPrint('⚠️ applyEdits: No clips to apply (clipSegments is empty)');
+      return;
+    }
+
+    debugPrint(
+        '🎬 applyEdits: Starting with ${state.clipSegments.length} clips');
     state = state.copyWith(isApplyingEdits: true);
 
-    // Prefer explicit clipSegments over deletedSegments
-    final keep = state.clipSegments.isNotEmpty
-        ? (state.clipSegments
-            .map(
-              (r) => RangeValues(
-                r.start.clamp(
-                  0.0,
-                  state.videoController!.value.duration.inMilliseconds
-                      .toDouble(),
-                ),
-                r.end.clamp(
-                  0.0,
-                  state.videoController!.value.duration.inMilliseconds
-                      .toDouble(),
-                ),
-              ),
-            )
-            .toList())
-        : _invertDeletedToKeep();
-
-    final segmentsToKeep = keep
+    final segmentsToKeep = state.clipSegments
         .map(
           (r) => {
             'start': r.start / 1000.0,
@@ -408,40 +499,25 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
         )
         .toList();
 
+    debugPrint('📤 applyEdits: Sending segments to API: $segmentsToKeep');
+
     try {
       await ref
           .read(tauriApiClientProvider)
           .applyEdits(recordingId, segmentsToKeep);
+      debugPrint('✅ applyEdits: API call successful, reloading video...');
       await initializeVideoPlayer(recordingId);
       state = state.copyWith(
         isApplyingEdits: false,
-        deletedSegments: [],
         clipSegments: [],
         selectedClipIndexes: <int>{},
       );
-    } catch (e) {
-      // TODO(reddwarf03): handle error
+      debugPrint('✅ applyEdits: Complete!');
+    } catch (e, stackTrace) {
+      debugPrint('❌ applyEdits: Error occurred: $e');
+      debugPrint('Stack trace: $stackTrace');
       state = state.copyWith(isApplyingEdits: false);
     }
-  }
-
-  List<RangeValues> _invertDeletedToKeep() {
-    final duration =
-        state.videoController!.value.duration.inMilliseconds.toDouble();
-    final segmentsToKeep = <RangeValues>[];
-    double lastEndTime = 0;
-    final sortedDeleted = [...state.deletedSegments]
-      ..sort((a, b) => a.start.compareTo(b.start));
-    for (final deletedSegment in sortedDeleted) {
-      if (deletedSegment.start > lastEndTime) {
-        segmentsToKeep.add(RangeValues(lastEndTime, deletedSegment.start));
-      }
-      lastEndTime = deletedSegment.end;
-    }
-    if (lastEndTime < duration) {
-      segmentsToKeep.add(RangeValues(lastEndTime, duration));
-    }
-    return segmentsToKeep;
   }
 
   // --- SFT Editor Logic ---
@@ -578,7 +654,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     final recordingId = state.recording?.id;
     if (recordingId == null || state.isUploading) return;
 
-    state = state.copyWith(isUploading: true, uploadError: null);
+    state = state.copyWith(isUploading: true);
 
     try {
       final demonstrationTitle = state.recording?.title ?? 'Unknown';

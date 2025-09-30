@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:clones_desktop/ui/components/video_player/video_controller.dart';
 import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:clones_desktop/ui/components/video_player/video_state.dart';
+import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart' as video_player;
@@ -85,10 +86,14 @@ class NativeVideoControllerImpl extends NativeVideoController {
         if (_controller?.value.isInitialized == true) {
           final notifier =
               ref.read(videoStateNotifierProvider(_videoId).notifier);
-          notifier.updatePosition(_controller!.value.position);
+          final currentPosition = _controller!.value.position;
+          notifier.updatePosition(currentPosition);
 
           if (_controller!.value.isPlaying) {
             notifier.setPlaying();
+
+            // Check if we're in a deleted zone and skip if needed
+            _checkAndSkipDeletedZones(currentPosition);
           } else {
             notifier.setPaused();
           }
@@ -181,6 +186,33 @@ class NativeVideoControllerImpl extends NativeVideoController {
       ref.read(videoStateNotifierProvider(_videoId).notifier).setSpeed(speed);
     } else {
       throw VideoControllerException('Cannot set speed: video not initialized');
+    }
+  }
+
+  /// Check if current position is in a deleted zone and skip to next valid position
+  void _checkAndSkipDeletedZones(Duration currentPosition) {
+    try {
+      final demoDetailNotifier = ref.read(demoDetailNotifierProvider.notifier);
+      final currentMs = currentPosition.inMilliseconds.toDouble();
+
+      if (demoDetailNotifier.isPositionInDeletedZone(currentMs)) {
+        final nextValidMs = demoDetailNotifier.getNextValidPosition(currentMs);
+
+        if (nextValidMs != null) {
+          // Skip to next valid position
+          debugPrint(
+            '⏭️ Auto-skipping deleted zone: ${currentMs}ms → ${nextValidMs}ms',
+          );
+          final nextPosition = Duration(milliseconds: nextValidMs.round());
+          _controller?.seekTo(nextPosition);
+        } else {
+          // No more valid positions, pause the video
+          debugPrint('⏸️ Reached end of valid clips, pausing');
+          _controller?.pause();
+        }
+      }
+    } catch (e) {
+      // Provider not available, ignore (e.g., not in demo detail page)
     }
   }
 

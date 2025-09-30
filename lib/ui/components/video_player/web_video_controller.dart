@@ -5,6 +5,7 @@ import 'dart:ui_web' as ui_web;
 import 'package:clones_desktop/ui/components/video_player/video_controller.dart';
 import 'package:clones_desktop/ui/components/video_player/video_source.dart';
 import 'package:clones_desktop/ui/components/video_player/video_state.dart';
+import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:web/web.dart' as web;
@@ -184,6 +185,12 @@ class WebVideoControllerImpl extends WebVideoController {
       ref
           .read(videoStateNotifierProvider(_videoId).notifier)
           .updatePosition(position);
+
+      // Check if we're in a deleted zone during playback
+      final videoState = ref.read(videoStateNotifierProvider(_videoId));
+      if (videoState.isPlaying) {
+        _checkAndSkipDeletedZones(position);
+      }
     });
   }
 
@@ -241,6 +248,28 @@ class WebVideoControllerImpl extends WebVideoController {
 
     _video!.playbackRate = speed;
     ref.read(videoStateNotifierProvider(_videoId).notifier).setSpeed(speed);
+  }
+
+  /// Check if current position is in a deleted zone and skip to next valid position
+  void _checkAndSkipDeletedZones(Duration currentPosition) {
+    try {
+      final demoDetailNotifier = ref.read(demoDetailNotifierProvider.notifier);
+      final currentMs = currentPosition.inMilliseconds.toDouble();
+
+      if (demoDetailNotifier.isPositionInDeletedZone(currentMs)) {
+        final nextValidMs = demoDetailNotifier.getNextValidPosition(currentMs);
+
+        if (nextValidMs != null) {
+          // Skip to next valid position
+          _video?.currentTime = nextValidMs / 1000.0;
+        } else {
+          // No more valid positions, pause the video
+          _video?.pause();
+        }
+      }
+    } catch (e) {
+      // Provider not available, ignore (e.g., not in demo detail page)
+    }
   }
 
   @override
