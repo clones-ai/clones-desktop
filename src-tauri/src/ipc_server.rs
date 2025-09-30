@@ -87,14 +87,14 @@ pub struct StopRecordingPayload {
 }
 
 #[derive(Deserialize)]
-pub struct Segment {
-    start: f64,
-    end: f64,
+pub struct FilteredZipPayload {
+    deleted_ranges: Vec<DeletedRange>,
 }
 
 #[derive(Deserialize)]
-pub struct ApplyEditsPayload {
-    segments: Vec<Segment>,
+pub struct DeletedRange {
+    start: f64,
+    end: f64,
 }
 
 // Structure for the `set_upload_data_allowed` payload
@@ -192,6 +192,11 @@ pub async fn init(app_handle: AppHandle) {
         // GET /recordings/:id/zip: Retrieve a zip archive of a specific recording.
         // Though it involves creation, the primary action is data retrieval, so GET is acceptable.
         .route("/recordings/:id/zip", get(create_recording_zip_handler))
+        // POST /recordings/:id/filtered-zip: Create a filtered zip excluding deleted segments
+        .route(
+            "/recordings/:id/filtered-zip",
+            post(create_filtered_recording_zip_handler),
+        )
         // GET /apps: Retrieve a list of installed applications.
         // Read-only data retrieval.
         .route("/apps", get(list_apps_handler))
@@ -248,8 +253,6 @@ pub async fn init(app_handle: AppHandle) {
         .route("/window/resizable", post(set_window_resizable_handler))
         // GET /displays/size: Get the size of all displays.
         .route("/displays/size", get(get_all_displays_size_handler))
-        // POST /recordings/:id/apply-edits: Apply edits to a specific recording.
-        .route("/recordings/:id/apply-edits", post(apply_edits_handler))
         // Transaction endpoints
         // GET /transaction/session: Generate a new session token
         .route("/transaction/session", get(generate_session_token_handler))
@@ -564,22 +567,6 @@ async fn open_recording_folder_handler(
     }
 }
 
-async fn apply_edits_handler(
-    State(state): State<AppState>,
-    axum::extract::Path(id): axum::extract::Path<String>,
-    Json(payload): Json<ApplyEditsPayload>,
-) -> Result<StatusCode, (StatusCode, String)> {
-    let segments_to_keep: Vec<(f64, f64)> = payload
-        .segments
-        .into_iter()
-        .map(|s| (s.start, s.end))
-        .collect();
-    match record::apply_edits(state.app_handle, id, segments_to_keep).await {
-        Ok(_) => Ok(StatusCode::OK),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
-    }
-}
-
 // Handler to get the deep link URL
 async fn get_deeplink_handler(
     State(state): State<AppState>,
@@ -845,5 +832,38 @@ async fn install_update_handler(
     match crate::commands::updater::install_update(state.app_handle.clone()).await {
         Ok(_) => Ok(StatusCode::OK),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e)),
+    }
+}
+
+// Handler to create a filtered recording zip
+async fn create_filtered_recording_zip_handler(
+    State(state): State<AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(payload): Json<FilteredZipPayload>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    let deleted_ranges: Vec<(f64, f64)> = payload
+        .deleted_ranges
+        .into_iter()
+        .map(|r| (r.start, r.end))
+        .collect();
+    
+    log::info!("🔍 [create_filtered_recording_zip_handler] Called for recording {}, deleted_ranges: {:?}", id, deleted_ranges);
+
+    match record::create_filtered_recording_zip(state.app_handle, id.clone(), deleted_ranges).await
+    {
+        Ok(zip_data) => {
+            let filename = format!("attachment; filename=\"recording_{}_filtered.zip\"", id);
+            let mut headers = axum::http::HeaderMap::new();
+            headers.insert(
+                axum::http::header::CONTENT_TYPE,
+                "application/zip".parse().unwrap(),
+            );
+            headers.insert(
+                axum::http::header::CONTENT_DISPOSITION,
+                filename.parse().unwrap(),
+            );
+            Ok((headers, zip_data))
+        }
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }

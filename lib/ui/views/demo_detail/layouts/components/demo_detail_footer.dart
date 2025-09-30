@@ -36,12 +36,12 @@ class DemoDetailFooter extends ConsumerWidget {
                 submission?.status == 'completed' ||
                 (submission != null && submission.status != 'failed'),
             buttonText: submission?.status == 'completed'
-                ? '✓ Uploaded'
+                ? '✓ Submitted'
                 : submission?.status == 'failed'
                     ? 'Failed'
                     : submission != null
                         ? 'Processing...'
-                        : 'Upload',
+                        : 'Submit Final Version for Scoring',
           ),
         ],
       ],

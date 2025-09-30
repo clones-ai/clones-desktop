@@ -74,9 +74,6 @@ extension DemoDetailStateComputed on DemoDetailState {
   /// This is called once per state instance during UI build,
   /// avoiding repeated calculations for every message
   Set<int> get sftMessagesInDeletedZones {
-    debugPrint(
-        '📝 GETTER CALLED: deletedClipsHistory.length=${deletedClipsHistory.length}, sftMessages.length=${sftMessages.length}');
-
     if (deletedClipsHistory.isEmpty || sftMessages.isEmpty) {
       return {};
     }
@@ -90,12 +87,6 @@ extension DemoDetailStateComputed on DemoDetailState {
       final isDeleted = deletedClipsHistory.any(
         (operation) => operation.any((clip) => clip.contains(messageTime)),
       );
-
-      if (i < 3) {
-        // Debug first 3 messages
-        debugPrint(
-            '📝   Message $i: timestamp=${msg.timestamp}ms, isDeleted=$isDeleted');
-      }
 
       if (isDeleted) {
         deletedSet.add(i);
