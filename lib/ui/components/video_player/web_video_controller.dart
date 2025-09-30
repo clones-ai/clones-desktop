@@ -267,8 +267,8 @@ class WebVideoControllerImpl extends WebVideoController {
           _video?.pause();
         }
       }
-    } catch (e) {
-      // Provider not available, ignore (e.g., not in demo detail page)
+    } catch (e, stack) {
+      debugPrint('[_checkAndSkipDeletedZones] Exception: $e\n$stack');
     }
   }
 
