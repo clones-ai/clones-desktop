@@ -5,7 +5,6 @@ import 'package:clones_desktop/application/recording.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/application/upload/provider.dart';
 import 'package:clones_desktop/application/upload/state.dart';
-import 'package:clones_desktop/domain/models/message/deleted_range.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/recording/recording_event.dart';
 import 'package:clones_desktop/domain/models/video_clip.dart';
@@ -149,7 +148,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
   }
 
   Future<void> loadSftData(String recordingId) async {
-    state = state.copyWith(sftMessages: [], privateRanges: []);
+    state = state.copyWith(sftMessages: []);
 
     // Load SFT messages
     try {
@@ -164,41 +163,8 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     } catch (e) {
       // SFT file might not exist, continue with empty messages
     }
-
-    // Load private ranges (optional file for privacy masking feature)
-    try {
-      final rangesJson =
-          await ref.read(tauriApiClientProvider).getRecordingFile(
-                recordingId: recordingId,
-                filename: 'private_ranges.json',
-              );
-      final List<dynamic> rangesData = jsonDecode(rangesJson);
-      final privateRanges =
-          rangesData.map((data) => DeletedRange.fromJson(data)).toList();
-      state = state.copyWith(privateRanges: privateRanges);
-      debugPrint(
-        'Loaded ${privateRanges.length} private ranges for $recordingId',
-      );
-    } catch (e) {
-      // Private ranges file doesn't exist yet - this is expected for new recordings
-      state = state.copyWith(privateRanges: []);
-    }
-
-    _applyMasking();
   }
 
-  void _applyMasking() {
-    final updatedMessages = state.sftMessages.map((message) {
-      return message.copyWith(
-        masked: state.privateRanges.any(
-          (range) =>
-              message.timestamp >= range.start &&
-              message.timestamp <= range.end,
-        ),
-      );
-    }).toList();
-    state = state.copyWith(sftMessages: updatedMessages);
-  }
 
   void toggleEventType(String eventType) {
     final newEnabledTypes = Set<String>.from(state.enabledEventTypes);
@@ -520,73 +486,6 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     }
   }
 
-  // --- SFT Editor Logic ---
-
-  void addPrivateRangeAroundMessage(SftMessage message) {
-    // Logic from Svelte to find previous and next message timestamps
-    final messages = state.sftMessages
-      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-    final currentIndex =
-        messages.indexWhere((m) => m.timestamp == message.timestamp);
-
-    if (currentIndex == -1) return;
-
-    var startTimestamp = 0;
-    if (currentIndex > 0) {
-      final prevMessage = messages[currentIndex - 1];
-      startTimestamp =
-          ((prevMessage.timestamp + message.timestamp) / 2).floor();
-    }
-
-    var endTimestamp = message.timestamp + 1000;
-    if (currentIndex < messages.length - 1) {
-      final nextMessage = messages[currentIndex + 1];
-      endTimestamp = ((message.timestamp + nextMessage.timestamp) / 2).floor();
-    }
-
-    final newRange =
-        DeletedRange(start: startTimestamp, end: endTimestamp, count: 1);
-    final updatedRanges = [...state.privateRanges, newRange];
-
-    state = state.copyWith(privateRanges: updatedRanges);
-    _applyMasking();
-    _savePrivateRanges();
-  }
-
-  void deletePrivateRange(DeletedRange range) {
-    final updatedRanges = state.privateRanges
-        .where((r) => r.start != range.start || r.end != range.end)
-        .toList();
-    state = state.copyWith(privateRanges: updatedRanges);
-    _applyMasking();
-    _savePrivateRanges();
-  }
-
-  void updatePrivateRange(int index, DeletedRange updatedRange) {
-    if (index < 0 || index >= state.privateRanges.length) return;
-
-    final updatedRanges = [...state.privateRanges];
-    updatedRanges[index] = updatedRange;
-    state = state.copyWith(privateRanges: updatedRanges);
-    _applyMasking();
-    _savePrivateRanges();
-  }
-
-  Future<void> _savePrivateRanges() async {
-    final recordingId = state.recording?.id;
-    if (recordingId == null) return;
-
-    try {
-      await ref.read(tauriApiClientProvider).writeRecordingFile(
-            recordingId: recordingId,
-            filename: 'private_ranges.json',
-            content:
-                jsonEncode(state.privateRanges.map((r) => r.toJson()).toList()),
-          );
-    } catch (e) {
-      // TODO(reddwarf03): handle error
-    }
-  }
 
   // --- Modal Management ---
 
@@ -668,6 +567,11 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
         if (uploadState.uploadStatus == UploadStatus.done) {
           sub.close();
           state = state.copyWith(isUploading: false);
+
+          // Invalidate recording providers to force refresh of cached data
+          ref
+            ..invalidate(listRecordingsProvider)
+            ..invalidate(mergedRecordingsProvider);
 
           // Reload recording to get updated submission data
           await loadRecording(recordingId);

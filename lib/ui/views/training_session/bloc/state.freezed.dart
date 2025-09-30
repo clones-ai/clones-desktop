@@ -35,7 +35,8 @@ mixin _$TrainingSessionState {
   TypingMessage? get typingMessage => throw _privateConstructorUsedError;
   bool get isWaitingForResponse => throw _privateConstructorUsedError;
   int? get hoveredMessageIndex => throw _privateConstructorUsedError;
-  List<DeletedRange> get deletedRanges => throw _privateConstructorUsedError;
+  List<Map<String, dynamic>> get deletedRanges =>
+      throw _privateConstructorUsedError;
   List<SftMessage>? get originalSftData => throw _privateConstructorUsedError;
   List<SftMessage> get availableSftData => throw _privateConstructorUsedError;
   AppInfo? get app => throw _privateConstructorUsedError;
@@ -73,7 +74,7 @@ abstract class $TrainingSessionStateCopyWith<$Res> {
       TypingMessage? typingMessage,
       bool isWaitingForResponse,
       int? hoveredMessageIndex,
-      List<DeletedRange> deletedRanges,
+      List<Map<String, dynamic>> deletedRanges,
       List<SftMessage>? originalSftData,
       List<SftMessage> availableSftData,
       AppInfo? app,
@@ -199,7 +200,7 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
       deletedRanges: null == deletedRanges
           ? _value.deletedRanges
           : deletedRanges // ignore: cast_nullable_to_non_nullable
-              as List<DeletedRange>,
+              as List<Map<String, dynamic>>,
       originalSftData: freezed == originalSftData
           ? _value.originalSftData
           : originalSftData // ignore: cast_nullable_to_non_nullable
@@ -321,7 +322,7 @@ abstract class _$$TrainingSessionStateImplCopyWith<$Res>
       TypingMessage? typingMessage,
       bool isWaitingForResponse,
       int? hoveredMessageIndex,
-      List<DeletedRange> deletedRanges,
+      List<Map<String, dynamic>> deletedRanges,
       List<SftMessage>? originalSftData,
       List<SftMessage> availableSftData,
       AppInfo? app,
@@ -449,7 +450,7 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
       deletedRanges: null == deletedRanges
           ? _value._deletedRanges
           : deletedRanges // ignore: cast_nullable_to_non_nullable
-              as List<DeletedRange>,
+              as List<Map<String, dynamic>>,
       originalSftData: freezed == originalSftData
           ? _value._originalSftData
           : originalSftData // ignore: cast_nullable_to_non_nullable
@@ -495,7 +496,7 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
       this.typingMessage = null,
       this.isWaitingForResponse = false,
       this.hoveredMessageIndex = null,
-      final List<DeletedRange> deletedRanges = const [],
+      final List<Map<String, dynamic>> deletedRanges = const [],
       final List<SftMessage>? originalSftData = null,
       final List<SftMessage> availableSftData = const [],
       this.app,
@@ -558,10 +559,10 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
   @override
   @JsonKey()
   final int? hoveredMessageIndex;
-  final List<DeletedRange> _deletedRanges;
+  final List<Map<String, dynamic>> _deletedRanges;
   @override
   @JsonKey()
-  List<DeletedRange> get deletedRanges {
+  List<Map<String, dynamic>> get deletedRanges {
     if (_deletedRanges is EqualUnmodifiableListView) return _deletedRanges;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_deletedRanges);
@@ -710,7 +711,7 @@ abstract class _TrainingSessionState extends TrainingSessionState {
       final TypingMessage? typingMessage,
       final bool isWaitingForResponse,
       final int? hoveredMessageIndex,
-      final List<DeletedRange> deletedRanges,
+      final List<Map<String, dynamic>> deletedRanges,
       final List<SftMessage>? originalSftData,
       final List<SftMessage> availableSftData,
       final AppInfo? app,
@@ -753,7 +754,7 @@ abstract class _TrainingSessionState extends TrainingSessionState {
   @override
   int? get hoveredMessageIndex;
   @override
-  List<DeletedRange> get deletedRanges;
+  List<Map<String, dynamic>> get deletedRanges;
   @override
   List<SftMessage>? get originalSftData;
   @override

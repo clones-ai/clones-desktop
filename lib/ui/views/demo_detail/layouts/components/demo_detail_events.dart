@@ -56,6 +56,13 @@ class DemoDetailEvents extends ConsumerWidget {
     return Column(
       children: [
         Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text(
+            'This events section lists the events (interactions like keyboard and mouse) that happened during the recording.',
+            style: theme.textTheme.bodySmall,
+          ),
+        ),
+        Padding(
           padding: const EdgeInsets.all(10),
           child: Wrap(
             spacing: 10,

@@ -4,7 +4,6 @@ import 'dart:convert';
 
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/assets.dart';
-import 'package:clones_desktop/domain/models/message/deleted_range.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
@@ -23,8 +22,7 @@ class EditorChatItem {
     this.messageIndex,
   });
   final int timestamp;
-  final dynamic
-      item; // Can be SftMessage, DeletedRange (start), or DeletedRange (end)
+  final dynamic item; // Can be SftMessage
   final String type;
   final int?
       messageIndex; // Original index in sftMessages list (for memoization)
@@ -47,7 +45,7 @@ class DemoDetailEditor extends ConsumerWidget {
       return const WalletNotConnected();
     }
 
-    if (demoDetail.sftMessages.isEmpty && demoDetail.privateRanges.isEmpty) {
+    if (demoDetail.sftMessages.isEmpty) {
       return Center(
         child: Text(
           'No editor data to display.',
@@ -72,92 +70,31 @@ class DemoDetailEditor extends ConsumerWidget {
         ),
       );
     }
-    for (final range in demoDetail.privateRanges) {
-      combinedData
-        ..add(
-          EditorChatItem(
-            timestamp: range.start,
-            item: range,
-            type: 'range_start',
-          ),
-        )
-        ..add(
-          EditorChatItem(timestamp: range.end, item: range, type: 'range_end'),
-        );
-    }
     combinedData.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-
-    final privateRanges = demoDetail.privateRanges;
 
     return Column(
       children: [
-        if (privateRanges.isNotEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-            decoration: BoxDecoration(
-              color: ClonesColors.secondaryText.withValues(alpha: 0.1),
-              border: Border.all(
-                color: ClonesColors.secondaryText.withValues(alpha: 0.3),
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.visibility_off,
-                      size: 16,
-                      color: Colors.red.shade400,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${privateRanges.length} privacy ${privateRanges.length == 1 ? 'range' : 'ranges'} active',
-                      style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _getPrivacyImpactText(privateRanges, demoDetail.sftMessages),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text(
+            'This editor section lists structured notes of what happened during the demo. The Clones Quality Agent will use them to evaluate and score the quality of the recording.',
+            style: theme.textTheme.bodySmall,
           ),
+        ),
         Expanded(
           child: ListView.builder(
             itemCount: combinedData.length,
             itemBuilder: (context, index) {
               final chatItem = combinedData[index];
-              if (chatItem.type == 'message') {
-                return _buildMessageCard(
-                  context,
-                  ref,
-                  chatItem.item,
-                  videoController,
-                  startTime,
-                  messagesInDeletedZones,
-                  chatItem.messageIndex!,
-                );
-              } else {
-                return _buildRangeCard(
-                  context,
-                  ref,
-                  chatItem.item,
-                  chatItem.type,
-                );
-              }
+              return _buildMessageCard(
+                context,
+                ref,
+                chatItem.item,
+                videoController,
+                startTime,
+                messagesInDeletedZones,
+                chatItem.messageIndex!,
+              );
             },
           ),
         ),
@@ -174,8 +111,6 @@ class DemoDetailEditor extends ConsumerWidget {
     Set<int> messagesInDeletedZones,
     int messageIndex,
   ) {
-    final demoDetail = ref.watch(demoDetailNotifierProvider);
-    final submissionStatus = demoDetail.recording?.submission?.status;
     final theme = Theme.of(context);
 
     // Use memoized deleted zone check (computed once per state change)
@@ -250,22 +185,7 @@ class DemoDetailEditor extends ConsumerWidget {
                           message.role.toUpperCase(),
                           style: theme.textTheme.bodySmall,
                         ),
-                        if (submissionStatus != 'completed')
-                          IconButton(
-                            icon: const Icon(
-                              Icons.visibility_off_outlined,
-                              size: 16,
-                              color: ClonesColors.primary,
-                            ),
-                            tooltip: 'Add privacy range',
-                            onPressed: () => ref
-                                .read(demoDetailNotifierProvider.notifier)
-                                .addPrivateRangeAroundMessage(message),
-                          )
-                        else
-                          const SizedBox(
-                            height: 30,
-                          ),
+                        const SizedBox(height: 30),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -307,68 +227,5 @@ class DemoDetailEditor extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  Widget _buildRangeCard(
-    BuildContext context,
-    WidgetRef ref,
-    DeletedRange range,
-    String type,
-  ) {
-    final isStart = type == 'range_start';
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
-      color: Colors.blueGrey.shade800,
-      child: ListTile(
-        visualDensity: VisualDensity.compact,
-        title: Text(
-          isStart ? 'Privacy Start' : 'Privacy End',
-          style:
-              const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(
-          '${(isStart ? range.start : range.end / 1000).toStringAsFixed(2)}s',
-          style: const TextStyle(color: Colors.white70),
-        ),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-          tooltip: 'Delete range',
-          onPressed: () => ref
-              .read(demoDetailNotifierProvider.notifier)
-              .deletePrivateRange(range),
-        ),
-        // TODO(reddwarf03): Add up/down buttons
-      ),
-    );
-  }
-
-  String _getPrivacyImpactText(
-    List<dynamic> privateRanges,
-    List<dynamic> sftMessages,
-  ) {
-    if (privateRanges.isEmpty) return '';
-
-    // Calculate total masked duration
-    final totalMaskedMs = privateRanges.fold<int>(
-      0,
-      (sum, range) => sum + (range.end - range.start) as int,
-    );
-    final maskedSeconds = (totalMaskedMs / 1000).round();
-
-    // Calculate masked messages
-    final maskedMessages = sftMessages
-        .where(
-          (msg) => privateRanges.any(
-            (range) =>
-                msg.timestamp >= range.start && msg.timestamp <= range.end,
-          ),
-        )
-        .length;
-
-    if (maskedSeconds > 0) {
-      return '~${maskedSeconds}s of content and $maskedMessages messages will be masked';
-    } else {
-      return '$maskedMessages messages will be masked';
-    }
   }
 }
