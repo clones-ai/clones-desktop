@@ -207,7 +207,6 @@ class NativeVideoControllerImpl extends NativeVideoController {
           _controller?.seekTo(nextPosition);
         } else {
           // No more valid positions, pause the video
-          debugPrint('⏸️ Reached end of valid clips, pausing');
           _controller?.pause();
         }
       }

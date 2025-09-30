@@ -78,19 +78,7 @@ extension DemoDetailStateComputed on DemoDetailState {
         '📝 GETTER CALLED: deletedClipsHistory.length=${deletedClipsHistory.length}, sftMessages.length=${sftMessages.length}');
 
     if (deletedClipsHistory.isEmpty || sftMessages.isEmpty) {
-      debugPrint(
-          '📝 EARLY RETURN: deletedClipsHistory.isEmpty=${deletedClipsHistory.isEmpty}, sftMessages.isEmpty=${sftMessages.isEmpty}');
       return {};
-    }
-
-    debugPrint(
-        '📝 Computing deleted messages: ${sftMessages.length} messages, ${deletedClipsHistory.length} delete ops, startTime=$startTime');
-
-    // Debug: show deleted clip ranges
-    for (var i = 0; i < deletedClipsHistory.length; i++) {
-      for (var clip in deletedClipsHistory[i]) {
-        debugPrint('📝   Deleted range: [${clip.start}, ${clip.end}]');
-      }
     }
 
     final deletedSet = <int>{};
@@ -113,8 +101,6 @@ extension DemoDetailStateComputed on DemoDetailState {
         deletedSet.add(i);
       }
     }
-
-    debugPrint('📝 Result: ${deletedSet.length} messages in deleted zones');
 
     return deletedSet;
   }

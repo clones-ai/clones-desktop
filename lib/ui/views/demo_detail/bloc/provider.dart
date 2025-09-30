@@ -63,15 +63,11 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
 
   Future<void> initializeVideoPlayer(String recordingId) async {
     try {
-      debugPrint('🎥 initializeVideoPlayer: Loading video for $recordingId');
       final videoData = await ref.read(tauriApiClientProvider).getRecordingFile(
             recordingId: recordingId,
             filename: 'recording.mp4',
             asBase64: true,
           );
-
-      debugPrint(
-          '🎥 initializeVideoPlayer: Video data loaded (${videoData.length} bytes)');
 
       // Create VideoSource for your custom video player system
       final videoSource = Base64VideoSource(videoData);
@@ -93,11 +89,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
         videoController: null, // No controller in DemoDetailNotifier
         videoSource: videoSource,
       );
-
-      debugPrint('🎥 initializeVideoPlayer: VideoSource updated');
     } catch (e) {
-      debugPrint(
-          '❌ initializeVideoPlayer: No video file for recording $recordingId (this is normal for recordings without video)');
       debugPrint('Error: $e');
       // This is expected for recordings without video files
     }
@@ -164,7 +156,6 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       // SFT file might not exist, continue with empty messages
     }
   }
-
 
   void toggleEventType(String eventType) {
     final newEnabledTypes = Set<String>.from(state.enabledEventTypes);
@@ -442,18 +433,14 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
   Future<void> applyEdits() async {
     final recordingId = state.recording?.id;
     if (recordingId == null || state.videoSource == null) {
-      debugPrint('❌ applyEdits: recordingId or videoSource is null');
       return;
     }
 
     // Check if there are clips to apply
     if (state.clipSegments.isEmpty) {
-      debugPrint('⚠️ applyEdits: No clips to apply (clipSegments is empty)');
       return;
     }
 
-    debugPrint(
-        '🎬 applyEdits: Starting with ${state.clipSegments.length} clips');
     state = state.copyWith(isApplyingEdits: true);
 
     final segmentsToKeep = state.clipSegments
@@ -465,27 +452,20 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
         )
         .toList();
 
-    debugPrint('📤 applyEdits: Sending segments to API: $segmentsToKeep');
-
     try {
       await ref
           .read(tauriApiClientProvider)
           .applyEdits(recordingId, segmentsToKeep);
-      debugPrint('✅ applyEdits: API call successful, reloading video...');
       await initializeVideoPlayer(recordingId);
       state = state.copyWith(
         isApplyingEdits: false,
         clipSegments: [],
         selectedClipIndexes: <int>{},
       );
-      debugPrint('✅ applyEdits: Complete!');
-    } catch (e, stackTrace) {
-      debugPrint('❌ applyEdits: Error occurred: $e');
-      debugPrint('Stack trace: $stackTrace');
+    } catch (e) {
       state = state.copyWith(isApplyingEdits: false);
     }
   }
-
 
   // --- Modal Management ---
 
