@@ -18,14 +18,18 @@ class TimelineClipsOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Stack(
-      children: clips.map((clip) {
+      children: clips.where((clip) {
+        return clip.start.isFinite && clip.end.isFinite && 
+               durationMs > 0 && durationMs.isFinite &&
+               timelineWidth > 0 && timelineWidth.isFinite;
+      }).map((clip) {
         final left = (clip.start / durationMs) * timelineWidth;
         final right = timelineWidth - (clip.end / durationMs) * timelineWidth;
         final isSelected = selectedIds.contains(clip.id);
         
         return Positioned(
-          left: left,
-          right: right,
+          left: left.clamp(0, timelineWidth),
+          right: right.clamp(0, timelineWidth),
           top: -8,
           bottom: -8,
           child: DecoratedBox(

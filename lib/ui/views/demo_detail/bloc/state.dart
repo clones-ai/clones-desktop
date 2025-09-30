@@ -1,4 +1,3 @@
-import 'package:clones_desktop/domain/models/message/deleted_range.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/recording/api_recording.dart';
 import 'package:clones_desktop/domain/models/recording/recording_event.dart';
@@ -17,7 +16,6 @@ class DemoDetailState with _$DemoDetailState {
     ApiRecording? recording,
     @Default([]) List<RecordingEvent> events,
     @Default([]) List<SftMessage> sftMessages,
-    @Default([]) List<DeletedRange> privateRanges,
     @Default({}) Set<String> eventTypes,
     @Default({}) Set<String> enabledEventTypes,
     @Default(0) int startTime,

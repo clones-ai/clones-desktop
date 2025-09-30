@@ -9,7 +9,6 @@ import 'package:clones_desktop/application/upload/state.dart';
 import 'package:clones_desktop/domain/models/api/api_error.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration_reward.dart';
-import 'package:clones_desktop/domain/models/message/deleted_range.dart';
 import 'package:clones_desktop/domain/models/message/message.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/message/typing_message.dart';
@@ -303,26 +302,6 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
     }
   }
 
-  // Function to save deleted ranges to a JSON file
-  Future<void> savePrivateRanges() async {
-    if (state.currentRecordingId == null) return;
-
-    try {
-      // Convert deletedRanges to JSON string
-      final rangesJson = jsonEncode(state.deletedRanges);
-
-      // Use invoke to save the file to the recording folder
-      await ref.read(tauriApiClientProvider).writeRecordingFile(
-            recordingId: state.currentRecordingId!,
-            filename: 'private_ranges.json',
-            content: rangesJson,
-          );
-
-      debugPrint('Saved private ranges to file');
-    } catch (error) {
-      debugPrint('Failed to save private ranges: $error');
-    }
-  }
 
   Future<void> handleDeleteMessage(int index, Message msg) async {
     if (msg.timestamp == null || state.originalSftData == null) {
@@ -364,15 +343,12 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
         .length;
     setDeletedRanges([
       ...state.deletedRanges,
-      DeletedRange(
-        start: startTimestamp,
-        end: endTimestamp,
-        count: count,
-      ),
+      {
+        'start': startTimestamp,
+        'end': endTimestamp,
+        'count': count,
+      },
     ]);
-
-    // Save the updated ranges to file
-    await savePrivateRanges();
 
     // Update available SFT data
     _updateAvailableSftData();
@@ -399,11 +375,8 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
 
         // Remove the range from deletedRanges
         setDeletedRanges(
-          state.deletedRanges.where((r) => r.start != start).toList(),
+          state.deletedRanges.where((r) => r['start'] != start).toList(),
         );
-
-        // Save the updated ranges to file
-        await savePrivateRanges();
 
         // Update available SFT data
         _updateAvailableSftData();
@@ -435,7 +408,7 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
     // Filter out deleted messages for UI display
     final available = state.originalSftData!.where((msg) {
       return !state.deletedRanges.any(
-        (range) => msg.timestamp >= range.start && msg.timestamp <= range.end,
+        (range) => msg.timestamp >= range['start'] && msg.timestamp <= range['end'],
       );
     }).toList();
 

@@ -1,7 +1,6 @@
 import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
-import 'package:clones_desktop/domain/models/message/deleted_range.dart';
 import 'package:clones_desktop/domain/models/message/message.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/message/typing_message.dart';
@@ -73,7 +72,7 @@ mixin TrainingSessionSetters on AutoDisposeNotifier<TrainingSessionState> {
     state = state.copyWith(hoveredMessageIndex: hoveredMessageIndex);
   }
 
-  void setDeletedRanges(List<DeletedRange> deletedRanges) {
+  void setDeletedRanges(List<Map<String, dynamic>> deletedRanges) {
     state = state.copyWith(deletedRanges: deletedRanges);
   }
 

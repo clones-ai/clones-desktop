@@ -20,7 +20,6 @@ mixin _$DemoDetailState {
   ApiRecording? get recording => throw _privateConstructorUsedError;
   List<RecordingEvent> get events => throw _privateConstructorUsedError;
   List<SftMessage> get sftMessages => throw _privateConstructorUsedError;
-  List<DeletedRange> get privateRanges => throw _privateConstructorUsedError;
   Set<String> get eventTypes => throw _privateConstructorUsedError;
   Set<String> get enabledEventTypes => throw _privateConstructorUsedError;
   int get startTime => throw _privateConstructorUsedError;
@@ -68,7 +67,6 @@ abstract class $DemoDetailStateCopyWith<$Res> {
       ApiRecording? recording,
       List<RecordingEvent> events,
       List<SftMessage> sftMessages,
-      List<DeletedRange> privateRanges,
       Set<String> eventTypes,
       Set<String> enabledEventTypes,
       int startTime,
@@ -113,7 +111,6 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
     Object? recording = freezed,
     Object? events = null,
     Object? sftMessages = null,
-    Object? privateRanges = null,
     Object? eventTypes = null,
     Object? enabledEventTypes = null,
     Object? startTime = null,
@@ -152,10 +149,6 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
           ? _value.sftMessages
           : sftMessages // ignore: cast_nullable_to_non_nullable
               as List<SftMessage>,
-      privateRanges: null == privateRanges
-          ? _value.privateRanges
-          : privateRanges // ignore: cast_nullable_to_non_nullable
-              as List<DeletedRange>,
       eventTypes: null == eventTypes
           ? _value.eventTypes
           : eventTypes // ignore: cast_nullable_to_non_nullable
@@ -281,7 +274,6 @@ abstract class _$$DemoDetailStateImplCopyWith<$Res>
       ApiRecording? recording,
       List<RecordingEvent> events,
       List<SftMessage> sftMessages,
-      List<DeletedRange> privateRanges,
       Set<String> eventTypes,
       Set<String> enabledEventTypes,
       int startTime,
@@ -326,7 +318,6 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
     Object? recording = freezed,
     Object? events = null,
     Object? sftMessages = null,
-    Object? privateRanges = null,
     Object? eventTypes = null,
     Object? enabledEventTypes = null,
     Object? startTime = null,
@@ -365,10 +356,6 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
           ? _value._sftMessages
           : sftMessages // ignore: cast_nullable_to_non_nullable
               as List<SftMessage>,
-      privateRanges: null == privateRanges
-          ? _value._privateRanges
-          : privateRanges // ignore: cast_nullable_to_non_nullable
-              as List<DeletedRange>,
       eventTypes: null == eventTypes
           ? _value._eventTypes
           : eventTypes // ignore: cast_nullable_to_non_nullable
@@ -461,7 +448,6 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
       this.recording,
       final List<RecordingEvent> events = const [],
       final List<SftMessage> sftMessages = const [],
-      final List<DeletedRange> privateRanges = const [],
       final Set<String> eventTypes = const {},
       final Set<String> enabledEventTypes = const {},
       this.startTime = 0,
@@ -484,7 +470,6 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
       this.uploadError})
       : _events = events,
         _sftMessages = sftMessages,
-        _privateRanges = privateRanges,
         _eventTypes = eventTypes,
         _enabledEventTypes = enabledEventTypes,
         _clips = clips,
@@ -515,15 +500,6 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
     if (_sftMessages is EqualUnmodifiableListView) return _sftMessages;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_sftMessages);
-  }
-
-  final List<DeletedRange> _privateRanges;
-  @override
-  @JsonKey()
-  List<DeletedRange> get privateRanges {
-    if (_privateRanges is EqualUnmodifiableListView) return _privateRanges;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_privateRanges);
   }
 
   final Set<String> _eventTypes;
@@ -638,7 +614,7 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
 
   @override
   String toString() {
-    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, privateRanges: $privateRanges, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoController: $videoController, videoSource: $videoSource, showTrainingSessionModal: $showTrainingSessionModal, clips: $clips, selectedClipIds: $selectedClipIds, clipboardClip: $clipboardClip, deletedClipsHistory: $deletedClipsHistory, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, isApplyingEdits: $isApplyingEdits, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, showUploadConfirmModal: $showUploadConfirmModal, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError)';
+    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoController: $videoController, videoSource: $videoSource, showTrainingSessionModal: $showTrainingSessionModal, clips: $clips, selectedClipIds: $selectedClipIds, clipboardClip: $clipboardClip, deletedClipsHistory: $deletedClipsHistory, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, isApplyingEdits: $isApplyingEdits, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, showUploadConfirmModal: $showUploadConfirmModal, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError)';
   }
 
   @override
@@ -653,8 +629,6 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
             const DeepCollectionEquality().equals(other._events, _events) &&
             const DeepCollectionEquality()
                 .equals(other._sftMessages, _sftMessages) &&
-            const DeepCollectionEquality()
-                .equals(other._privateRanges, _privateRanges) &&
             const DeepCollectionEquality()
                 .equals(other._eventTypes, _eventTypes) &&
             const DeepCollectionEquality()
@@ -704,7 +678,6 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
         recording,
         const DeepCollectionEquality().hash(_events),
         const DeepCollectionEquality().hash(_sftMessages),
-        const DeepCollectionEquality().hash(_privateRanges),
         const DeepCollectionEquality().hash(_eventTypes),
         const DeepCollectionEquality().hash(_enabledEventTypes),
         startTime,
@@ -743,7 +716,6 @@ abstract class _DemoDetailState extends DemoDetailState {
       final ApiRecording? recording,
       final List<RecordingEvent> events,
       final List<SftMessage> sftMessages,
-      final List<DeletedRange> privateRanges,
       final Set<String> eventTypes,
       final Set<String> enabledEventTypes,
       final int startTime,
@@ -775,8 +747,6 @@ abstract class _DemoDetailState extends DemoDetailState {
   List<RecordingEvent> get events;
   @override
   List<SftMessage> get sftMessages;
-  @override
-  List<DeletedRange> get privateRanges;
   @override
   Set<String> get eventTypes;
   @override

@@ -1,7 +1,6 @@
 import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
-import 'package:clones_desktop/domain/models/message/deleted_range.dart';
 import 'package:clones_desktop/domain/models/message/message.dart';
 import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/message/typing_message.dart';
@@ -32,7 +31,7 @@ class TrainingSessionState with _$TrainingSessionState {
     @Default(null) TypingMessage? typingMessage,
     @Default(false) bool isWaitingForResponse,
     @Default(null) int? hoveredMessageIndex,
-    @Default([]) List<DeletedRange> deletedRanges,
+    @Default([]) List<Map<String, dynamic>> deletedRanges,
     @Default(null) List<SftMessage>? originalSftData,
     @Default([]) List<SftMessage> availableSftData,
     AppInfo? app,

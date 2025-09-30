@@ -7,7 +7,7 @@ part of 'provider.dart';
 // **************************************************************************
 
 String _$demoDetailNotifierHash() =>
-    r'198f96c84528ba691353b34adb91985bb84a828f';
+    r'2e93260b9daf5ece17d9a9a9d4e231ecee453bbd';
 
 /// See also [DemoDetailNotifier].
 @ProviderFor(DemoDetailNotifier)
