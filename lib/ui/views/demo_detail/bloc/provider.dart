@@ -380,9 +380,9 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
 
   /// Check if a position is in a deleted zone
   bool isPositionInDeletedZone(double positionMs) {
-    return state.deletedClipsHistory.any(
-      (operation) => operation.any((clip) => clip.contains(positionMs)),
-    );
+    return state.deletedClipsHistory
+        .expand((operation) => operation)
+        .any((clip) => clip.contains(positionMs));
   }
 
   /// Find the next valid (non-deleted) position after the given position

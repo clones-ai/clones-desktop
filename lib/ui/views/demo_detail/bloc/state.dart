@@ -31,7 +31,7 @@ class DemoDetailState with _$DemoDetailState {
     @JsonKey(includeIfNull: false) VideoClip? clipboardClip,
     // Each deletion operation is stored as a separate list of clips
     @Default([]) List<List<VideoClip>> deletedClipsHistory,
-    
+
     // Legacy support for RangeValues (deprecated)
     @Default([]) List<RangeValues> clipSegments,
     @Default({}) Set<int> selectedClipIndexes,
@@ -47,4 +47,77 @@ class DemoDetailState with _$DemoDetailState {
     String? uploadError,
   }) = _DemoDetailState;
   const DemoDetailState._();
+}
+
+/// Extension to add computed properties to DemoDetailState
+extension DemoDetailStateComputed on DemoDetailState {
+  /// Compute which event indices are in deleted zones
+  /// This is called once per state instance during UI build,
+  /// avoiding repeated calculations for every event
+  Set<int> get eventsInDeletedZones {
+    if (deletedClipsHistory.isEmpty || events.isEmpty) {
+      return {};
+    }
+
+    final deletedSet = <int>{};
+    for (var i = 0; i < events.length; i++) {
+      final relativeTime = (events[i].time - startTime).toDouble();
+      final isDeleted = deletedClipsHistory.any(
+        (operation) => operation.any((clip) => clip.contains(relativeTime)),
+      );
+      if (isDeleted) {
+        deletedSet.add(i);
+      }
+    }
+    return deletedSet;
+  }
+
+  /// Compute which SFT message indices are in deleted zones
+  /// This is called once per state instance during UI build,
+  /// avoiding repeated calculations for every message
+  Set<int> get sftMessagesInDeletedZones {
+    debugPrint(
+        '📝 GETTER CALLED: deletedClipsHistory.length=${deletedClipsHistory.length}, sftMessages.length=${sftMessages.length}');
+
+    if (deletedClipsHistory.isEmpty || sftMessages.isEmpty) {
+      debugPrint(
+          '📝 EARLY RETURN: deletedClipsHistory.isEmpty=${deletedClipsHistory.isEmpty}, sftMessages.isEmpty=${sftMessages.isEmpty}');
+      return {};
+    }
+
+    debugPrint(
+        '📝 Computing deleted messages: ${sftMessages.length} messages, ${deletedClipsHistory.length} delete ops, startTime=$startTime');
+
+    // Debug: show deleted clip ranges
+    for (var i = 0; i < deletedClipsHistory.length; i++) {
+      for (var clip in deletedClipsHistory[i]) {
+        debugPrint('📝   Deleted range: [${clip.start}, ${clip.end}]');
+      }
+    }
+
+    final deletedSet = <int>{};
+    for (var i = 0; i < sftMessages.length; i++) {
+      final msg = sftMessages[i];
+      // SFT message timestamps are already relative to video start (not absolute Unix time)
+      // So we use them directly without subtracting startTime
+      final messageTime = msg.timestamp.toDouble();
+      final isDeleted = deletedClipsHistory.any(
+        (operation) => operation.any((clip) => clip.contains(messageTime)),
+      );
+
+      if (i < 3) {
+        // Debug first 3 messages
+        debugPrint(
+            '📝   Message $i: timestamp=${msg.timestamp}ms, isDeleted=$isDeleted');
+      }
+
+      if (isDeleted) {
+        deletedSet.add(i);
+      }
+    }
+
+    debugPrint('📝 Result: ${deletedSet.length} messages in deleted zones');
+
+    return deletedSet;
+  }
 }

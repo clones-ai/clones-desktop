@@ -9,6 +9,7 @@ import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
+import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
 import 'package:clones_desktop/utils/format_time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,11 +20,14 @@ class EditorChatItem {
     required this.timestamp,
     required this.item,
     required this.type,
+    this.messageIndex,
   });
   final int timestamp;
   final dynamic
       item; // Can be SftMessage, DeletedRange (start), or DeletedRange (end)
   final String type;
+  final int?
+      messageIndex; // Original index in sftMessages list (for memoization)
 }
 
 class DemoDetailEditor extends ConsumerWidget {
@@ -52,10 +56,20 @@ class DemoDetailEditor extends ConsumerWidget {
       );
     }
 
+    // Get memoized set of messages in deleted zones
+    final messagesInDeletedZones = demoDetail.sftMessagesInDeletedZones;
+    debugPrint('📝 Editor: messagesInDeletedZones = $messagesInDeletedZones');
+
     final combinedData = <EditorChatItem>[];
-    for (final msg in demoDetail.sftMessages) {
+    for (var i = 0; i < demoDetail.sftMessages.length; i++) {
+      final msg = demoDetail.sftMessages[i];
       combinedData.add(
-        EditorChatItem(timestamp: msg.timestamp, item: msg, type: 'message'),
+        EditorChatItem(
+          timestamp: msg.timestamp,
+          item: msg,
+          type: 'message',
+          messageIndex: i,
+        ),
       );
     }
     for (final range in demoDetail.privateRanges) {
@@ -133,6 +147,8 @@ class DemoDetailEditor extends ConsumerWidget {
                   chatItem.item,
                   videoController,
                   startTime,
+                  messagesInDeletedZones,
+                  chatItem.messageIndex!,
                 );
               } else {
                 return _buildRangeCard(
@@ -155,33 +171,16 @@ class DemoDetailEditor extends ConsumerWidget {
     SftMessage message,
     VideoPlayerController? videoController,
     int startTime,
+    Set<int> messagesInDeletedZones,
+    int messageIndex,
   ) {
     final demoDetail = ref.watch(demoDetailNotifierProvider);
     final submissionStatus = demoDetail.recording?.submission?.status;
     final theme = Theme.of(context);
 
-    // Check if message is in a deleted zone
-    // Convert absolute timestamp to relative (same as events do)
+    // Use memoized deleted zone check (computed once per state change)
     final relativeTime = message.timestamp - startTime;
-    var isInDeletedZone = false;
-
-    try {
-      // Only check if we have deleted history (clips are always initialized)
-      if (demoDetail.deletedClipsHistory.isNotEmpty) {
-        final notifier = ref.read(demoDetailNotifierProvider.notifier);
-
-        final absoluteCheck =
-            notifier.isPositionInDeletedZone(message.timestamp.toDouble());
-        final relativeCheck = relativeTime >= 0 &&
-            notifier.isPositionInDeletedZone(relativeTime.toDouble());
-
-        // Use whichever works (prefer relative like events)
-        isInDeletedZone = relativeTime >= 0 ? relativeCheck : absoluteCheck;
-      }
-    } catch (e) {
-      // If there's an error, just don't mark as deleted
-      debugPrint('❌ Error checking deleted zone for message: $e');
-    }
+    final isInDeletedZone = messagesInDeletedZones.contains(messageIndex);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),

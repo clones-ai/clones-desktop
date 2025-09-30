@@ -8,6 +8,7 @@ import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
+import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
 import 'package:clones_desktop/utils/format_time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,8 +32,17 @@ class DemoDetailEvents extends ConsumerWidget {
     final videoController = demoDetail.videoController;
     final startTime = demoDetail.startTime;
 
-    final filteredEvents =
-        events.where((e) => enabledEventTypes.contains(e.event)).toList();
+    // Build a map from filtered events to their original indices for deleted zone lookup
+    final filteredEventIndices = <int>[];
+    for (var i = 0; i < events.length; i++) {
+      if (enabledEventTypes.contains(events[i].event)) {
+        filteredEventIndices.add(i);
+      }
+    }
+    final filteredEvents = filteredEventIndices.map((i) => events[i]).toList();
+
+    // Get memoized set of events in deleted zones
+    final eventsInDeletedZones = demoDetail.eventsInDeletedZones;
 
     if (events.isEmpty) {
       return Center(
@@ -87,12 +97,12 @@ class DemoDetailEvents extends ConsumerWidget {
             itemCount: filteredEvents.length,
             itemBuilder: (context, index) {
               final event = filteredEvents[index];
-              final notifier = ref.read(demoDetailNotifierProvider.notifier);
+              final originalEventIndex = filteredEventIndices[index];
 
-              // Check if event is in a deleted zone
+              // Use memoized deleted zone check (computed once per state change)
               final relativeTime = event.time - startTime;
               final isInDeletedZone =
-                  notifier.isPositionInDeletedZone(relativeTime.toDouble());
+                  eventsInDeletedZones.contains(originalEventIndex);
 
               return Stack(
                 children: [
