@@ -430,42 +430,6 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     state = state.copyWith(clipSegments: clips);
   }
 
-  Future<void> applyEdits() async {
-    final recordingId = state.recording?.id;
-    if (recordingId == null || state.videoSource == null) {
-      return;
-    }
-
-    // Check if there are clips to apply
-    if (state.clipSegments.isEmpty) {
-      return;
-    }
-
-    state = state.copyWith(isApplyingEdits: true);
-
-    final segmentsToKeep = state.clipSegments
-        .map(
-          (r) => {
-            'start': r.start / 1000.0,
-            'end': r.end / 1000.0,
-          },
-        )
-        .toList();
-
-    try {
-      await ref
-          .read(tauriApiClientProvider)
-          .applyEdits(recordingId, segmentsToKeep);
-      await initializeVideoPlayer(recordingId);
-      state = state.copyWith(
-        isApplyingEdits: false,
-        clipSegments: [],
-        selectedClipIndexes: <int>{},
-      );
-    } catch (e) {
-      state = state.copyWith(isApplyingEdits: false);
-    }
-  }
 
   // --- Modal Management ---
 
@@ -567,10 +531,21 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       // Start the upload by calling the upload method
       // We need to find the poolId from the recording's demonstration
       final poolId = state.recording?.demonstration?.poolId ?? 'unknown';
+      
+      // Pass deleted segments to upload for filtering
+      final deletedRanges = state.deletedClipsHistory
+          .expand((operation) => operation)
+          .map((clip) => {'start': clip.start, 'end': clip.end})
+          .toList();
+      
+      debugPrint('🔍 [uploadRecording] deletedRanges: $deletedRanges');
+      debugPrint('🔍 [uploadRecording] deletedClipsHistory length: ${state.deletedClipsHistory.length}');
+      
       await ref.read(uploadQueueProvider.notifier).upload(
             recordingId,
             poolId,
             demonstrationTitle,
+            deletedRanges: deletedRanges,
           );
     } catch (e) {
       if (e.toString().contains('Upload data is not allowed')) {

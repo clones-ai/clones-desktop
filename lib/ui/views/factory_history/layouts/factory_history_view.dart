@@ -1,8 +1,6 @@
 import 'package:clones_desktop/application/recording.dart';
 import 'package:clones_desktop/application/session/provider.dart';
-import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/assets.dart';
-import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/design_widget/message_box/message_box.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/factory_history/bloc/provider.dart';

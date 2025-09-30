@@ -5,6 +5,7 @@ import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
 import 'package:clones_desktop/domain/models/recording/recording_meta.dart';
 import 'package:clones_desktop/utils/window_alignment.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class TauriApiClient {
@@ -320,19 +321,6 @@ class TauriApiClient {
     }
   }
 
-  Future<void> applyEdits(
-    String recordingId,
-    List<Map<String, double>> segments,
-  ) async {
-    final response = await _client.post(
-      Uri.parse('$_baseUrl/recordings/$recordingId/apply-edits'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'segments': segments}),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to apply edits: ${response.body}');
-    }
-  }
 
   Future<Uint8List> getRecordingZip(String recordingId) async {
     final response =
@@ -341,6 +329,20 @@ class TauriApiClient {
       return response.bodyBytes;
     } else {
       throw Exception('Failed to get recording zip: ${response.body}');
+    }
+  }
+
+  Future<Uint8List> getFilteredRecordingZip(String recordingId, List<Map<String, double>> deletedRanges) async {
+    debugPrint('🔍 [getFilteredRecordingZip] Called with recordingId: $recordingId, deletedRanges: $deletedRanges');
+    final response = await _client.post(
+      Uri.parse('$_baseUrl/recordings/$recordingId/filtered-zip'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'deleted_ranges': deletedRanges}),
+    );
+    if (response.statusCode == 200) {
+      return response.bodyBytes;
+    } else {
+      throw Exception('Failed to get filtered recording zip: ${response.body}');
     }
   }
 

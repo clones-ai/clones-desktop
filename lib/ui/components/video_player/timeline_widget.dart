@@ -1,5 +1,4 @@
 import 'package:clones_desktop/ui/components/card.dart';
-import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/video_player/timeline/timeline_base_track.dart';
 import 'package:clones_desktop/ui/components/video_player/timeline/timeline_context_menu_item.dart';
 import 'package:clones_desktop/ui/components/video_player/timeline/timeline_editing_elements.dart';
@@ -57,18 +56,6 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
       child: Column(
         children: [
           _buildCustomTimeline(context, ref),
-          if (canEdit && demoDetail.clips.length > 1)
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: BtnPrimary(
-                onTap: ref.read(demoDetailNotifierProvider.notifier).applyEdits,
-                icon: Icons.check,
-                buttonText: 'Apply Edits',
-                btnPrimaryType: BtnPrimaryType.outlinePrimary,
-                isLoading: demoDetail.isApplyingEdits,
-                isLocked: demoDetail.isApplyingEdits,
-              ),
-            ),
         ],
       ),
     );
