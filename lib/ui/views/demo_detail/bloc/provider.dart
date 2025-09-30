@@ -533,7 +533,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     final recordingId = state.recording?.id;
     if (recordingId == null || state.isUploading) return;
 
-    state = state.copyWith(isUploading: true);
+    state = state.copyWith(isUploading: true, uploadError: null);
 
     try {
       final demonstrationTitle = state.recording?.title ?? 'Unknown';
