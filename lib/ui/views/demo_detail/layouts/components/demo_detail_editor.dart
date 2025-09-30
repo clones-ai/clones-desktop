@@ -56,7 +56,6 @@ class DemoDetailEditor extends ConsumerWidget {
 
     // Get memoized set of messages in deleted zones
     final messagesInDeletedZones = demoDetail.sftMessagesInDeletedZones;
-    debugPrint('📝 Editor: messagesInDeletedZones = $messagesInDeletedZones');
 
     final combinedData = <EditorChatItem>[];
     for (var i = 0; i < demoDetail.sftMessages.length; i++) {
