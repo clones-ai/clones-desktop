@@ -380,8 +380,10 @@ pub async fn start_recording(
 
     set_rec_state(&app, "starting".to_string(), None)?;
 
-    // Initialize FFmpeg
+    // Initialize FFmpeg and FFprobe
     init_ffmpeg()?;
+    crate::tools::ffmpeg::init_ffprobe()
+        .map_err(|e| format!("Failed to initialize FFprobe: {}", e))?;
 
     // Store demonstration data in state if available
     if let Some(demonstration_data) = &demonstration {
@@ -764,8 +766,12 @@ pub async fn create_filtered_recording_zip(
             "sft.json" => filter_sft_json(&file_path, &deleted_ranges)?,
             "meta.json" => update_meta_json(&file_path, &deleted_ranges)?,
             "recording.mp4" => {
-                // Video should already be edited by apply_edits
-                read_file_contents(&file_path)?
+                // Apply video edits if deleted ranges exist
+                if deleted_ranges.is_empty() {
+                    read_file_contents(&file_path)?
+                } else {
+                    apply_video_edits(&file_path, &deleted_ranges)?
+                }
             }
             _ => read_file_contents(&file_path)?,
         };
@@ -814,7 +820,13 @@ fn filter_input_log(
     let contents = std::fs::read_to_string(file_path)
         .map_err(|e| format!("Failed to read input_log.jsonl: {}", e))?;
 
-    let mut filtered_lines = Vec::new();
+    // Convert deleted ranges from milliseconds to seconds
+    let deleted_ranges_seconds: Vec<(f64, f64)> = deleted_ranges
+        .iter()
+        .map(|(start_ms, end_ms)| (start_ms / 1000.0, end_ms / 1000.0))
+        .collect();
+
+    let mut filtered_lines: Vec<String> = Vec::new();
 
     for line in contents.lines() {
         if line.trim().is_empty() {
@@ -826,7 +838,7 @@ fn filter_input_log(
                 // Always preserve critical events regardless of timestamp
                 if let Some(event_type) = json.get("event").and_then(|e| e.as_str()) {
                     if event_type == "ffmpeg_stderr" || event_type == "axtree" {
-                        filtered_lines.push(line);
+                        filtered_lines.push(line.to_string());
                         continue;
                     }
                 }
@@ -835,21 +847,40 @@ fn filter_input_log(
                     let time_seconds = time_ms / 1000.0;
 
                     // Check if this timestamp is in any deleted range
-                    let is_deleted = deleted_ranges
+                    let is_deleted = deleted_ranges_seconds
                         .iter()
                         .any(|(start, end)| time_seconds >= *start && time_seconds <= *end);
 
                     if !is_deleted {
-                        filtered_lines.push(line);
+                        // Calculate how much time was deleted before this timestamp
+                        let deleted_time_before: f64 = deleted_ranges_seconds
+                            .iter()
+                            .filter(|(start, _end)| *start < time_seconds)
+                            .map(|(start, end)| end - start)
+                            .sum();
+
+                        // Adjust the timestamp by subtracting deleted time
+                        let adjusted_time_seconds = time_seconds - deleted_time_before;
+                        let adjusted_time_ms = adjusted_time_seconds * 1000.0;
+
+                        // Update the timestamp in the JSON entry
+                        let mut json_entry = json.clone();
+                        json_entry["time"] = serde_json::Value::from(adjusted_time_ms);
+
+                        // Serialize the adjusted entry
+                        match serde_json::to_string(&json_entry) {
+                            Ok(adjusted_line) => filtered_lines.push(adjusted_line),
+                            Err(_) => filtered_lines.push(line.to_string()), // Fallback to original
+                        }
                     }
                 } else {
                     // Keep lines without timestamp
-                    filtered_lines.push(line);
+                    filtered_lines.push(line.to_string());
                 }
             }
             Err(_) => {
                 // Keep malformed lines
-                filtered_lines.push(line);
+                filtered_lines.push(line.to_string());
             }
         }
     }
@@ -873,24 +904,30 @@ fn filter_sft_json(
     let contents = std::fs::read_to_string(file_path)
         .map_err(|e| format!("Failed to read sft.json: {}", e))?;
 
-    let mut sft_data: Vec<serde_json::Value> =
+    let sft_data: Vec<serde_json::Value> =
         serde_json::from_str(&contents).map_err(|e| format!("Failed to parse sft.json: {}", e))?;
+
+    // Convert deleted ranges from milliseconds to seconds
+    let deleted_ranges_seconds: Vec<(f64, f64)> = deleted_ranges
+        .iter()
+        .map(|(start_ms, end_ms)| (start_ms / 1000.0, end_ms / 1000.0))
+        .collect();
 
     // Filter and adjust timestamps
     let mut filtered_sft_data = Vec::new();
-    
+
     for mut entry in sft_data {
         if let Some(timestamp_ms) = entry.get("timestamp").and_then(|t| t.as_f64()) {
             let timestamp_seconds = timestamp_ms / 1000.0;
 
             // Check if this timestamp is in any deleted range
-            let is_in_deleted_range = deleted_ranges
+            let is_in_deleted_range = deleted_ranges_seconds
                 .iter()
                 .any(|(start, end)| timestamp_seconds >= *start && timestamp_seconds <= *end);
 
             if !is_in_deleted_range {
                 // Calculate how much time was deleted before this timestamp
-                let deleted_time_before: f64 = deleted_ranges
+                let deleted_time_before: f64 = deleted_ranges_seconds
                     .iter()
                     .filter(|(start, _end)| *start < timestamp_seconds)
                     .map(|(start, end)| end - start)
@@ -929,8 +966,11 @@ fn update_meta_json(
 
     if !deleted_ranges.is_empty() {
         if let Some(original_duration) = meta.get("duration_seconds").and_then(|d| d.as_f64()) {
-            // Calculate total deleted time
-            let total_deleted: f64 = deleted_ranges.iter().map(|(start, end)| end - start).sum();
+            // Convert deleted ranges from milliseconds to seconds and calculate total deleted time
+            let total_deleted: f64 = deleted_ranges
+                .iter()
+                .map(|(start_ms, end_ms)| (end_ms - start_ms) / 1000.0)
+                .sum();
 
             let new_duration = (original_duration - total_deleted).max(0.0);
             meta["duration_seconds"] = serde_json::Value::from(new_duration);
@@ -948,6 +988,286 @@ fn update_meta_json(
         .map_err(|e| format!("Failed to serialize updated meta.json: {}", e))?;
 
     Ok(updated_json.into_bytes())
+}
+
+/// Apply video edits by trimming out deleted ranges using FFmpeg
+fn apply_video_edits(
+    input_path: &std::path::Path,
+    deleted_ranges: &[(f64, f64)],
+) -> Result<Vec<u8>, String> {
+    if deleted_ranges.is_empty() {
+        return read_file_contents(input_path);
+    }
+
+    log::info!(
+        "[apply_video_edits] Processing video with {} deleted ranges",
+        deleted_ranges.len()
+    );
+
+    // Ensure FFmpeg is initialized
+    FFMPEG_PATH.get().ok_or("FFmpeg not initialized")?;
+
+    // Create temporary output file
+    let temp_dir = std::env::temp_dir();
+    let temp_output = temp_dir.join(format!(
+        "edited_video_{}.mp4",
+        chrono::Local::now().format("%Y%m%d_%H%M%S_%3f")
+    ));
+
+    // Get video duration first
+    let duration = get_video_duration(input_path)?;
+    log::info!(
+        "[apply_video_edits] Original video duration: {:.2}s",
+        duration
+    );
+
+    // Create segments to keep (inverse of deleted ranges)
+    let mut keep_segments = Vec::new();
+    let mut current_start = 0.0;
+
+    // Convert ranges from milliseconds to seconds and sort by start time
+    let mut sorted_ranges: Vec<(f64, f64)> = deleted_ranges
+        .iter()
+        .map(|(start_ms, end_ms)| (start_ms / 1000.0, end_ms / 1000.0))
+        .collect();
+    sorted_ranges.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+    
+    log::info!(
+        "[apply_video_edits] Converted deleted ranges from ms to seconds: {:?}",
+        sorted_ranges
+    );
+    log::info!(
+        "[apply_video_edits] Video duration: {:.2}s, Processing deletion from {:.2}s to {:.2}s",
+        duration,
+        sorted_ranges.get(0).map(|(s, _)| *s).unwrap_or(0.0),
+        sorted_ranges.get(0).map(|(_, e)| *e).unwrap_or(0.0)
+    );
+
+    for (delete_start, delete_end) in sorted_ranges {
+        if current_start < delete_start {
+            keep_segments.push((current_start, delete_start));
+        }
+        current_start = delete_end.max(current_start);
+    }
+
+    // Add final segment if there's remaining video
+    if current_start < duration {
+        keep_segments.push((current_start, duration));
+    }
+
+    if keep_segments.is_empty() {
+        return Err("No video segments left after applying edits".to_string());
+    }
+
+    log::info!(
+        "[apply_video_edits] Keeping {} segments: {:?}",
+        keep_segments.len(),
+        keep_segments
+    );
+
+    // Create FFmpeg filter for concatenation
+    if keep_segments.len() == 1 {
+        // Simple trim case
+        let (start, end) = keep_segments[0];
+        trim_video_segment(input_path, &temp_output, start, end - start)?;
+    } else {
+        // Multiple segments - need to concatenate
+        concatenate_video_segments(input_path, &temp_output, &keep_segments)?;
+    }
+
+    // Read the processed video
+    let result = read_file_contents(&temp_output);
+
+    // Clean up temporary file
+    if let Err(e) = std::fs::remove_file(&temp_output) {
+        log::warn!("[apply_video_edits] Failed to cleanup temp file: {}", e);
+    }
+
+    result
+}
+
+/// Trim a single video segment using FFmpeg
+fn trim_video_segment(
+    input_path: &std::path::Path,
+    output_path: &std::path::Path,
+    start_seconds: f64,
+    duration_seconds: f64,
+) -> Result<(), String> {
+    let ffmpeg_path = FFMPEG_PATH.get().ok_or("FFmpeg not initialized")?;
+
+    log::info!(
+        "[trim_video_segment] Trimming from {:.2}s for {:.2}s",
+        start_seconds,
+        duration_seconds
+    );
+
+    let mut command = std::process::Command::new(ffmpeg_path);
+
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+
+    let output = command
+        .args([
+            "-i",
+            input_path.to_str().unwrap(),
+            "-ss",
+            &start_seconds.to_string(),
+            "-t",
+            &duration_seconds.to_string(),
+            "-c:v",
+            "libx264", // Re-encode for precision
+            "-c:a",
+            "aac", // Re-encode audio
+            "-preset",
+            "ultrafast", // Fast encoding
+            "-avoid_negative_ts",
+            "make_zero",
+            "-y", // Overwrite output file
+            output_path.to_str().unwrap(),
+        ])
+        .output()
+        .map_err(|e| format!("Failed to execute FFmpeg: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("FFmpeg failed: {}", stderr));
+    }
+
+    Ok(())
+}
+
+/// Concatenate multiple video segments using FFmpeg
+fn concatenate_video_segments(
+    input_path: &std::path::Path,
+    output_path: &std::path::Path,
+    segments: &[(f64, f64)],
+) -> Result<(), String> {
+    let ffmpeg_path = FFMPEG_PATH.get().ok_or("FFmpeg not initialized")?;
+
+    log::info!(
+        "[concatenate_video_segments] Concatenating {} segments",
+        segments.len()
+    );
+
+    // Create temporary directory for segment files
+    let temp_dir = std::env::temp_dir().join(format!(
+        "video_segments_{}",
+        chrono::Local::now().format("%Y%m%d_%H%M%S_%3f")
+    ));
+    std::fs::create_dir_all(&temp_dir)
+        .map_err(|e| format!("Failed to create temp directory: {}", e))?;
+
+    let mut segment_files = Vec::new();
+    let mut concat_list = String::new();
+
+    // Extract each segment
+    for (i, (start, end)) in segments.iter().enumerate() {
+        let segment_file = temp_dir.join(format!("segment_{}.mp4", i));
+        trim_video_segment(input_path, &segment_file, *start, end - start)?;
+
+        concat_list.push_str(&format!("file '{}'\n", segment_file.to_str().unwrap()));
+        segment_files.push(segment_file);
+    }
+
+    // Write concat list file
+    let concat_file = temp_dir.join("concat_list.txt");
+    std::fs::write(&concat_file, concat_list)
+        .map_err(|e| format!("Failed to write concat file: {}", e))?;
+
+    // Concatenate segments
+    let mut command = std::process::Command::new(ffmpeg_path);
+
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+
+    let output = command
+        .args([
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            concat_file.to_str().unwrap(),
+            "-c:v",
+            "libx264",
+            "-c:a", 
+            "aac",
+            "-preset",
+            "ultrafast",
+            "-y",
+            output_path.to_str().unwrap(),
+        ])
+        .output()
+        .map_err(|e| format!("Failed to execute FFmpeg concat: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+
+        // Clean up temp files before returning error
+        let _ = std::fs::remove_dir_all(&temp_dir);
+
+        return Err(format!("FFmpeg concat failed: {}", stderr));
+    }
+
+    // Clean up temporary files
+    if let Err(e) = std::fs::remove_dir_all(&temp_dir) {
+        log::warn!(
+            "[concatenate_video_segments] Failed to cleanup temp directory: {}",
+            e
+        );
+    }
+
+    Ok(())
+}
+
+/// Get video duration using FFprobe
+fn get_video_duration(video_path: &std::path::Path) -> Result<f64, String> {
+    use crate::tools::ffmpeg::FFPROBE_PATH;
+
+    let ffprobe_path = FFPROBE_PATH.get().ok_or("FFprobe not initialized")?;
+
+    let mut command = std::process::Command::new(ffprobe_path);
+
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+
+    let output = command
+        .args([
+            "-v",
+            "quiet",
+            "-print_format",
+            "json",
+            "-show_format",
+            video_path.to_str().unwrap(),
+        ])
+        .output()
+        .map_err(|e| format!("Failed to execute FFprobe: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("FFprobe failed: {}", stderr));
+    }
+
+    let output_str = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&output_str)
+        .map_err(|e| format!("Failed to parse FFprobe output: {}", e))?;
+
+    let duration_str = json["format"]["duration"]
+        .as_str()
+        .ok_or("Duration not found in FFprobe output")?;
+
+    duration_str
+        .parse::<f64>()
+        .map_err(|e| format!("Failed to parse duration: {}", e))
 }
 
 pub async fn get_current_demonstration(

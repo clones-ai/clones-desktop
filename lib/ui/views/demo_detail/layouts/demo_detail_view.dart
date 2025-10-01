@@ -33,14 +33,24 @@ class DemoDetailView extends ConsumerStatefulWidget {
   ConsumerState<DemoDetailView> createState() => _DemoDetailViewState();
 }
 
-class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
-  bool _editorFullscreen = false;
+class _DemoDetailViewState extends ConsumerState<DemoDetailView>
+    with TickerProviderStateMixin {
+  bool _videoFullscreen = false;
   Widget? _videoPlayerWidget;
   String? _currentVideoId;
+  bool _videoPlayerCreated = false;
+  late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
+
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+
 
     // Set modal state immediately if no recordingId
     if (widget.recordingId == null) {
@@ -60,6 +70,24 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
     });
   }
 
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleVideoFullscreen() {
+    setState(() {
+      _videoFullscreen = !_videoFullscreen;
+    });
+
+    if (_videoFullscreen) {
+      _animationController.forward();
+    } else {
+      _animationController.reverse();
+    }
+  }
+
   Widget _buildVideoPreview({bool showExpandButton = true}) {
     // Create video player widget once and reuse it
     final demoDetail = ref.watch(demoDetailNotifierProvider);
@@ -67,31 +95,28 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
 
     if (videoSource == null) {
       return DemoDetailVideoPreview(
-        onExpand: showExpandButton
-            ? () => setState(() => _editorFullscreen = true)
-            : null,
+        onExpand: showExpandButton ? _toggleVideoFullscreen : null,
       );
     }
 
-    // Create or reuse the video player widget
-    _videoPlayerWidget ??= Hero(
-      tag: 'demo-video-player',
-      child: VideoPlayerWithId(
+    // Create or reuse the video player widget with a stable key
+    if (!_videoPlayerCreated) {
+      _videoPlayerWidget = VideoPlayerWithId(
+        key: const ValueKey('main-video-player'),
         source: videoSource,
         onVideoIdAvailable: (videoId) {
           setState(() {
             _currentVideoId = videoId;
           });
         },
-      ),
-    );
+      );
+      _videoPlayerCreated = true;
+    }
 
     return DemoDetailVideoPreview(
       videoWidget: _videoPlayerWidget,
       videoId: _currentVideoId,
-      onExpand: showExpandButton
-          ? () => setState(() => _editorFullscreen = true)
-          : null,
+      onExpand: showExpandButton ? _toggleVideoFullscreen : null,
     );
   }
 
@@ -150,132 +175,242 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
       builder: (context, constraints) {
         return Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Builder(
-                      builder: (context) {
-                        if (constraints.maxWidth > Breakpoints.desktop) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                flex: 9,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const DemoDetailInfos(),
-                                    const SizedBox(height: 20),
-                                    Expanded(
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Expanded(
-                                            flex: 5,
-                                            child: _buildVideoPreview(),
-                                          ),
-                                          const SizedBox(width: 20),
-                                          Expanded(
-                                            flex: 4,
-                                            child: SingleChildScrollView(
-                                              child: Column(
-                                                children: [
-                                                  if (submission == null &&
-                                                      recording != null &&
-                                                      !showTrainingSessionModal)
-                                                    CardWidget(
-                                                      child: SizedBox(
-                                                        width: MediaQuery.of(
-                                                          context,
-                                                        ).size.width,
-                                                        child:
-                                                            const PreUploadMessages(),
-                                                      ),
-                                                    )
-                                                  else
-                                                    const DemoDetailSubmissionResult(),
-                                                  const SizedBox(
-                                                    height: 20,
-                                                  ),
-                                                  if (submission != null) ...[
-                                                    const DemoDetailSteps(),
-                                                    const SizedBox(
-                                                      height: 20,
-                                                    ),
-                                                  ],
-                                                  if (submission != null) ...[
-                                                    const DemoDetailRewards(),
-                                                    const SizedBox(
-                                                      height: 20,
-                                                    ),
-                                                  ],
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 20),
-                              Expanded(
-                                flex: 3,
-                                child: _buildEditorTabs(),
-                              ),
-                            ],
-                          );
-                        }
-                        return SingleChildScrollView(
+            AnimatedBuilder(
+              animation: _animationController,
+              builder: (context, child) {
+                return Padding(
+                  padding: EdgeInsets.all(_videoFullscreen ? 0 : 24),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: Builder(
+                          builder: (context) {
+                            if (constraints.maxWidth > Breakpoints.desktop) {
+                              return _buildDesktopLayout(
+                                constraints,
+                                submission,
+                                recording,
+                                showTrainingSessionModal,
+                              );
+                            }
+                            return _buildMobileLayout(
+                              submission,
+                              recording,
+                              showTrainingSessionModal,
+                            );
+                          },
+                        ),
+                      ),
+                      if (!_videoFullscreen) ...[
+                        const SizedBox(height: 10),
+                        AnimatedOpacity(
+                          opacity: 1 - _animationController.value,
+                          duration: const Duration(milliseconds: 300),
+                          child: const DemoDetailFooter(),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              },
+            ),
+            if (ref.watch(demoDetailNotifierProvider).showTrainingSessionModal)
+              _buildTrainingSessionModal(),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDesktopLayout(
+    BoxConstraints constraints,
+    dynamic submission,
+    dynamic recording,
+    bool showTrainingSessionModal,
+  ) {
+    if (_videoFullscreen) {
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOutCubic,
+        child: Stack(
+          children: [
+            _buildVideoPreview(showExpandButton: false),
+            Positioned(
+              top: 16,
+              right: 16,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.fullscreen_exit,
+                  color: ClonesColors.secondary,
+                  size: 32,
+                ),
+                onPressed: _toggleVideoFullscreen,
+                tooltip: 'Exit fullscreen',
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 9,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (!_videoFullscreen) ...[
+                AnimatedOpacity(
+                  opacity: 1 - _animationController.value,
+                  duration: const Duration(milliseconds: 300),
+                  child: const DemoDetailInfos(),
+                ),
+                const SizedBox(height: 20),
+              ],
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: _buildVideoPreview(),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      flex: 4,
+                      child: AnimatedOpacity(
+                        opacity: 1 - _animationController.value,
+                        duration: const Duration(milliseconds: 300),
+                        child: SingleChildScrollView(
+                          physics: const ClampingScrollPhysics(),
                           child: Column(
                             children: [
-                              const DemoDetailInfos(),
-                              const SizedBox(height: 20),
-                              _buildVideoPreview(),
-                              const SizedBox(height: 20),
-                              const DemoDetailSteps(),
-                              const SizedBox(height: 20),
                               if (submission == null &&
                                   recording != null &&
                                   !showTrainingSessionModal)
                                 CardWidget(
                                   child: SizedBox(
-                                    width: MediaQuery.of(
-                                      context,
-                                    ).size.width,
+                                    width: MediaQuery.of(context).size.width,
                                     child: const PreUploadMessages(),
                                   ),
                                 )
                               else
                                 const DemoDetailSubmissionResult(),
                               const SizedBox(height: 20),
-                              const DemoDetailRewards(),
-                              const SizedBox(height: 20),
-                              SizedBox(
-                                height: 500,
-                                child: _buildEditorTabs(),
-                              ),
+                              if (submission != null) ...[
+                                const DemoDetailSteps(),
+                                const SizedBox(height: 20),
+                              ],
+                              if (submission != null) ...[
+                                const DemoDetailRewards(),
+                                const SizedBox(height: 20),
+                              ],
                             ],
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  const DemoDetailFooter(),
-                ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 20),
+        Expanded(
+          flex: 3,
+          child: _buildEditorTabs(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout(
+    dynamic submission,
+    dynamic recording,
+    bool showTrainingSessionModal,
+  ) {
+    if (_videoFullscreen) {
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOutCubic,
+        child: Stack(
+          children: [
+            _buildVideoPreview(showExpandButton: false),
+            Positioned(
+              top: 16,
+              right: 16,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.fullscreen_exit,
+                  color: ClonesColors.secondary,
+                  size: 32,
+                ),
+                onPressed: _toggleVideoFullscreen,
+                tooltip: 'Exit fullscreen',
               ),
             ),
-            _buildFullscreenOverlay(constraints),
-            if (ref.watch(demoDetailNotifierProvider).showTrainingSessionModal)
-              _buildTrainingSessionModal(),
           ],
-        );
-      },
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
+      child: Column(
+        children: [
+          if (!_videoFullscreen) ...[
+            AnimatedOpacity(
+              opacity: 1 - _animationController.value,
+              duration: const Duration(milliseconds: 300),
+              child: const DemoDetailInfos(),
+            ),
+            const SizedBox(height: 20),
+          ],
+          _buildVideoPreview(),
+          const SizedBox(height: 20),
+          AnimatedOpacity(
+            opacity: 1 - _animationController.value,
+            duration: const Duration(milliseconds: 300),
+            child: const DemoDetailSteps(),
+          ),
+          const SizedBox(height: 20),
+          if (submission == null && recording != null && !showTrainingSessionModal)
+            AnimatedOpacity(
+              opacity: 1 - _animationController.value,
+              duration: const Duration(milliseconds: 300),
+              child: CardWidget(
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: const PreUploadMessages(),
+                ),
+              ),
+            )
+          else
+            AnimatedOpacity(
+              opacity: 1 - _animationController.value,
+              duration: const Duration(milliseconds: 300),
+              child: const DemoDetailSubmissionResult(),
+            ),
+          const SizedBox(height: 20),
+          AnimatedOpacity(
+            opacity: 1 - _animationController.value,
+            duration: const Duration(milliseconds: 300),
+            child: const DemoDetailRewards(),
+          ),
+          const SizedBox(height: 20),
+          AnimatedOpacity(
+            opacity: 1 - _animationController.value,
+            duration: const Duration(milliseconds: 300),
+            child: SizedBox(
+              height: 500,
+              child: _buildEditorTabs(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -308,75 +443,6 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
     );
   }
 
-  Widget _buildFullscreenOverlay(BoxConstraints constraints) {
-    return AnimatedPositioned(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOutCubic,
-      top: 0,
-      left: _editorFullscreen ? 0 : constraints.maxWidth,
-      width: constraints.maxWidth,
-      height: constraints.maxHeight,
-      child: IgnorePointer(
-        ignoring: !_editorFullscreen,
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 300),
-          opacity: _editorFullscreen ? 1.0 : 0.0,
-          child: Material(
-            color: Colors.transparent,
-            child: Stack(
-              children: [
-                BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                  child: Container(
-                    color: Colors.black.withValues(alpha: 0.8),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          IconButton(
-                            icon: const Icon(
-                              Icons.close_fullscreen,
-                              color: ClonesColors.secondary,
-                              size: 32,
-                            ),
-                            tooltip: 'Close',
-                            onPressed: () =>
-                                setState(() => _editorFullscreen = false),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child:
-                                  _buildVideoPreview(showExpandButton: false),
-                            ),
-                            const SizedBox(width: 20),
-                            Expanded(
-                              child: _buildEditorTabs(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildTrainingSessionModal() {
     return Stack(
