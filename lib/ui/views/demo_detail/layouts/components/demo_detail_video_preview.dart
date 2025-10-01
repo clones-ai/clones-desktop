@@ -32,10 +32,8 @@ class _DemoDetailVideoPreviewState
     final theme = Theme.of(context);
 
     return CardWidget(
-      child: SingleChildScrollView(
-        child: Column(
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -75,30 +73,32 @@ class _DemoDetailVideoPreviewState
               ],
             ),
             const SizedBox(height: 10),
-            if (widget.videoWidget == null)
-              Text('No video found', style: theme.textTheme.bodyMedium)
-            else
-              MouseRegion(
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    if (state.isLoading)
-                      const Center(
-                        child: SizedBox(
-                          width: 50,
-                          height: 50,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1,
-                          ),
-                        ),
-                      )
-                    else
-                      _buildVideoWithOverlay(),
-                  ],
-                ),
-              ),
+            Expanded(
+              child: widget.videoWidget == null
+                  ? Center(
+                      child: Text('No video found', style: theme.textTheme.bodyMedium),
+                    )
+                  : MouseRegion(
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          if (state.isLoading)
+                            const Center(
+                              child: SizedBox(
+                                width: 50,
+                                height: 50,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 1,
+                                ),
+                              ),
+                            )
+                          else
+                            _buildVideoWithOverlay(),
+                        ],
+                      ),
+                    ),
+            ),
           ],
-        ),
       ),
     );
   }

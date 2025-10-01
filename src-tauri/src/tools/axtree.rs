@@ -11,11 +11,14 @@ use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::thread;
 use std::time::Duration;
+use tauri::Emitter;
 
 pub static DUMP_TREE_PATH: OnceLock<PathBuf> = OnceLock::new();
 static POLLING_ACTIVE: OnceLock<Arc<Mutex<bool>>> = OnceLock::new();
+static RECORDING_MODE: OnceLock<Arc<Mutex<bool>>> = OnceLock::new();
 
 const POLLING_SLEEP_SECS: u64 = 2;
+const POLLING_SLEEP_SECS_RECORDING: u64 = 60; // 60 seconds during recording to avoid focus stealing
 
 #[cfg(target_os = "windows")]
 fn get_dump_tree_url() -> String {
@@ -173,8 +176,27 @@ pub fn start_dump_tree_polling(_: tauri::AppHandle) -> Result<(), String> {
                 use std::os::windows::process::CommandExt;
                 command.creation_flags(0x08000000); // CREATE_NO_WINDOW constant
             }
-            let proc = command
-                .arg("-e")
+            // Check if we're in recording mode to add appropriate flags
+            let is_recording = {
+                if let Some(recording_mode) = RECORDING_MODE.get() {
+                    let lock = lock_with_timeout(recording_mode, Duration::from_secs(1));
+                    if let Some(recording) = lock {
+                        *recording
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            };
+
+            let mut cmd = command.arg("-e").arg("--recording-display").arg("0");
+            
+            if is_recording {
+                cmd = cmd.arg("--low-frequency");
+            }
+
+            let proc = cmd
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
                 .spawn();
@@ -243,15 +265,74 @@ pub fn start_dump_tree_polling(_: tauri::AppHandle) -> Result<(), String> {
                 }
             }
 
-            // Sleep before the next poll
-            info!(
-                "[AxTree] Sleeping for {} seconds before next poll",
+            // Sleep before the next poll - use longer interval during recording
+            let sleep_duration = if is_recording {
+                POLLING_SLEEP_SECS_RECORDING
+            } else {
                 POLLING_SLEEP_SECS
+            };
+            
+            info!(
+                "[AxTree] Sleeping for {} seconds before next poll (recording mode: {})",
+                sleep_duration, is_recording
             );
-            thread::sleep(Duration::from_secs(POLLING_SLEEP_SECS));
+            thread::sleep(Duration::from_secs(sleep_duration));
         }
         info!("[AxTree] Polling thread exited.");
     });
+
+    Ok(())
+}
+
+/// Sets the recording mode for AXTree polling.
+/// When recording is true, polling frequency is reduced to avoid focus stealing.
+pub fn set_recording_mode(recording: bool) -> Result<(), String> {
+    info!("[AxTree] Setting recording mode: {}", recording);
+    
+    let recording_mode = RECORDING_MODE.get_or_init(|| Arc::new(Mutex::new(false)));
+    let lock = lock_with_timeout(recording_mode, Duration::from_secs(2));
+    if let Some(mut mode) = lock {
+        *mode = recording;
+        Ok(())
+    } else {
+        Err("Could not acquire recording mode lock".to_string())
+    }
+}
+
+/// Captures a single AXTree snapshot before recording starts.
+/// This provides detailed accessibility data without disrupting the recording.
+pub fn capture_pre_recording_snapshot(app: tauri::AppHandle) -> Result<(), String> {
+    info!("[AxTree] Capturing pre-recording AXTree snapshot");
+    
+    let dump_tree = DUMP_TREE_PATH
+        .get()
+        .ok_or("Dump tree path not initialized")?;
+
+    let mut command = Command::new(dump_tree);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x08000000); // CREATE_NO_WINDOW constant
+    }
+
+    let output = command
+        .arg("-e")
+        .arg("--recording-display")
+        .arg("0")
+        .output()
+        .map_err(|e| format!("Failed to execute dump-tree: {}", e))?;
+
+    if let Ok(stdout) = String::from_utf8(output.stdout) {
+        for line in stdout.lines() {
+            if let Ok(mut json) = serde_json::from_str::<Value>(line) {
+                if let Some(obj) = json.as_object_mut() {
+                    obj.insert("event".to_string(), json!("axtree_pre_recording"));
+                    let _ = crate::core::record::log_input(json!(obj));
+                    let _ = app.emit("axtree_pre_recording", json!(obj));
+                }
+            }
+        }
+    }
 
     Ok(())
 }

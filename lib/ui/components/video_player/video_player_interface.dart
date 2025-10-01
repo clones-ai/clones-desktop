@@ -74,63 +74,120 @@ abstract class ConsumerVideoPlayerState<T extends ConsumerStatefulWidget>
           _handleSeekForward();
         }
       },
-      child: Column(
-        children: [
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
-                child: DecoratedBox(
-                  decoration: const BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.all(Radius.circular(8)),
-                  ),
-                  child: videoState.hasError
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.error,
-                                size: 48,
-                                color: Colors.red,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Video playback error',
-                                style:
-                                    Theme.of(context).textTheme.headlineSmall,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                videoState.errorMessage ?? 'Unknown error',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final needsScroll = constraints.maxHeight < 400;
+
+          if (needsScroll) {
+            return SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                children: [
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1200),
+                      child: AspectRatio(
+                        aspectRatio: 16 / 9,
+                        child: DecoratedBox(
+                          decoration: const BoxDecoration(
+                            color: Colors.black,
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
                           ),
-                        )
-                      : videoState.isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : buildVideoPlayer(context),
+                          child: videoState.hasError
+                              ? _buildErrorWidget(context, videoState)
+                              : videoState.isLoading
+                                  ? const Center(
+                                      child: CircularProgressIndicator())
+                                  : buildVideoPlayer(context),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TimelineWidget(
+                    videoId: videoId,
+                    onSeek: _handleSeek,
+                  ),
+                  const SizedBox(height: 16),
+                  TransportControls(
+                    videoId: videoId,
+                    onPlayPause: _handlePlayPause,
+                    onStop: _handleStop,
+                    onSeekBackward: _handleSeekBackward,
+                    onSeekForward: _handleSeekForward,
+                    onSpeedChange: _handleSpeedChange,
+                  ),
+                ],
+              ),
+            );
+          }
+
+          // Normal layout
+          return Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1200),
+                    child: AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: DecoratedBox(
+                        decoration: const BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.all(Radius.circular(8)),
+                        ),
+                        child: videoState.hasError
+                            ? _buildErrorWidget(context, videoState)
+                            : videoState.isLoading
+                                ? const Center(
+                                    child: CircularProgressIndicator())
+                                : buildVideoPlayer(context),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(height: 16),
+              TimelineWidget(
+                videoId: videoId,
+                onSeek: _handleSeek,
+              ),
+              const SizedBox(height: 16),
+              TransportControls(
+                videoId: videoId,
+                onPlayPause: _handlePlayPause,
+                onStop: _handleStop,
+                onSeekBackward: _handleSeekBackward,
+                onSeekForward: _handleSeekForward,
+                onSpeedChange: _handleSpeedChange,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget(BuildContext context, VideoState videoState) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.error,
+            size: 48,
+            color: Colors.red,
           ),
           const SizedBox(height: 16),
-          TimelineWidget(
-            videoId: videoId,
-            onSeek: _handleSeek,
+          Text(
+            'Video playback error',
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
-          const SizedBox(height: 16),
-          TransportControls(
-            videoId: videoId,
-            onPlayPause: _handlePlayPause,
-            onStop: _handleStop,
-            onSeekBackward: _handleSeekBackward,
-            onSeekForward: _handleSeekForward,
-            onSpeedChange: _handleSpeedChange,
+          const SizedBox(height: 8),
+          Text(
+            videoState.errorMessage ?? 'Unknown error',
+            style: Theme.of(context).textTheme.bodyMedium,
+            textAlign: TextAlign.center,
           ),
         ],
       ),
