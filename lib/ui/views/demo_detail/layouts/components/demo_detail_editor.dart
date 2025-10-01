@@ -77,7 +77,9 @@ class DemoDetailEditor extends ConsumerWidget {
           padding: const EdgeInsets.all(8),
           child: Text(
             'This editor section lists structured notes of what happened during the demo. The Clones Quality Agent will use them to evaluate and score the quality of the recording.',
-            style: theme.textTheme.bodySmall,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontSize: 10,
+            ),
           ),
         ),
         Expanded(

@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/ui/components/card.dart';
-import 'package:clones_desktop/ui/components/video_player/video_player.dart';
+import 'package:clones_desktop/ui/components/video_player/video_player_with_id.dart';
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/demo_detail/layouts/components/demo_detail_editor.dart';
@@ -36,6 +36,7 @@ class DemoDetailView extends ConsumerStatefulWidget {
 class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
   bool _editorFullscreen = false;
   Widget? _videoPlayerWidget;
+  String? _currentVideoId;
 
   @override
   void initState() {
@@ -75,11 +76,19 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
     // Create or reuse the video player widget
     _videoPlayerWidget ??= Hero(
       tag: 'demo-video-player',
-      child: VideoPlayer(source: videoSource),
+      child: VideoPlayerWithId(
+        source: videoSource,
+        onVideoIdAvailable: (videoId) {
+          setState(() {
+            _currentVideoId = videoId;
+          });
+        },
+      ),
     );
 
     return DemoDetailVideoPreview(
       videoWidget: _videoPlayerWidget,
+      videoId: _currentVideoId,
       onExpand: showExpandButton
           ? () => setState(() => _editorFullscreen = true)
           : null,
@@ -246,7 +255,10 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView> {
                               const SizedBox(height: 20),
                               const DemoDetailRewards(),
                               const SizedBox(height: 20),
-                              _buildEditorTabs(),
+                              SizedBox(
+                                height: 500,
+                                child: _buildEditorTabs(),
+                              ),
                             ],
                           ),
                         );

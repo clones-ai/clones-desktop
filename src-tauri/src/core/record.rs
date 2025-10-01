@@ -5,15 +5,15 @@
 use crate::core::input;
 use crate::tools::axtree;
 use crate::tools::cqa;
-use crate::tools::ffmpeg::{init_ffmpeg, FFmpegRecorder, FFMPEG_PATH, FFPROBE_PATH};
+use crate::tools::ffmpeg::{init_ffmpeg, FFmpegRecorder, FFMPEG_PATH};
 use crate::utils::logger::Logger;
 use crate::utils::settings::get_custom_app_local_data_dir;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use chrono::Local;
 use display_info::DisplayInfo;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::fs::{self, create_dir_all, File};
-use std::io::{BufRead, BufReader, BufWriter, Cursor, Read, Write};
+use std::io::{BufReader, Cursor, Read, Write};
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
@@ -718,80 +718,57 @@ pub async fn delete_recording(app: tauri::AppHandle, recording_id: String) -> Re
     Ok(())
 }
 
-
-
-
 pub async fn create_recording_zip(
     app: tauri::AppHandle,
     recording_id: String,
 ) -> Result<Vec<u8>, String> {
+    create_filtered_recording_zip(app, recording_id, Vec::new()).await
+}
+
+pub async fn create_filtered_recording_zip(
+    app: tauri::AppHandle,
+    recording_id: String,
+    deleted_ranges: Vec<(f64, f64)>,
+) -> Result<Vec<u8>, String> {
     log::info!(
-        "[create_recording_zip] Starting to create zip for recording ID: {}",
-        recording_id
+        "[create_filtered_recording_zip] Starting to create filtered zip for recording ID: {} with {} deleted ranges",
+        recording_id,
+        deleted_ranges.len()
     );
 
     let recordings_dir = get_custom_app_local_data_dir(&app)?
         .join("recordings")
         .join(&recording_id);
 
-    log::info!(
-        "[create_recording_zip] Recording directory: {}",
-        recordings_dir.display()
-    );
-
     // Create a buffer to store the zip file
     let buf = Cursor::new(Vec::new());
     let mut zip = ZipWriter::new(buf);
     let options = FileOptions::default().compression_method(zip::CompressionMethod::Stored);
-    log::info!("[create_recording_zip] Initialized zip writer with Stored compression method");
 
-
-    // Add files to zip
+    // Process each file with filtering if needed
     let filenames = ["input_log.jsonl", "meta.json", "recording.mp4", "sft.json"];
-    log::info!(
-        "[create_recording_zip] Adding {} files to zip archive",
-        filenames.len()
-    );
 
     for filename in filenames {
         let file_path = recordings_dir.join(filename);
 
-        log::info!(
-            "[create_recording_zip] Processing file: {} from path: {}",
-            filename,
-            file_path.display()
-        );
-
         if !file_path.exists() {
-            log::info!(
-                "[create_recording_zip] ERROR: File not found: {}",
-                file_path.display()
+            log::warn!(
+                "[create_filtered_recording_zip] File not found: {}",
+                filename
             );
-            return Err(format!("File not found: {}", filename));
+            continue;
         }
 
-        // Get file size for logging
-        let metadata = fs::metadata(&file_path)
-            .map_err(|e| format!("Failed to get metadata for {}: {}", filename, e))?;
-        let file_size = metadata.len();
-        log::info!(
-            "[create_recording_zip] Adding file to zip: {} (size: {} bytes)",
-            filename,
-            file_size
-        );
-
-        // Read file normally
-        let mut file = File::open(&file_path)
-            .map_err(|e| format!("Failed to open {}: {}", filename, e))?;
-        let mut contents = Vec::new();
-        file.read_to_end(&mut contents)
-            .map_err(|e| format!("Failed to read {}: {}", filename, e))?;
-
-        log::info!(
-            "[create_recording_zip] Read {} bytes from {}",
-            contents.len(),
-            filename
-        );
+        let contents = match filename {
+            "input_log.jsonl" => filter_input_log(&file_path, &deleted_ranges)?,
+            "sft.json" => filter_sft_json(&file_path, &deleted_ranges)?,
+            "meta.json" => update_meta_json(&file_path, &deleted_ranges)?,
+            "recording.mp4" => {
+                // Video should already be edited by apply_edits
+                read_file_contents(&file_path)?
+            }
+            _ => read_file_contents(&file_path)?,
+        };
 
         zip.start_file(filename, options)
             .map_err(|e| format!("Failed to add {} to zip: {}", filename, e))?;
@@ -799,30 +776,178 @@ pub async fn create_recording_zip(
             .map_err(|e| format!("Failed to write {} to zip: {}", filename, e))?;
 
         log::info!(
-            "[create_recording_zip] Successfully added {} to zip archive",
-            filename
+            "[create_filtered_recording_zip] Added filtered {} ({} bytes)",
+            filename,
+            contents.len()
         );
     }
 
-    // Finish zip file
-    log::info!("[create_recording_zip] Finalizing zip archive");
     let buf = zip
         .finish()
         .map_err(|e| format!("Failed to finalize zip: {}", e))?
         .into_inner();
 
-    let zip_size = buf.len();
     log::info!(
-        "[create_recording_zip] Zip archive created successfully, size: {} bytes",
-        zip_size
-    );
-
-
-    log::info!(
-        "[create_recording_zip] Completed creating zip for recording ID: {}",
-        recording_id
+        "[create_filtered_recording_zip] Completed filtered zip, size: {} bytes",
+        buf.len()
     );
     Ok(buf)
+}
+
+fn read_file_contents(file_path: &std::path::Path) -> Result<Vec<u8>, String> {
+    let mut file = File::open(file_path)
+        .map_err(|e| format!("Failed to open {}: {}", file_path.display(), e))?;
+    let mut contents = Vec::new();
+    file.read_to_end(&mut contents)
+        .map_err(|e| format!("Failed to read {}: {}", file_path.display(), e))?;
+    Ok(contents)
+}
+
+fn filter_input_log(
+    file_path: &std::path::Path,
+    deleted_ranges: &[(f64, f64)],
+) -> Result<Vec<u8>, String> {
+    if deleted_ranges.is_empty() {
+        return read_file_contents(file_path);
+    }
+
+    let contents = std::fs::read_to_string(file_path)
+        .map_err(|e| format!("Failed to read input_log.jsonl: {}", e))?;
+
+    let mut filtered_lines = Vec::new();
+
+    for line in contents.lines() {
+        if line.trim().is_empty() {
+            continue;
+        }
+
+        match serde_json::from_str::<serde_json::Value>(line) {
+            Ok(json) => {
+                // Always preserve critical events regardless of timestamp
+                if let Some(event_type) = json.get("event").and_then(|e| e.as_str()) {
+                    if event_type == "ffmpeg_stderr" || event_type == "axtree" {
+                        filtered_lines.push(line);
+                        continue;
+                    }
+                }
+
+                if let Some(time_ms) = json.get("time").and_then(|t| t.as_f64()) {
+                    let time_seconds = time_ms / 1000.0;
+
+                    // Check if this timestamp is in any deleted range
+                    let is_deleted = deleted_ranges
+                        .iter()
+                        .any(|(start, end)| time_seconds >= *start && time_seconds <= *end);
+
+                    if !is_deleted {
+                        filtered_lines.push(line);
+                    }
+                } else {
+                    // Keep lines without timestamp
+                    filtered_lines.push(line);
+                }
+            }
+            Err(_) => {
+                // Keep malformed lines
+                filtered_lines.push(line);
+            }
+        }
+    }
+
+    let filtered_content = filtered_lines.join("\n");
+    if !filtered_content.is_empty() {
+        Ok(format!("{}\n", filtered_content).into_bytes())
+    } else {
+        Ok(Vec::new())
+    }
+}
+
+fn filter_sft_json(
+    file_path: &std::path::Path,
+    deleted_ranges: &[(f64, f64)],
+) -> Result<Vec<u8>, String> {
+    if deleted_ranges.is_empty() {
+        return read_file_contents(file_path);
+    }
+
+    let contents = std::fs::read_to_string(file_path)
+        .map_err(|e| format!("Failed to read sft.json: {}", e))?;
+
+    let mut sft_data: Vec<serde_json::Value> =
+        serde_json::from_str(&contents).map_err(|e| format!("Failed to parse sft.json: {}", e))?;
+
+    // Filter and adjust timestamps
+    let mut filtered_sft_data = Vec::new();
+    
+    for mut entry in sft_data {
+        if let Some(timestamp_ms) = entry.get("timestamp").and_then(|t| t.as_f64()) {
+            let timestamp_seconds = timestamp_ms / 1000.0;
+
+            // Check if this timestamp is in any deleted range
+            let is_in_deleted_range = deleted_ranges
+                .iter()
+                .any(|(start, end)| timestamp_seconds >= *start && timestamp_seconds <= *end);
+
+            if !is_in_deleted_range {
+                // Calculate how much time was deleted before this timestamp
+                let deleted_time_before: f64 = deleted_ranges
+                    .iter()
+                    .filter(|(start, _end)| *start < timestamp_seconds)
+                    .map(|(start, end)| end - start)
+                    .sum();
+
+                // Adjust the timestamp by subtracting deleted time
+                let adjusted_timestamp_seconds = timestamp_seconds - deleted_time_before;
+                let adjusted_timestamp_ms = adjusted_timestamp_seconds * 1000.0;
+
+                // Update the timestamp in the entry
+                entry["timestamp"] = serde_json::Value::from(adjusted_timestamp_ms);
+                filtered_sft_data.push(entry);
+            }
+            // If in deleted range, skip this entry entirely
+        } else {
+            // Keep entries without timestamp
+            filtered_sft_data.push(entry);
+        }
+    }
+
+    let filtered_json = serde_json::to_string_pretty(&filtered_sft_data)
+        .map_err(|e| format!("Failed to serialize filtered sft.json: {}", e))?;
+
+    Ok(filtered_json.into_bytes())
+}
+
+fn update_meta_json(
+    file_path: &std::path::Path,
+    deleted_ranges: &[(f64, f64)],
+) -> Result<Vec<u8>, String> {
+    let contents = std::fs::read_to_string(file_path)
+        .map_err(|e| format!("Failed to read meta.json: {}", e))?;
+
+    let mut meta: serde_json::Value =
+        serde_json::from_str(&contents).map_err(|e| format!("Failed to parse meta.json: {}", e))?;
+
+    if !deleted_ranges.is_empty() {
+        if let Some(original_duration) = meta.get("duration_seconds").and_then(|d| d.as_f64()) {
+            // Calculate total deleted time
+            let total_deleted: f64 = deleted_ranges.iter().map(|(start, end)| end - start).sum();
+
+            let new_duration = (original_duration - total_deleted).max(0.0);
+            meta["duration_seconds"] = serde_json::Value::from(new_duration);
+
+            log::info!(
+                "[update_meta_json] Updated duration from {:.2}s to {:.2}s (deleted {:.2}s)",
+                original_duration,
+                new_duration,
+                total_deleted
+            );
+        }
+    }
+
+    let updated_json = serde_json::to_string_pretty(&meta)
+        .map_err(|e| format!("Failed to serialize updated meta.json: {}", e))?;
+
+    Ok(updated_json.into_bytes())
 }
 
 pub async fn get_current_demonstration(
@@ -833,130 +958,4 @@ pub async fn get_current_demonstration(
         .lock()
         .map_err(|e| e.to_string())?;
     Ok(current_demonstration.clone())
-}
-
-pub async fn trim_recording(
-    app: tauri::AppHandle,
-    recording_id: String,
-    start_time: f64,
-    end_time: f64,
-) -> Result<(), String> {
-    let recordings_dir = get_custom_app_local_data_dir(&app)?
-        .join("recordings")
-        .join(&recording_id);
-    let video_path = recordings_dir.join("recording.mp4");
-    let temp_output_path = recordings_dir.join("recording_trimmed.mp4");
-
-    if !video_path.exists() {
-        return Err("Original video file not found.".to_string());
-    }
-
-    let ffmpeg_path = FFMPEG_PATH
-        .get()
-        .ok_or_else(|| "FFmpeg path not initialized.".to_string())?;
-
-    let mut command = Command::new(ffmpeg_path);
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        command.creation_flags(0x08000000); // CREATE_NO_WINDOW
-    }
-
-    let output = command
-        .arg("-i")
-        .arg(&video_path)
-        .arg("-ss")
-        .arg(start_time.to_string())
-        .arg("-to")
-        .arg(end_time.to_string())
-        .arg(&temp_output_path)
-        .arg("-y") // Overwrite output file if it exists
-        .output()
-        .map_err(|e| format!("Failed to execute FFmpeg command: {}", e))?;
-
-    if !output.status.success() {
-        let error_message = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("FFmpeg command failed: {}", error_message));
-    }
-
-    // Replace the original file with the trimmed one
-    fs::rename(&temp_output_path, &video_path)
-        .map_err(|e| format!("Failed to replace original video file: {}", e))?;
-
-    Ok(())
-}
-
-pub async fn apply_edits(
-    app: tauri::AppHandle,
-    recording_id: String,
-    segments: Vec<(f64, f64)>,
-) -> Result<(), String> {
-    let recordings_dir = get_custom_app_local_data_dir(&app)?
-        .join("recordings")
-        .join(&recording_id);
-    let video_path = recordings_dir.join("recording.mp4");
-    let temp_output_path = recordings_dir.join("recording_edited.mp4");
-
-    if !video_path.exists() {
-        return Err("Original video file not found.".to_string());
-    }
-    if segments.is_empty() {
-        // No segments to keep, so create an empty video file
-        fs::write(&temp_output_path, []).map_err(|e| e.to_string())?;
-        fs::rename(&temp_output_path, &video_path).map_err(|e| e.to_string())?;
-        return Ok(());
-    }
-
-    let ffmpeg_path = FFMPEG_PATH
-        .get()
-        .ok_or_else(|| "FFmpeg path not initialized.".to_string())?;
-
-    let mut filter_complex = String::new();
-    let mut concat_inputs = String::new();
-
-    for (i, (start, end)) in segments.iter().enumerate() {
-        filter_complex.push_str(&format!(
-            "[0:v]trim=start={}:end={},setpts=PTS-STARTPTS[v{}];",
-            start, end, i
-        ));
-        concat_inputs.push_str(&format!("[v{}]", i));
-    }
-
-    filter_complex.push_str(&format!(
-        "{}concat=n={}:v=1:a=0[outv]",
-        concat_inputs,
-        segments.len()
-    ));
-
-    let mut command = Command::new(ffmpeg_path);
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        command.creation_flags(0x08000000);
-    }
-
-    let output = command
-        .arg("-i")
-        .arg(&video_path)
-        .arg("-filter_complex")
-        .arg(&filter_complex)
-        .arg("-map")
-        .arg("[outv]")
-        .arg(&temp_output_path)
-        .arg("-y")
-        .output()
-        .map_err(|e| format!("Failed to execute FFmpeg command: {}", e))?;
-
-    if !output.status.success() {
-        let error_message = String::from_utf8_lossy(&output.stderr);
-        return Err(format!(
-            "FFmpeg command failed: {}\nFilter Complex: {}",
-            error_message, filter_complex
-        ));
-    }
-
-    fs::rename(&temp_output_path, &video_path)
-        .map_err(|e| format!("Failed to replace original video file: {}", e))?;
-
-    Ok(())
 }

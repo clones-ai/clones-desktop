@@ -54,8 +54,18 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
     return CardWidget(
       variant: CardVariant.secondary,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildCustomTimeline(context, ref),
+          Padding(
+            padding: const EdgeInsets.only(top: 12, left: 8),
+            child: Text(
+              'You can edit your demo to remove unwanted parts. Click right on the timeline to open the context menu.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontSize: 10,
+                  ),
+            ),
+          )
         ],
       ),
     );

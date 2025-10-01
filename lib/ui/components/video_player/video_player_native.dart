@@ -1,3 +1,4 @@
+import 'package:clones_desktop/ui/components/video_player/axtree_overlay.dart';
 import 'package:clones_desktop/ui/components/video_player/native_video_controller.dart';
 import 'package:clones_desktop/ui/components/video_player/video_controller.dart';
 import 'package:clones_desktop/ui/components/video_player/video_player_interface.dart';
@@ -55,25 +56,57 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
 
   @override
   Widget buildVideoPlayer(BuildContext context) {
-    return _controller.videoPlayerController != null
-        ? ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              width: double.infinity,
-              height: double.infinity,
-              color: Colors.black,
-              child: FittedBox(
-                child: SizedBox(
-                  width: _controller.videoPlayerController!.value.size.width,
-                  height: _controller.videoPlayerController!.value.size.height,
-                  child: video_player.VideoPlayer(
-                    _controller.videoPlayerController!,
+    final videoController = _controller.videoPlayerController;
+    if (videoController == null) {
+      return const SizedBox.shrink();
+    }
+
+    // Watch for current position changes to update AxTree overlay
+    final videoState = ref.watch(videoStateNotifierProvider(_videoId));
+    final demoDetail = ref.watch(demoDetailNotifierProvider);
+    
+    // Update AxTree for current position
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(demoDetailNotifierProvider.notifier)
+            .updateAxTreeForCurrentTime(videoState.currentPosition.inMilliseconds);
+      }
+    });
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: Colors.black,
+        child: FittedBox(
+          child: SizedBox(
+            width: videoController.value.size.width,
+            height: videoController.value.size.height,
+            child: Stack(
+              children: [
+                // Video player
+                video_player.VideoPlayer(videoController),
+                
+                // AxTree overlay
+                if (demoDetail.showAxTreeOverlay && demoDetail.currentAxTreeEvent != null)
+                  AxTreeOverlay(
+                    axTreeEvent: demoDetail.currentAxTreeEvent!,
+                    videoSize: Size(
+                      videoController.value.size.width,
+                      videoController.value.size.height,
+                    ),
+                    recordingResolution: Size(
+                      demoDetail.recording?.primaryMonitor?.width?.toDouble() ?? 1920,
+                      demoDetail.recording?.primaryMonitor?.height?.toDouble() ?? 1080,
+                    ),
                   ),
-                ),
-              ),
+              ],
             ),
-          )
-        : const SizedBox.shrink();
+          ),
+        ),
+      ),
+    );
   }
 
   @override

@@ -47,7 +47,10 @@ mixin _$DemoDetailState {
   bool get showUploadConfirmModal => throw _privateConstructorUsedError;
   String? get exportPath => throw _privateConstructorUsedError;
   String? get exportError => throw _privateConstructorUsedError;
-  String? get uploadError => throw _privateConstructorUsedError;
+  String? get uploadError =>
+      throw _privateConstructorUsedError; // AxTree overlay state
+  bool get showAxTreeOverlay => throw _privateConstructorUsedError;
+  RecordingEvent? get currentAxTreeEvent => throw _privateConstructorUsedError;
 
   /// Create a copy of DemoDetailState
   /// with the given fields replaced by the non-null parameter values.
@@ -86,10 +89,13 @@ abstract class $DemoDetailStateCopyWith<$Res> {
       bool showUploadConfirmModal,
       String? exportPath,
       String? exportError,
-      String? uploadError});
+      String? uploadError,
+      bool showAxTreeOverlay,
+      RecordingEvent? currentAxTreeEvent});
 
   $ApiRecordingCopyWith<$Res>? get recording;
   $VideoClipCopyWith<$Res>? get clipboardClip;
+  $RecordingEventCopyWith<$Res>? get currentAxTreeEvent;
 }
 
 /// @nodoc
@@ -131,6 +137,8 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
     Object? exportPath = freezed,
     Object? exportError = freezed,
     Object? uploadError = freezed,
+    Object? showAxTreeOverlay = null,
+    Object? currentAxTreeEvent = freezed,
   }) {
     return _then(_value.copyWith(
       isLoading: null == isLoading
@@ -229,6 +237,14 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
           ? _value.uploadError
           : uploadError // ignore: cast_nullable_to_non_nullable
               as String?,
+      showAxTreeOverlay: null == showAxTreeOverlay
+          ? _value.showAxTreeOverlay
+          : showAxTreeOverlay // ignore: cast_nullable_to_non_nullable
+              as bool,
+      currentAxTreeEvent: freezed == currentAxTreeEvent
+          ? _value.currentAxTreeEvent
+          : currentAxTreeEvent // ignore: cast_nullable_to_non_nullable
+              as RecordingEvent?,
     ) as $Val);
   }
 
@@ -257,6 +273,20 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
 
     return $VideoClipCopyWith<$Res>(_value.clipboardClip!, (value) {
       return _then(_value.copyWith(clipboardClip: value) as $Val);
+    });
+  }
+
+  /// Create a copy of DemoDetailState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $RecordingEventCopyWith<$Res>? get currentAxTreeEvent {
+    if (_value.currentAxTreeEvent == null) {
+      return null;
+    }
+
+    return $RecordingEventCopyWith<$Res>(_value.currentAxTreeEvent!, (value) {
+      return _then(_value.copyWith(currentAxTreeEvent: value) as $Val);
     });
   }
 }
@@ -293,12 +323,16 @@ abstract class _$$DemoDetailStateImplCopyWith<$Res>
       bool showUploadConfirmModal,
       String? exportPath,
       String? exportError,
-      String? uploadError});
+      String? uploadError,
+      bool showAxTreeOverlay,
+      RecordingEvent? currentAxTreeEvent});
 
   @override
   $ApiRecordingCopyWith<$Res>? get recording;
   @override
   $VideoClipCopyWith<$Res>? get clipboardClip;
+  @override
+  $RecordingEventCopyWith<$Res>? get currentAxTreeEvent;
 }
 
 /// @nodoc
@@ -338,6 +372,8 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
     Object? exportPath = freezed,
     Object? exportError = freezed,
     Object? uploadError = freezed,
+    Object? showAxTreeOverlay = null,
+    Object? currentAxTreeEvent = freezed,
   }) {
     return _then(_$DemoDetailStateImpl(
       isLoading: null == isLoading
@@ -436,6 +472,14 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
           ? _value.uploadError
           : uploadError // ignore: cast_nullable_to_non_nullable
               as String?,
+      showAxTreeOverlay: null == showAxTreeOverlay
+          ? _value.showAxTreeOverlay
+          : showAxTreeOverlay // ignore: cast_nullable_to_non_nullable
+              as bool,
+      currentAxTreeEvent: freezed == currentAxTreeEvent
+          ? _value.currentAxTreeEvent
+          : currentAxTreeEvent // ignore: cast_nullable_to_non_nullable
+              as RecordingEvent?,
     ));
   }
 }
@@ -467,7 +511,9 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
       this.showUploadConfirmModal = false,
       this.exportPath,
       this.exportError,
-      this.uploadError})
+      this.uploadError,
+      this.showAxTreeOverlay = false,
+      this.currentAxTreeEvent})
       : _events = events,
         _sftMessages = sftMessages,
         _eventTypes = eventTypes,
@@ -611,10 +657,16 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
   final String? exportError;
   @override
   final String? uploadError;
+// AxTree overlay state
+  @override
+  @JsonKey()
+  final bool showAxTreeOverlay;
+  @override
+  final RecordingEvent? currentAxTreeEvent;
 
   @override
   String toString() {
-    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoController: $videoController, videoSource: $videoSource, showTrainingSessionModal: $showTrainingSessionModal, clips: $clips, selectedClipIds: $selectedClipIds, clipboardClip: $clipboardClip, deletedClipsHistory: $deletedClipsHistory, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, isApplyingEdits: $isApplyingEdits, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, showUploadConfirmModal: $showUploadConfirmModal, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError)';
+    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoController: $videoController, videoSource: $videoSource, showTrainingSessionModal: $showTrainingSessionModal, clips: $clips, selectedClipIds: $selectedClipIds, clipboardClip: $clipboardClip, deletedClipsHistory: $deletedClipsHistory, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, isApplyingEdits: $isApplyingEdits, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, showUploadConfirmModal: $showUploadConfirmModal, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError, showAxTreeOverlay: $showAxTreeOverlay, currentAxTreeEvent: $currentAxTreeEvent)';
   }
 
   @override
@@ -668,7 +720,11 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
             (identical(other.exportError, exportError) ||
                 other.exportError == exportError) &&
             (identical(other.uploadError, uploadError) ||
-                other.uploadError == uploadError));
+                other.uploadError == uploadError) &&
+            (identical(other.showAxTreeOverlay, showAxTreeOverlay) ||
+                other.showAxTreeOverlay == showAxTreeOverlay) &&
+            (identical(other.currentAxTreeEvent, currentAxTreeEvent) ||
+                other.currentAxTreeEvent == currentAxTreeEvent));
   }
 
   @override
@@ -697,7 +753,9 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
         showUploadConfirmModal,
         exportPath,
         exportError,
-        uploadError
+        uploadError,
+        showAxTreeOverlay,
+        currentAxTreeEvent
       ]);
 
   /// Create a copy of DemoDetailState
@@ -736,7 +794,9 @@ abstract class _DemoDetailState extends DemoDetailState {
       final bool showUploadConfirmModal,
       final String? exportPath,
       final String? exportError,
-      final String? uploadError}) = _$DemoDetailStateImpl;
+      final String? uploadError,
+      final bool showAxTreeOverlay,
+      final RecordingEvent? currentAxTreeEvent}) = _$DemoDetailStateImpl;
   const _DemoDetailState._() : super._();
 
   @override
@@ -791,7 +851,11 @@ abstract class _DemoDetailState extends DemoDetailState {
   @override
   String? get exportError;
   @override
-  String? get uploadError;
+  String? get uploadError; // AxTree overlay state
+  @override
+  bool get showAxTreeOverlay;
+  @override
+  RecordingEvent? get currentAxTreeEvent;
 
   /// Create a copy of DemoDetailState
   /// with the given fields replaced by the non-null parameter values.

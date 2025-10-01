@@ -146,6 +146,7 @@ class ClonesColors {
   static const Color eventTypeMouseWheel = Colors.indigoAccent;
   static const Color eventTypeKeyDown = Colors.yellow;
   static const Color eventTypeKeyUp = Colors.lightGreen;
+  static const Color eventAxtree = Colors.lightGreenAccent;
 
   static Color getEventTypeColor(String eventType) {
     switch (eventType) {
@@ -163,6 +164,8 @@ class ClonesColors {
         return eventTypeKeyDown;
       case 'keyup':
         return eventTypeKeyUp;
+      case 'axtree':
+        return eventAxtree;
       default:
         return Colors.white;
     }
