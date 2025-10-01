@@ -122,10 +122,15 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       final eventTypes = events.map((e) => e.event).toSet();
       final startTime = events.isNotEmpty ? events.first.time : 0;
 
+      // Disable axtree and ffmpeg_stderr by default
+      final filteredEventTypes = eventTypes
+          .where((type) => type != 'axtree' && type != 'ffmpeg_stderr')
+          .toSet();
+
       state = state.copyWith(
         events: events,
         eventTypes: eventTypes,
-        enabledEventTypes: eventTypes,
+        enabledEventTypes: filteredEventTypes,
         startTime: startTime,
       );
     } catch (e) {
@@ -439,6 +444,27 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
 
   void setShowUploadConfirmModal(bool show) {
     state = state.copyWith(showUploadConfirmModal: show);
+  }
+
+  // --- AxTree Overlay Management ---
+
+  void toggleAxTreeOverlay() {
+    state = state.copyWith(showAxTreeOverlay: !state.showAxTreeOverlay);
+  }
+
+  void setShowAxTreeOverlay(bool show) {
+    state = state.copyWith(showAxTreeOverlay: show);
+  }
+
+  void updateAxTreeForCurrentTime(int currentTimeMs) {
+    if (!state.showAxTreeOverlay) {
+      return;
+    }
+    
+    final axTreeEvent = state.getAxTreeEventAtPosition(currentTimeMs);
+    if (axTreeEvent != state.currentAxTreeEvent) {
+      state = state.copyWith(currentAxTreeEvent: axTreeEvent);
+    }
   }
 
   Future<void> confirmUploadPermission() async {

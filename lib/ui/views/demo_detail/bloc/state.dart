@@ -43,6 +43,10 @@ class DemoDetailState with _$DemoDetailState {
     String? exportPath,
     String? exportError,
     String? uploadError,
+
+    // AxTree overlay state
+    @Default(false) bool showAxTreeOverlay,
+    RecordingEvent? currentAxTreeEvent,
   }) = _DemoDetailState;
   const DemoDetailState._();
 }
@@ -94,5 +98,29 @@ extension DemoDetailStateComputed on DemoDetailState {
     }
 
     return deletedSet;
+  }
+
+  /// Get the most recent AxTree event at or before the current video position
+  RecordingEvent? getAxTreeEventAtPosition(int currentTimeMs) {
+    if (!showAxTreeOverlay || events.isEmpty) {
+      return null;
+    }
+
+    final relativeTimeMs = currentTimeMs;
+    
+    // Find the most recent axtree event at or before the current position
+    RecordingEvent? mostRecentAxTree;
+    
+    for (final event in events.reversed) {
+      if (event.event == 'axtree') {
+        final eventRelativeTime = event.time - startTime;
+        if (eventRelativeTime <= relativeTimeMs) {
+          mostRecentAxTree = event;
+          break;
+        }
+      }
+    }
+    
+    return mostRecentAxTree;
   }
 }
