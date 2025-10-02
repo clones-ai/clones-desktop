@@ -25,7 +25,9 @@ mixin _$SubmissionStatus {
   String? get address => throw _privateConstructorUsedError;
   SubmissionMeta get meta => throw _privateConstructorUsedError;
   String get status => throw _privateConstructorUsedError;
-  List<SubmissionFile> get files => throw _privateConstructorUsedError;
+  String? get demoHash => throw _privateConstructorUsedError;
+  FileManifest? get fileManifest => throw _privateConstructorUsedError;
+  bool? get integrityVerified => throw _privateConstructorUsedError;
   String? get error => throw _privateConstructorUsedError;
   String get createdAt => throw _privateConstructorUsedError;
   String get updatedAt => throw _privateConstructorUsedError;
@@ -58,7 +60,9 @@ abstract class $SubmissionStatusCopyWith<$Res> {
       String? address,
       SubmissionMeta meta,
       String status,
-      List<SubmissionFile> files,
+      String? demoHash,
+      FileManifest? fileManifest,
+      bool? integrityVerified,
       String? error,
       String createdAt,
       String updatedAt,
@@ -69,6 +73,7 @@ abstract class $SubmissionStatusCopyWith<$Res> {
       ClaimAuthorization? claimAuthorization});
 
   $SubmissionMetaCopyWith<$Res> get meta;
+  $FileManifestCopyWith<$Res>? get fileManifest;
   $GradeResultCopyWith<$Res>? get gradeResult;
   $ClaimAuthorizationCopyWith<$Res>? get claimAuthorization;
 }
@@ -92,7 +97,9 @@ class _$SubmissionStatusCopyWithImpl<$Res, $Val extends SubmissionStatus>
     Object? address = freezed,
     Object? meta = null,
     Object? status = null,
-    Object? files = null,
+    Object? demoHash = freezed,
+    Object? fileManifest = freezed,
+    Object? integrityVerified = freezed,
     Object? error = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
@@ -119,10 +126,18 @@ class _$SubmissionStatusCopyWithImpl<$Res, $Val extends SubmissionStatus>
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      files: null == files
-          ? _value.files
-          : files // ignore: cast_nullable_to_non_nullable
-              as List<SubmissionFile>,
+      demoHash: freezed == demoHash
+          ? _value.demoHash
+          : demoHash // ignore: cast_nullable_to_non_nullable
+              as String?,
+      fileManifest: freezed == fileManifest
+          ? _value.fileManifest
+          : fileManifest // ignore: cast_nullable_to_non_nullable
+              as FileManifest?,
+      integrityVerified: freezed == integrityVerified
+          ? _value.integrityVerified
+          : integrityVerified // ignore: cast_nullable_to_non_nullable
+              as bool?,
       error: freezed == error
           ? _value.error
           : error // ignore: cast_nullable_to_non_nullable
@@ -172,6 +187,20 @@ class _$SubmissionStatusCopyWithImpl<$Res, $Val extends SubmissionStatus>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
+  $FileManifestCopyWith<$Res>? get fileManifest {
+    if (_value.fileManifest == null) {
+      return null;
+    }
+
+    return $FileManifestCopyWith<$Res>(_value.fileManifest!, (value) {
+      return _then(_value.copyWith(fileManifest: value) as $Val);
+    });
+  }
+
+  /// Create a copy of SubmissionStatus
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
   $GradeResultCopyWith<$Res>? get gradeResult {
     if (_value.gradeResult == null) {
       return null;
@@ -211,7 +240,9 @@ abstract class _$$SubmissionStatusImplCopyWith<$Res>
       String? address,
       SubmissionMeta meta,
       String status,
-      List<SubmissionFile> files,
+      String? demoHash,
+      FileManifest? fileManifest,
+      bool? integrityVerified,
       String? error,
       String createdAt,
       String updatedAt,
@@ -223,6 +254,8 @@ abstract class _$$SubmissionStatusImplCopyWith<$Res>
 
   @override
   $SubmissionMetaCopyWith<$Res> get meta;
+  @override
+  $FileManifestCopyWith<$Res>? get fileManifest;
   @override
   $GradeResultCopyWith<$Res>? get gradeResult;
   @override
@@ -246,7 +279,9 @@ class __$$SubmissionStatusImplCopyWithImpl<$Res>
     Object? address = freezed,
     Object? meta = null,
     Object? status = null,
-    Object? files = null,
+    Object? demoHash = freezed,
+    Object? fileManifest = freezed,
+    Object? integrityVerified = freezed,
     Object? error = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
@@ -273,10 +308,18 @@ class __$$SubmissionStatusImplCopyWithImpl<$Res>
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      files: null == files
-          ? _value._files
-          : files // ignore: cast_nullable_to_non_nullable
-              as List<SubmissionFile>,
+      demoHash: freezed == demoHash
+          ? _value.demoHash
+          : demoHash // ignore: cast_nullable_to_non_nullable
+              as String?,
+      fileManifest: freezed == fileManifest
+          ? _value.fileManifest
+          : fileManifest // ignore: cast_nullable_to_non_nullable
+              as FileManifest?,
+      integrityVerified: freezed == integrityVerified
+          ? _value.integrityVerified
+          : integrityVerified // ignore: cast_nullable_to_non_nullable
+              as bool?,
       error: freezed == error
           ? _value.error
           : error // ignore: cast_nullable_to_non_nullable
@@ -321,7 +364,9 @@ class _$SubmissionStatusImpl implements _SubmissionStatus {
       this.address,
       required this.meta,
       required this.status,
-      required final List<SubmissionFile> files,
+      this.demoHash,
+      this.fileManifest,
+      this.integrityVerified,
       this.error,
       required this.createdAt,
       required this.updatedAt,
@@ -329,8 +374,7 @@ class _$SubmissionStatusImpl implements _SubmissionStatus {
       @JsonKey(name: 'grade_result') this.gradeResult,
       this.maxReward,
       this.reward,
-      this.claimAuthorization})
-      : _files = files;
+      this.claimAuthorization});
 
   factory _$SubmissionStatusImpl.fromJson(Map<String, dynamic> json) =>
       _$$SubmissionStatusImplFromJson(json);
@@ -344,14 +388,12 @@ class _$SubmissionStatusImpl implements _SubmissionStatus {
   final SubmissionMeta meta;
   @override
   final String status;
-  final List<SubmissionFile> _files;
   @override
-  List<SubmissionFile> get files {
-    if (_files is EqualUnmodifiableListView) return _files;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_files);
-  }
-
+  final String? demoHash;
+  @override
+  final FileManifest? fileManifest;
+  @override
+  final bool? integrityVerified;
   @override
   final String? error;
   @override
@@ -372,7 +414,7 @@ class _$SubmissionStatusImpl implements _SubmissionStatus {
 
   @override
   String toString() {
-    return 'SubmissionStatus(id: $id, address: $address, meta: $meta, status: $status, files: $files, error: $error, createdAt: $createdAt, updatedAt: $updatedAt, clampedScore: $clampedScore, gradeResult: $gradeResult, maxReward: $maxReward, reward: $reward, claimAuthorization: $claimAuthorization)';
+    return 'SubmissionStatus(id: $id, address: $address, meta: $meta, status: $status, demoHash: $demoHash, fileManifest: $fileManifest, integrityVerified: $integrityVerified, error: $error, createdAt: $createdAt, updatedAt: $updatedAt, clampedScore: $clampedScore, gradeResult: $gradeResult, maxReward: $maxReward, reward: $reward, claimAuthorization: $claimAuthorization)';
   }
 
   @override
@@ -384,7 +426,12 @@ class _$SubmissionStatusImpl implements _SubmissionStatus {
             (identical(other.address, address) || other.address == address) &&
             (identical(other.meta, meta) || other.meta == meta) &&
             (identical(other.status, status) || other.status == status) &&
-            const DeepCollectionEquality().equals(other._files, _files) &&
+            (identical(other.demoHash, demoHash) ||
+                other.demoHash == demoHash) &&
+            (identical(other.fileManifest, fileManifest) ||
+                other.fileManifest == fileManifest) &&
+            (identical(other.integrityVerified, integrityVerified) ||
+                other.integrityVerified == integrityVerified) &&
             (identical(other.error, error) || other.error == error) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
@@ -409,7 +456,9 @@ class _$SubmissionStatusImpl implements _SubmissionStatus {
       address,
       meta,
       status,
-      const DeepCollectionEquality().hash(_files),
+      demoHash,
+      fileManifest,
+      integrityVerified,
       error,
       createdAt,
       updatedAt,
@@ -442,7 +491,9 @@ abstract class _SubmissionStatus implements SubmissionStatus {
       final String? address,
       required final SubmissionMeta meta,
       required final String status,
-      required final List<SubmissionFile> files,
+      final String? demoHash,
+      final FileManifest? fileManifest,
+      final bool? integrityVerified,
       final String? error,
       required final String createdAt,
       required final String updatedAt,
@@ -465,7 +516,11 @@ abstract class _SubmissionStatus implements SubmissionStatus {
   @override
   String get status;
   @override
-  List<SubmissionFile> get files;
+  String? get demoHash;
+  @override
+  FileManifest? get fileManifest;
+  @override
+  bool? get integrityVerified;
   @override
   String? get error;
   @override

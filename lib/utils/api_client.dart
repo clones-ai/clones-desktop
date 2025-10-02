@@ -314,6 +314,49 @@ class ApiClient {
       }
     }
   }
+
+  /// Get raw text response (bypasses JSON parsing)
+  Future<String> getRawText(
+    String endpoint, {
+    Map<String, dynamic>? params,
+    RequestOptions options = const RequestOptions(),
+  }) async {
+    final headers = await _getHeaders(options);
+    try {
+      final response = await dioConfig.get<String>(
+        endpoint,
+        queryParameters: params,
+        options: dio.Options(
+          headers: headers,
+          responseType: dio.ResponseType.plain,
+        ),
+      );
+      
+      if (response.data == null) {
+        throw ApiError(
+          status: response.statusCode ?? 400,
+          statusText: response.statusMessage ?? 'Error',
+          message: 'No data received from server',
+        );
+      }
+      
+      return response.data!;
+    } on dio.DioException catch (e) {
+      if (e.response != null) {
+        throw ApiError(
+          status: e.response!.statusCode!,
+          statusText: e.response!.statusMessage!,
+          message: e.response!.data?.toString() ?? 'An error occurred',
+        );
+      } else {
+        throw ApiError(
+          status: 500,
+          statusText: 'Network Error',
+          message: e.message ?? 'A network error occurred.',
+        );
+      }
+    }
+  }
 }
 
 final apiClientProvider = Provider<ApiClient>(ApiClient.new);

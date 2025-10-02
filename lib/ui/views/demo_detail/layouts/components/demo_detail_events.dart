@@ -46,9 +46,27 @@ class DemoDetailEvents extends ConsumerWidget {
 
     if (events.isEmpty) {
       return Center(
-        child: Text(
-          'No events to display.',
-          style: theme.textTheme.bodyMedium,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              demoDetail.recording?.location == 'cloud' 
+                  ? Icons.cloud_outlined 
+                  : Icons.event_busy,
+              size: 48,
+              color: ClonesColors.secondaryText,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              demoDetail.recording?.location == 'cloud'
+                  ? 'Event data not available for cloud recordings'
+                  : 'No events to display.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: ClonesColors.secondaryText,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       );
     }

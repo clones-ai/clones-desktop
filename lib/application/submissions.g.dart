@@ -338,5 +338,302 @@ class _GetFactorySubmissionsProviderElement
   String get factoryAddress =>
       (origin as GetFactorySubmissionsProvider).factoryAddress;
 }
+
+String _$getDemoFileHash() => r'0cd04f8b3ad0788bc5a55eb9a91f8a6dc99a4fe1';
+
+/// See also [getDemoFile].
+@ProviderFor(getDemoFile)
+const getDemoFileProvider = GetDemoFileFamily();
+
+/// See also [getDemoFile].
+class GetDemoFileFamily extends Family<AsyncValue<String>> {
+  /// See also [getDemoFile].
+  const GetDemoFileFamily();
+
+  /// See also [getDemoFile].
+  GetDemoFileProvider call({
+    required String submissionId,
+    required String filename,
+  }) {
+    return GetDemoFileProvider(
+      submissionId: submissionId,
+      filename: filename,
+    );
+  }
+
+  @override
+  GetDemoFileProvider getProviderOverride(
+    covariant GetDemoFileProvider provider,
+  ) {
+    return call(
+      submissionId: provider.submissionId,
+      filename: provider.filename,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'getDemoFileProvider';
+}
+
+/// See also [getDemoFile].
+class GetDemoFileProvider extends AutoDisposeFutureProvider<String> {
+  /// See also [getDemoFile].
+  GetDemoFileProvider({
+    required String submissionId,
+    required String filename,
+  }) : this._internal(
+          (ref) => getDemoFile(
+            ref as GetDemoFileRef,
+            submissionId: submissionId,
+            filename: filename,
+          ),
+          from: getDemoFileProvider,
+          name: r'getDemoFileProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$getDemoFileHash,
+          dependencies: GetDemoFileFamily._dependencies,
+          allTransitiveDependencies:
+              GetDemoFileFamily._allTransitiveDependencies,
+          submissionId: submissionId,
+          filename: filename,
+        );
+
+  GetDemoFileProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.submissionId,
+    required this.filename,
+  }) : super.internal();
+
+  final String submissionId;
+  final String filename;
+
+  @override
+  Override overrideWith(
+    FutureOr<String> Function(GetDemoFileRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: GetDemoFileProvider._internal(
+        (ref) => create(ref as GetDemoFileRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        submissionId: submissionId,
+        filename: filename,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<String> createElement() {
+    return _GetDemoFileProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GetDemoFileProvider &&
+        other.submissionId == submissionId &&
+        other.filename == filename;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, submissionId.hashCode);
+    hash = _SystemHash.combine(hash, filename.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GetDemoFileRef on AutoDisposeFutureProviderRef<String> {
+  /// The parameter `submissionId` of this provider.
+  String get submissionId;
+
+  /// The parameter `filename` of this provider.
+  String get filename;
+}
+
+class _GetDemoFileProviderElement
+    extends AutoDisposeFutureProviderElement<String> with GetDemoFileRef {
+  _GetDemoFileProviderElement(super.provider);
+
+  @override
+  String get submissionId => (origin as GetDemoFileProvider).submissionId;
+  @override
+  String get filename => (origin as GetDemoFileProvider).filename;
+}
+
+String _$getDemoFileAsBase64Hash() =>
+    r'0ff3ab11f4e6e315d5058b1d33ad1976dcf6fb76';
+
+/// See also [getDemoFileAsBase64].
+@ProviderFor(getDemoFileAsBase64)
+const getDemoFileAsBase64Provider = GetDemoFileAsBase64Family();
+
+/// See also [getDemoFileAsBase64].
+class GetDemoFileAsBase64Family extends Family<AsyncValue<String>> {
+  /// See also [getDemoFileAsBase64].
+  const GetDemoFileAsBase64Family();
+
+  /// See also [getDemoFileAsBase64].
+  GetDemoFileAsBase64Provider call({
+    required String submissionId,
+    required String filename,
+  }) {
+    return GetDemoFileAsBase64Provider(
+      submissionId: submissionId,
+      filename: filename,
+    );
+  }
+
+  @override
+  GetDemoFileAsBase64Provider getProviderOverride(
+    covariant GetDemoFileAsBase64Provider provider,
+  ) {
+    return call(
+      submissionId: provider.submissionId,
+      filename: provider.filename,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'getDemoFileAsBase64Provider';
+}
+
+/// See also [getDemoFileAsBase64].
+class GetDemoFileAsBase64Provider extends AutoDisposeFutureProvider<String> {
+  /// See also [getDemoFileAsBase64].
+  GetDemoFileAsBase64Provider({
+    required String submissionId,
+    required String filename,
+  }) : this._internal(
+          (ref) => getDemoFileAsBase64(
+            ref as GetDemoFileAsBase64Ref,
+            submissionId: submissionId,
+            filename: filename,
+          ),
+          from: getDemoFileAsBase64Provider,
+          name: r'getDemoFileAsBase64Provider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$getDemoFileAsBase64Hash,
+          dependencies: GetDemoFileAsBase64Family._dependencies,
+          allTransitiveDependencies:
+              GetDemoFileAsBase64Family._allTransitiveDependencies,
+          submissionId: submissionId,
+          filename: filename,
+        );
+
+  GetDemoFileAsBase64Provider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.submissionId,
+    required this.filename,
+  }) : super.internal();
+
+  final String submissionId;
+  final String filename;
+
+  @override
+  Override overrideWith(
+    FutureOr<String> Function(GetDemoFileAsBase64Ref provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: GetDemoFileAsBase64Provider._internal(
+        (ref) => create(ref as GetDemoFileAsBase64Ref),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        submissionId: submissionId,
+        filename: filename,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<String> createElement() {
+    return _GetDemoFileAsBase64ProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GetDemoFileAsBase64Provider &&
+        other.submissionId == submissionId &&
+        other.filename == filename;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, submissionId.hashCode);
+    hash = _SystemHash.combine(hash, filename.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GetDemoFileAsBase64Ref on AutoDisposeFutureProviderRef<String> {
+  /// The parameter `submissionId` of this provider.
+  String get submissionId;
+
+  /// The parameter `filename` of this provider.
+  String get filename;
+}
+
+class _GetDemoFileAsBase64ProviderElement
+    extends AutoDisposeFutureProviderElement<String>
+    with GetDemoFileAsBase64Ref {
+  _GetDemoFileAsBase64ProviderElement(super.provider);
+
+  @override
+  String get submissionId =>
+      (origin as GetDemoFileAsBase64Provider).submissionId;
+  @override
+  String get filename => (origin as GetDemoFileAsBase64Provider).filename;
+}
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
