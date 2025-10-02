@@ -47,9 +47,27 @@ class DemoDetailEditor extends ConsumerWidget {
 
     if (demoDetail.sftMessages.isEmpty) {
       return Center(
-        child: Text(
-          'No editor data to display.',
-          style: theme.textTheme.bodyMedium,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              demoDetail.recording?.location == 'cloud' 
+                  ? Icons.cloud_outlined 
+                  : Icons.edit_off,
+              size: 48,
+              color: ClonesColors.secondaryText,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              demoDetail.recording?.location == 'cloud'
+                  ? 'Editor data not available for cloud recordings'
+                  : 'No editor data to display.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: ClonesColors.secondaryText,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       );
     }

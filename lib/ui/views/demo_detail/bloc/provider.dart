@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:clones_desktop/application/recording.dart';
+import 'package:clones_desktop/application/submissions.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/application/upload/provider.dart';
 import 'package:clones_desktop/application/upload/state.dart';
@@ -62,6 +63,23 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
   }
 
   Future<void> initializeVideoPlayer(String recordingId) async {
+    // Clear any existing video state first
+    await state.videoController?.dispose();
+    state = state.copyWith(
+      videoController: null,
+      videoSource: null,
+    );
+
+    // Check if the recording is local or cloud
+    if (state.recording?.location == 'local') {
+      await _initializeVideoFromLocal(recordingId);
+    } else if (state.recording?.location == 'cloud') {
+      await _initializeVideoFromCloud();
+    }
+    // For other cases, keep video state null
+  }
+
+  Future<void> _initializeVideoFromLocal(String recordingId) async {
     try {
       final videoData = await ref.read(tauriApiClientProvider).getRecordingFile(
             recordingId: recordingId,
@@ -69,70 +87,76 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
             asBase64: true,
           );
 
-      // Create VideoSource for your custom video player system
-      final videoSource = Base64VideoSource(videoData);
-
-      // Don't create VideoPlayerController here - let VideoPlayer components handle it
-      // Just store the videoSource for the components to use
-      await state.videoController?.dispose();
-
-      // Force a complete refresh by setting videoSource to null first
-      state = state.copyWith(
-        videoController: null,
-        videoSource: null,
-      );
-
-      // Small delay to ensure UI detects the change
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      state = state.copyWith(
-        videoController: null, // No controller in DemoDetailNotifier
-        videoSource: videoSource,
-      );
+      await _createVideoSource(videoData);
     } catch (e) {
-      debugPrint('Error: $e');
+      debugPrint('Error loading local video: $e');
       // This is expected for recordings without video files
     }
   }
 
+  Future<void> _initializeVideoFromCloud() async {
+    final submissionId = state.recording?.submission?.id;
+    if (submissionId == null) return;
+
+    try {
+      final videoData = await ref.read(
+        getDemoFileAsBase64Provider(
+          submissionId: submissionId,
+          filename: 'recording.mp4',
+        ).future,
+      );
+
+      await _createVideoSource(videoData);
+    } catch (e) {
+      debugPrint('Error loading cloud video: $e');
+      // Video might not exist or not accessible
+    }
+  }
+
+  Future<void> _createVideoSource(String videoData) async {
+    // Create VideoSource for your custom video player system
+    final videoSource = Base64VideoSource(videoData);
+
+    // Force a complete refresh by setting videoSource to null first
+    state = state.copyWith(
+      videoController: null,
+      videoSource: null,
+    );
+
+    // Small delay to ensure UI detects the change
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    state = state.copyWith(
+      videoController: null, // No controller in DemoDetailNotifier
+      videoSource: videoSource,
+    );
+  }
+
   Future<void> loadEvents(String recordingId) async {
+    // Check if the recording is local or cloud
+    if (state.recording?.location == 'local') {
+      await _loadEventsFromLocal(recordingId);
+    } else if (state.recording?.location == 'cloud') {
+      await _loadEventsFromCloud();
+    } else {
+      // Default to empty
+      state = state.copyWith(
+        events: [],
+        eventTypes: {},
+        enabledEventTypes: {},
+        startTime: 0,
+      );
+    }
+  }
+
+  Future<void> _loadEventsFromLocal(String recordingId) async {
     try {
       final eventsJsonl =
           await ref.read(tauriApiClientProvider).getRecordingFile(
                 recordingId: recordingId,
                 filename: 'input_log.jsonl',
               );
-      final events = eventsJsonl
-          .split('\n')
-          .where((line) => line.trim().isNotEmpty)
-          .map((line) {
-            try {
-              return RecordingEvent.fromJson(jsonDecode(line));
-            } catch (e) {
-              return null;
-            }
-          })
-          .where((item) => item != null)
-          .cast<RecordingEvent>()
-          .toList()
-
-        // Sort events by time
-        ..sort((a, b) => a.time.compareTo(b.time));
-
-      final eventTypes = events.map((e) => e.event).toSet();
-      final startTime = events.isNotEmpty ? events.first.time : 0;
-
-      // Disable axtree and ffmpeg_stderr by default
-      final filteredEventTypes = eventTypes
-          .where((type) => type != 'axtree' && type != 'ffmpeg_stderr')
-          .toSet();
-
-      state = state.copyWith(
-        events: events,
-        eventTypes: eventTypes,
-        enabledEventTypes: filteredEventTypes,
-        startTime: startTime,
-      );
+      await _parseEventsData(eventsJsonl);
     } catch (e) {
       // It's okay if this fails, the file might not exist
       state = state.copyWith(
@@ -144,22 +168,117 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     }
   }
 
+  Future<void> _loadEventsFromCloud() async {
+    final submissionId = state.recording?.submission?.id;
+    if (submissionId == null) {
+      state = state.copyWith(
+        events: [],
+        eventTypes: {},
+        enabledEventTypes: {},
+        startTime: 0,
+      );
+      return;
+    }
+
+    try {
+      final eventsJsonl = await ref.read(
+        getDemoFileProvider(
+          submissionId: submissionId,
+          filename: 'input_log.jsonl',
+        ).future,
+      );
+      await _parseEventsData(eventsJsonl);
+    } catch (e) {
+      // File might not exist or not accessible
+      state = state.copyWith(
+        events: [],
+        eventTypes: {},
+        enabledEventTypes: {},
+        startTime: 0,
+      );
+    }
+  }
+
+  Future<void> _parseEventsData(String eventsJsonl) async {
+    final events = eventsJsonl
+        .split('\n')
+        .where((line) => line.trim().isNotEmpty)
+        .map((line) {
+          try {
+            return RecordingEvent.fromJson(jsonDecode(line));
+          } catch (e) {
+            return null;
+          }
+        })
+        .where((item) => item != null)
+        .cast<RecordingEvent>()
+        .toList()
+
+      // Sort events by time
+      ..sort((a, b) => a.time.compareTo(b.time));
+
+    final eventTypes = events.map((e) => e.event).toSet();
+    final startTime = events.isNotEmpty ? events.first.time : 0;
+
+    // Disable axtree and ffmpeg_stderr by default
+    final filteredEventTypes = eventTypes
+        .where((type) => type != 'axtree' && type != 'ffmpeg_stderr')
+        .toSet();
+
+    state = state.copyWith(
+      events: events,
+      eventTypes: eventTypes,
+      enabledEventTypes: filteredEventTypes,
+      startTime: startTime,
+    );
+  }
+
   Future<void> loadSftData(String recordingId) async {
     state = state.copyWith(sftMessages: []);
 
-    // Load SFT messages
+    // Check if the recording is local or cloud
+    if (state.recording?.location == 'local') {
+      await _loadSftDataFromLocal(recordingId);
+    } else if (state.recording?.location == 'cloud') {
+      await _loadSftDataFromCloud();
+    }
+    // For other cases, keep empty list
+  }
+
+  Future<void> _loadSftDataFromLocal(String recordingId) async {
     try {
       final sftJson = await ref.read(tauriApiClientProvider).getRecordingFile(
             recordingId: recordingId,
             filename: 'sft.json',
           );
-      final List<dynamic> sftData = jsonDecode(sftJson);
-      final sftMessages =
-          sftData.map((data) => SftMessage.fromJson(data)).toList();
-      state = state.copyWith(sftMessages: sftMessages);
+      await _parseSftData(sftJson);
     } catch (e) {
       // SFT file might not exist, continue with empty messages
     }
+  }
+
+  Future<void> _loadSftDataFromCloud() async {
+    final submissionId = state.recording?.submission?.id;
+    if (submissionId == null) return;
+
+    try {
+      final sftJson = await ref.read(
+        getDemoFileProvider(
+          submissionId: submissionId,
+          filename: 'sft.json',
+        ).future,
+      );
+      await _parseSftData(sftJson);
+    } catch (e) {
+      // File might not exist or not accessible
+    }
+  }
+
+  Future<void> _parseSftData(String sftJson) async {
+    final sftData = jsonDecode(sftJson) as List<dynamic>;
+    final sftMessages =
+        sftData.map((data) => SftMessage.fromJson(data)).toList();
+    state = state.copyWith(sftMessages: sftMessages);
   }
 
   void toggleEventType(String eventType) {

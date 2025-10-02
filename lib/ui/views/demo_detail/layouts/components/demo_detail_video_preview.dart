@@ -76,7 +76,30 @@ class _DemoDetailVideoPreviewState
             Expanded(
               child: widget.videoWidget == null
                   ? Center(
-                      child: Text('No video found', style: theme.textTheme.bodyMedium),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            state.recording?.location == 'cloud' 
+                                ? Icons.cloud_outlined 
+                                : Icons.videocam_off,
+                            size: 48,
+                            color: ClonesColors.secondaryText,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            state.recording?.location == 'cloud'
+                                ? state.isLoading
+                                    ? 'Loading video from cloud...'
+                                    : 'No video available for this cloud recording'
+                                : 'No video found',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: ClonesColors.secondaryText,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     )
                   : MouseRegion(
                       child: Stack(

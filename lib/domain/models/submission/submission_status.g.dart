@@ -13,9 +13,11 @@ _$SubmissionStatusImpl _$$SubmissionStatusImplFromJson(
       address: json['address'] as String?,
       meta: SubmissionMeta.fromJson(json['meta'] as Map<String, dynamic>),
       status: json['status'] as String,
-      files: (json['files'] as List<dynamic>)
-          .map((e) => SubmissionFile.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      demoHash: json['demoHash'] as String?,
+      fileManifest: json['fileManifest'] == null
+          ? null
+          : FileManifest.fromJson(json['fileManifest'] as Map<String, dynamic>),
+      integrityVerified: json['integrityVerified'] as bool?,
       error: json['error'] as String?,
       createdAt: json['createdAt'] as String,
       updatedAt: json['updatedAt'] as String,
@@ -38,7 +40,9 @@ Map<String, dynamic> _$$SubmissionStatusImplToJson(
       'address': instance.address,
       'meta': instance.meta,
       'status': instance.status,
-      'files': instance.files,
+      'demoHash': instance.demoHash,
+      'fileManifest': instance.fileManifest,
+      'integrityVerified': instance.integrityVerified,
       'error': instance.error,
       'createdAt': instance.createdAt,
       'updatedAt': instance.updatedAt,

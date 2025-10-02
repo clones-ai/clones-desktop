@@ -487,7 +487,7 @@ class _DeleteRecordingProviderElement
   String get recordingId => (origin as DeleteRecordingProvider).recordingId;
 }
 
-String _$mergedRecordingsHash() => r'dea88216181568a620b8409acab5be3632324414';
+String _$mergedRecordingsHash() => r'21a1b3b52d247e6db5a8e4e04ee8f22b11db96dd';
 
 /// See also [mergedRecordings].
 @ProviderFor(mergedRecordings)

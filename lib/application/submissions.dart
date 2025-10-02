@@ -42,3 +42,29 @@ Future<List<PoolSubmission>> getFactorySubmissions(
     factoryAddress: factoryAddress,
   );
 }
+
+@riverpod
+Future<String> getDemoFile(
+  Ref ref, {
+  required String submissionId,
+  required String filename,
+}) async {
+  final submissionsRepository = ref.watch(submissionsRepositoryProvider);
+  return submissionsRepository.getDemoFile(
+    submissionId: submissionId,
+    filename: filename,
+  );
+}
+
+@riverpod
+Future<String> getDemoFileAsBase64(
+  Ref ref, {
+  required String submissionId,
+  required String filename,
+}) async {
+  final submissionsRepository = ref.watch(submissionsRepositoryProvider);
+  return submissionsRepository.getDemoFileAsBase64(
+    submissionId: submissionId,
+    filename: filename,
+  );
+}

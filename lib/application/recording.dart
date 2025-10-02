@@ -58,7 +58,7 @@ Future<List<ApiRecording>> mergedRecordings(Ref ref) async {
 
   final result = <ApiRecording>[];
 
-  // 1. Add remote-only recordings
+  // 1. Add remote-only recordings (cloud)
   final remoteOnlySubmissions = submissions
       .where((s) => !localRecordings.any((r) => r.id == s.meta.id))
       .toList();
@@ -82,19 +82,43 @@ Future<List<ApiRecording>> mergedRecordings(Ref ref) async {
             primaryMonitor: meta.primaryMonitor,
             demonstration: meta.demonstration,
             submission: s,
-            location: 'database',
+            location: 'cloud',
           );
         },
       ),
     )
 
-    // 2. Add local recordings (and merge with remote if they exist)
+    // 2. Add local recordings with priority logic
     ..addAll(
       localRecordings.map(
         (rec) {
           final submission =
               submissions.firstWhereOrNull((s) => s.meta.id == rec.id);
 
+          // If submission exists and has been successfully uploaded (completed status),
+          // use backend data as source of truth
+          if (submission != null && 
+              (submission.status == 'completed' || submission.status == 'processing')) {
+            final meta = submission.meta;
+            return ApiRecording(
+              id: meta.id,
+              timestamp: meta.timestamp,
+              durationSeconds: meta.durationSeconds,
+              status: meta.status,
+              title: meta.title,
+              description: meta.description,
+              platform: meta.platform,
+              arch: meta.arch,
+              version: meta.version,
+              locale: meta.locale,
+              primaryMonitor: meta.primaryMonitor,
+              demonstration: meta.demonstration,
+              submission: submission,
+              location: 'cloud',
+            );
+          }
+
+          // Otherwise, use local data (not uploaded yet or upload failed)
           return ApiRecording(
             id: rec.id,
             timestamp: rec.timestamp,
