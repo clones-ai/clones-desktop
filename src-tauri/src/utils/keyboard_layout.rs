@@ -259,15 +259,17 @@ fn read_registry_string_value(hkey: windows::Win32::Foundation::HKEY, value_name
 }
 
 #[cfg(target_os = "windows")]
+static IME_KEYWORDS: &[&str] = &[
+    "ime", "pinyin", "wubi", "zhuyin", "kana", "hangul", 
+    "input method", "phonetic", "changjie", "quick", 
+    "microsoft ime", "bopomofo", "jyutping"
+];
+
+#[cfg(target_os = "windows")]
 fn infer_kind_from_name(name: &str) -> LayoutKind {
     let n = name.to_lowercase();
-    let ime_keywords = [
-        "ime", "pinyin", "wubi", "zhuyin", "kana", "hangul", 
-        "input method", "phonetic", "changjie", "quick", 
-        "microsoft ime", "bopomofo", "jyutping"
-    ];
     
-    if ime_keywords.iter().any(|keyword| n.contains(keyword)) {
+    if IME_KEYWORDS.iter().any(|keyword| n.contains(keyword)) {
         LayoutKind::InputMethod
     } else {
         LayoutKind::KeyboardLayout
