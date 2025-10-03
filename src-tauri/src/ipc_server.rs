@@ -23,13 +23,9 @@ use crate::utils::permissions::has_ax_perms;
 // Import functions from `commands/tools`
 use crate::commands::tools::{check_tools, init_tools};
 // Import functions from `core/record`
-use crate::core::record::{open_recording_folder, process_recording};
-// Import functions from `core/video_server`
-use crate::core::video_server::get_video_url;
+use crate::core::record::process_recording;
 // Import functions from `utils/permissions`
 use crate::utils::permissions::{has_record_perms, request_ax_perms, request_record_perms};
-// Import functions from `commands/settings`
-use crate::commands::settings::{get_onboarding_complete, set_onboarding_complete};
 // Import functions from `commands/transaction`
 use crate::commands::transaction::{
     cleanup_old_transactions, generate_session_token, generate_transaction_deep_link,
@@ -107,12 +103,6 @@ pub struct SetUploadAllowedPayload {
 #[derive(Serialize)]
 pub struct PermissionStatus {
     has_permission: bool,
-}
-
-// Structure for the `set_onboarding_complete` payload
-#[derive(Deserialize)]
-pub struct SetOnboardingCompletePayload {
-    complete: bool,
 }
 
 // Structures for transaction endpoints
@@ -220,19 +210,12 @@ pub async fn init(app_handle: AppHandle) {
         )
         // POST /permissions/ax/request: Trigger a request for accessibility permissions.
         .route("/permissions/ax/request", post(request_ax_perms_handler))
-        // GET & POST /onboarding/complete: GET to read, POST to update onboarding status.
-        .route(
-            "/onboarding/complete",
-            get(get_onboarding_complete_handler).post(set_onboarding_complete_handler),
-        )
         // POST /tools/init: Trigger the initialization of external tools.
         .route("/tools/init", post(init_tools_handler))
         // GET /tools/check: Check the status of external tools.
         .route("/tools/check", get(check_tools_handler))
         // POST /recordings/:id/process: Trigger post-processing for a specific recording.
         .route("/recordings/:id/process", post(process_recording_handler))
-        // POST /recordings/:id/open: Trigger opening the folder of a specific recording.
-        .route("/recordings/:id/open", post(open_recording_folder_handler))
         // GET /deeplink: Retrieve the latest deep link URL received by the application.
         .route("/deeplink", get(get_deeplink_handler))
         // POST /open-url: Open an external URL.
@@ -507,26 +490,6 @@ async fn request_ax_perms_handler() -> StatusCode {
     StatusCode::OK
 }
 
-async fn get_onboarding_complete_handler(State(state): State<AppState>) -> impl IntoResponse {
-    let status = get_onboarding_complete(state.app_handle);
-    (
-        StatusCode::OK,
-        Json(PermissionStatus {
-            has_permission: status,
-        }),
-    )
-}
-
-async fn set_onboarding_complete_handler(
-    State(state): State<AppState>,
-    Json(payload): Json<SetOnboardingCompletePayload>,
-) -> Result<StatusCode, (StatusCode, String)> {
-    match set_onboarding_complete(state.app_handle, payload.complete) {
-        Ok(_) => Ok(StatusCode::OK),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e)),
-    }
-}
-
 // --- Handlers for tools ---
 
 async fn init_tools_handler(
@@ -552,16 +515,6 @@ async fn process_recording_handler(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     match process_recording(state.app_handle, id).await {
-        Ok(_) => Ok(StatusCode::OK),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
-    }
-}
-
-async fn open_recording_folder_handler(
-    State(state): State<AppState>,
-    axum::extract::Path(id): axum::extract::Path<String>,
-) -> Result<StatusCode, (StatusCode, String)> {
-    match open_recording_folder(state.app_handle, id).await {
         Ok(_) => Ok(StatusCode::OK),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
@@ -846,8 +799,12 @@ async fn create_filtered_recording_zip_handler(
         .into_iter()
         .map(|r| (r.start, r.end))
         .collect();
-    
-    log::info!("🔍 [create_filtered_recording_zip_handler] Called for recording {}, deleted_ranges: {:?}", id, deleted_ranges);
+
+    log::info!(
+        "🔍 [create_filtered_recording_zip_handler] Called for recording {}, deleted_ranges: {:?}",
+        id,
+        deleted_ranges
+    );
 
     match record::create_filtered_recording_zip(state.app_handle, id.clone(), deleted_ranges).await
     {

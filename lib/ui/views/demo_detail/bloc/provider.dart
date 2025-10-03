@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -21,11 +22,13 @@ part 'provider.g.dart';
 @riverpod
 class DemoDetailNotifier extends _$DemoDetailNotifier {
   File? _tempVideoFile;
+  Timer? _typingTimer;
 
   @override
   DemoDetailState build() {
     ref.onDispose(() {
       state.videoController?.dispose();
+      _typingTimer?.cancel();
       // Clean up temporary file if it exists
       _tempVideoFile?.deleteSync();
     });
@@ -33,7 +36,25 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
   }
 
   Future<void> loadRecording(String recordingId) async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(
+      isLoading: true,
+      events: [],
+      sftMessages: [],
+      eventTypes: {},
+      enabledEventTypes: {},
+      startTime: 0,
+      videoController: null,
+      videoSource: null,
+      clips: [],
+      selectedClipIds: {},
+      clipboardClip: null,
+      deletedClipsHistory: [],
+      currentAxTreeEvent: null,
+    );
+
+    // Start pre-upload animation when recording is loaded
+    startPreUploadAnimation();
+
     try {
       var recordings = await ref.read(mergedRecordingsProvider.future);
       var recording =
@@ -50,7 +71,6 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       }
 
       state = state.copyWith(
-        isLoading: false,
         recording: recording,
       );
 
@@ -58,6 +78,8 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       await loadEvents(recordingId);
       await loadSftData(recordingId);
       await initializeVideoPlayer(recordingId);
+
+      state = state.copyWith(isLoading: false);
     } catch (_) {}
     state = state.copyWith(isLoading: false);
   }
@@ -413,7 +435,7 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     if (state.deletedClipsHistory.isEmpty) return;
 
     // Find which deletion operation contains the clicked position
-    int operationIndex = -1;
+    var operationIndex = -1;
     for (var i = 0; i < state.deletedClipsHistory.length; i++) {
       final operation = state.deletedClipsHistory[i];
       if (operation.any((clip) => clip.contains(clickTimeMs))) {
@@ -439,25 +461,6 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       clipSegments: restoredClips.map((c) => c.toRangeValues()).toList(),
     );
   }
-
-  void mergeAdjacentClips() {
-    if (state.clipSegments.isEmpty) return;
-    final sorted = [...state.clipSegments]
-      ..sort((a, b) => a.start.compareTo(b.start));
-    final merged = <RangeValues>[sorted.first];
-    for (var i = 1; i < sorted.length; i++) {
-      final last = merged.last;
-      final cur = sorted[i];
-      if (cur.start <= last.end + 1) {
-        merged[merged.length - 1] = RangeValues(last.start, cur.end);
-      } else {
-        merged.add(cur);
-      }
-    }
-    state = state.copyWith(clipSegments: merged);
-  }
-
-  // --- Deleted Zone Helpers (for skip logic) ---
 
   /// Check if a position is in a deleted zone
   bool isPositionInDeletedZone(double positionMs) {
@@ -502,59 +505,6 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     return positionMs; // Fallback
   }
 
-  // Clipboard operations for clips
-  void cutSelectedClips() {
-    if (state.selectedClipIndexes.isEmpty) return;
-    // Only support single-clip cut for now
-    final idx = state.selectedClipIndexes.first;
-    if (idx < 0 || idx >= state.clipSegments.length) return;
-    final clip = state.clipSegments[idx];
-    final remaining = [...state.clipSegments]..removeAt(idx);
-    state = state.copyWith(
-      clipSegments: remaining,
-      selectedClipIndexes: <int>{},
-      clipboardClip: VideoClip.fromRangeValues(clip),
-    );
-  }
-
-  void copySelectedClips() {
-    if (state.selectedClipIndexes.isEmpty) return;
-    final idx = state.selectedClipIndexes.first;
-    if (idx < 0 || idx >= state.clipSegments.length) return;
-    final clip = state.clipSegments[idx];
-    state = state.copyWith(clipboardClip: VideoClip.fromRangeValues(clip));
-  }
-
-  void pasteClipboardAt(double positionMs) {
-    final clip = state.clipboardClip;
-    if (clip == null) return;
-    // Paste will insert a clip of same duration, starting at positionMs
-    final duration = clip.end - clip.start;
-    final newStart = positionMs;
-    final newEnd = positionMs + duration;
-    if (newEnd <= newStart) return;
-    final newClip = RangeValues(newStart, newEnd);
-    final clips = [...state.clipSegments, newClip]
-      ..sort((a, b) => a.start.compareTo(b.start));
-    state = state.copyWith(clipSegments: clips);
-  }
-
-  void trimToPlayhead(double positionMs) {
-    // For all selected clips, trim their end to playhead if playhead inside clip
-    if (state.selectedClipIndexes.isEmpty) return;
-    final clips = [...state.clipSegments];
-    final selected = state.selectedClipIndexes;
-    for (final idx in selected) {
-      if (idx < 0 || idx >= clips.length) continue;
-      final c = clips[idx];
-      if (positionMs > c.start && positionMs < c.end) {
-        clips[idx] = RangeValues(c.start, positionMs);
-      }
-    }
-    state = state.copyWith(clipSegments: clips);
-  }
-
-
   // --- Modal Management ---
 
   void setShowTrainingSessionModal(bool show) {
@@ -579,7 +529,6 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     if (!state.showAxTreeOverlay) {
       return;
     }
-    
     final axTreeEvent = state.getAxTreeEventAtPosition(currentTimeMs);
     if (axTreeEvent != state.currentAxTreeEvent) {
       state = state.copyWith(currentAxTreeEvent: axTreeEvent);
@@ -615,13 +564,6 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
   }
 
   // --- Button Actions ---
-
-  Future<void> openRecordingFolder() async {
-    final recordingId = state.recording?.id;
-    if (recordingId == null) return;
-    await ref.read(tauriApiClientProvider).openRecordingFolder(recordingId);
-  }
-
   Future<void> processRecording() async {
     final recordingId = state.recording?.id;
     if (recordingId == null || state.isProcessing) return;
@@ -638,11 +580,146 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
     }
   }
 
+  static const String fullFirstMessage =
+      'Now that your demo has been recorded, feel free to edit out anything you find sensitive. You can also trim parts that feel too long, unnecessary, or where mistakes happened. The more polished your demo is, the better your score will be!';
+  static const String fullSecondMessage =
+      "Once you're happy with your demo, just click Upload to send it to the Clones Quality Agent for scoring.";
+  static const String fullThirdMessage =
+      'Your demo is now being uploaded and reviewed by the Clones Quality Agent. This may take a little while...';
+
+  static const Duration typingInterval = Duration(milliseconds: 30);
+  static const Duration messageDelay = Duration(milliseconds: 500);
+
+  void startPreUploadAnimation() {
+    if (state.showFirstMessage) return; // Already started
+
+    state = state.copyWith(
+      showFirstMessage: true,
+      currentMessageIndex: 0,
+      currentTypingIndex: 0,
+      firstMessage: '',
+      secondMessage: '',
+      thirdMessage: '',
+    );
+    _startTypingTimer();
+  }
+
+  void _startTypingTimer() {
+    if (_typingTimer?.isActive == true) return;
+
+    _typingTimer = Timer.periodic(typingInterval, (timer) {
+      updateTypingAnimation();
+
+      // Check if current message is complete
+      final isComplete = _isCurrentMessageComplete();
+
+      if (isComplete) {
+        timer.cancel();
+
+        if (state.currentMessageIndex == 0) {
+          // Start second message after delay
+          Timer(messageDelay, _startTypingTimer);
+        }
+      }
+    });
+  }
+
+  bool _isCurrentMessageComplete() {
+    final messageIndex = state.currentMessageIndex;
+    final currentIndex = state.currentTypingIndex;
+
+    String fullMessage;
+    switch (messageIndex) {
+      case 0:
+        fullMessage = fullFirstMessage;
+        break;
+      case 1:
+        fullMessage = fullSecondMessage;
+        break;
+      case 2:
+        fullMessage = fullThirdMessage;
+        break;
+      default:
+        return true;
+    }
+
+    return currentIndex >= fullMessage.length;
+  }
+
+  void updateTypingAnimation() {
+    final currentIndex = state.currentTypingIndex;
+    final messageIndex = state.currentMessageIndex;
+
+    String fullMessage;
+    switch (messageIndex) {
+      case 0:
+        fullMessage = fullFirstMessage;
+        break;
+      case 1:
+        fullMessage = fullSecondMessage;
+        break;
+      case 2:
+        fullMessage = fullThirdMessage;
+        break;
+      default:
+        return;
+    }
+
+    if (currentIndex < fullMessage.length) {
+      final currentText = fullMessage.substring(0, currentIndex + 1);
+
+      switch (messageIndex) {
+        case 0:
+          state = state.copyWith(
+            firstMessage: currentText,
+            currentTypingIndex: currentIndex + 1,
+          );
+          break;
+        case 1:
+          state = state.copyWith(
+            secondMessage: currentText,
+            currentTypingIndex: currentIndex + 1,
+          );
+          break;
+        case 2:
+          state = state.copyWith(
+            thirdMessage: currentText,
+            currentTypingIndex: currentIndex + 1,
+          );
+          break;
+      }
+    } else {
+      // Current message complete
+      if (messageIndex == 0) {
+        // Start second message after delay
+        state = state.copyWith(
+          showSecondMessage: true,
+          currentMessageIndex: 1,
+          currentTypingIndex: 0,
+        );
+      }
+    }
+  }
+
+  void startThirdMessageAnimation() {
+    _typingTimer?.cancel();
+    state = state.copyWith(
+      showThirdMessage: true,
+      currentMessageIndex: 2,
+      currentTypingIndex: 0,
+      thirdMessage: '',
+    );
+    _startTypingTimer();
+  }
+
   Future<void> uploadRecording() async {
     final recordingId = state.recording?.id;
     if (recordingId == null || state.isUploading) return;
 
     state = state.copyWith(isUploading: true, uploadError: null);
+
+    // Start third message animation when upload begins
+    startThirdMessageAnimation();
 
     try {
       final demonstrationTitle = state.recording?.title ?? 'Unknown';
@@ -676,16 +753,13 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
       // Start the upload by calling the upload method
       // We need to find the poolId from the recording's demonstration
       final poolId = state.recording?.demonstration?.poolId ?? 'unknown';
-      
+
       // Pass deleted segments to upload for filtering
       final deletedRanges = state.deletedClipsHistory
           .expand((operation) => operation)
           .map((clip) => {'start': clip.start, 'end': clip.end})
           .toList();
-      
-      debugPrint('🔍 [uploadRecording] deletedRanges: $deletedRanges');
-      debugPrint('🔍 [uploadRecording] deletedClipsHistory length: ${state.deletedClipsHistory.length}');
-      
+
       await ref.read(uploadQueueProvider.notifier).upload(
             recordingId,
             poolId,

@@ -65,7 +65,7 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
                     fontSize: 10,
                   ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -197,11 +197,11 @@ class _TimelineWidgetState extends ConsumerState<TimelineWidget> {
                       totalDuration: videoState.totalDuration,
                       timelineWidth: timelineWidth,
                     ),
-                    if (canEdit)
-                      TimelineEventMarkers(
-                        videoId: widget.videoId,
-                        timelineWidth: timelineWidth,
-                      ),
+
+                    TimelineEventMarkers(
+                      videoId: widget.videoId,
+                      timelineWidth: timelineWidth,
+                    ),
                     TimelinePlayhead(
                       currentPosition: videoState.currentPosition,
                       totalDuration: videoState.totalDuration,

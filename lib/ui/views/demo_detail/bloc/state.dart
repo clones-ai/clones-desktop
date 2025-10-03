@@ -9,6 +9,8 @@ import 'package:video_player/video_player.dart';
 
 part 'state.freezed.dart';
 
+const kMaxRecordingDuration = 120;
+
 @freezed
 class DemoDetailState with _$DemoDetailState {
   const factory DemoDetailState({
@@ -33,7 +35,6 @@ class DemoDetailState with _$DemoDetailState {
     // Legacy support for RangeValues (deprecated)
     @Default([]) List<RangeValues> clipSegments,
     @Default({}) Set<int> selectedClipIndexes,
-    @Default(false) bool isApplyingEdits,
 
     // New states for button handling
     @Default(false) bool isProcessing,
@@ -47,6 +48,16 @@ class DemoDetailState with _$DemoDetailState {
     // AxTree overlay state
     @Default(false) bool showAxTreeOverlay,
     RecordingEvent? currentAxTreeEvent,
+
+    // Pre-upload messages animation state
+    @Default('') String firstMessage,
+    @Default('') String secondMessage,
+    @Default('') String thirdMessage,
+    @Default(false) bool showFirstMessage,
+    @Default(false) bool showSecondMessage,
+    @Default(false) bool showThirdMessage,
+    @Default(0) int currentTypingIndex,
+    @Default(0) int currentMessageIndex,
   }) = _DemoDetailState;
   const DemoDetailState._();
 }
@@ -107,10 +118,10 @@ extension DemoDetailStateComputed on DemoDetailState {
     }
 
     final relativeTimeMs = currentTimeMs;
-    
+
     // Find the most recent axtree event at or before the current position
     RecordingEvent? mostRecentAxTree;
-    
+
     for (final event in events.reversed) {
       if (event.event == 'axtree') {
         final eventRelativeTime = event.time - startTime;
@@ -120,7 +131,7 @@ extension DemoDetailStateComputed on DemoDetailState {
         }
       }
     }
-    
+
     return mostRecentAxTree;
   }
 }

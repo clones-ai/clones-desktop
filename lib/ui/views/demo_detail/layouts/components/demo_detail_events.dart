@@ -49,18 +49,26 @@ class DemoDetailEvents extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              demoDetail.recording?.location == 'cloud' 
-                  ? Icons.cloud_outlined 
-                  : Icons.event_busy,
-              size: 48,
-              color: ClonesColors.secondaryText,
-            ),
+            if (demoDetail.isLoading)
+              const CircularProgressIndicator(
+                color: ClonesColors.primary,
+                strokeWidth: 1,
+              )
+            else
+              Icon(
+                demoDetail.recording?.location == 'cloud'
+                    ? Icons.cloud_outlined
+                    : Icons.event_busy,
+                size: 48,
+                color: ClonesColors.secondaryText,
+              ),
             const SizedBox(height: 16),
             Text(
-              demoDetail.recording?.location == 'cloud'
-                  ? 'Event data not available for cloud recordings'
-                  : 'No events to display.',
+              demoDetail.isLoading
+                  ? 'Loading events data...'
+                  : demoDetail.recording?.location == 'cloud'
+                      ? 'Event data not available for cloud recordings'
+                      : 'No events to display.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: ClonesColors.secondaryText,
               ),

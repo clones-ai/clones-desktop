@@ -16,9 +16,7 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$ForgeState {
-  bool get showFactoryDetail => throw _privateConstructorUsedError;
   bool get showGenerateFactoryModal => throw _privateConstructorUsedError;
-  Factory? get selectedFactory => throw _privateConstructorUsedError;
 
   /// Create a copy of ForgeState
   /// with the given fields replaced by the non-null parameter values.
@@ -33,12 +31,7 @@ abstract class $ForgeStateCopyWith<$Res> {
           ForgeState value, $Res Function(ForgeState) then) =
       _$ForgeStateCopyWithImpl<$Res, ForgeState>;
   @useResult
-  $Res call(
-      {bool showFactoryDetail,
-      bool showGenerateFactoryModal,
-      Factory? selectedFactory});
-
-  $FactoryCopyWith<$Res>? get selectedFactory;
+  $Res call({bool showGenerateFactoryModal});
 }
 
 /// @nodoc
@@ -56,38 +49,14 @@ class _$ForgeStateCopyWithImpl<$Res, $Val extends ForgeState>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? showFactoryDetail = null,
     Object? showGenerateFactoryModal = null,
-    Object? selectedFactory = freezed,
   }) {
     return _then(_value.copyWith(
-      showFactoryDetail: null == showFactoryDetail
-          ? _value.showFactoryDetail
-          : showFactoryDetail // ignore: cast_nullable_to_non_nullable
-              as bool,
       showGenerateFactoryModal: null == showGenerateFactoryModal
           ? _value.showGenerateFactoryModal
           : showGenerateFactoryModal // ignore: cast_nullable_to_non_nullable
               as bool,
-      selectedFactory: freezed == selectedFactory
-          ? _value.selectedFactory
-          : selectedFactory // ignore: cast_nullable_to_non_nullable
-              as Factory?,
     ) as $Val);
-  }
-
-  /// Create a copy of ForgeState
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $FactoryCopyWith<$Res>? get selectedFactory {
-    if (_value.selectedFactory == null) {
-      return null;
-    }
-
-    return $FactoryCopyWith<$Res>(_value.selectedFactory!, (value) {
-      return _then(_value.copyWith(selectedFactory: value) as $Val);
-    });
   }
 }
 
@@ -99,13 +68,7 @@ abstract class _$$ForgeStateImplCopyWith<$Res>
       __$$ForgeStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {bool showFactoryDetail,
-      bool showGenerateFactoryModal,
-      Factory? selectedFactory});
-
-  @override
-  $FactoryCopyWith<$Res>? get selectedFactory;
+  $Res call({bool showGenerateFactoryModal});
 }
 
 /// @nodoc
@@ -121,23 +84,13 @@ class __$$ForgeStateImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? showFactoryDetail = null,
     Object? showGenerateFactoryModal = null,
-    Object? selectedFactory = freezed,
   }) {
     return _then(_$ForgeStateImpl(
-      showFactoryDetail: null == showFactoryDetail
-          ? _value.showFactoryDetail
-          : showFactoryDetail // ignore: cast_nullable_to_non_nullable
-              as bool,
       showGenerateFactoryModal: null == showGenerateFactoryModal
           ? _value.showGenerateFactoryModal
           : showGenerateFactoryModal // ignore: cast_nullable_to_non_nullable
               as bool,
-      selectedFactory: freezed == selectedFactory
-          ? _value.selectedFactory
-          : selectedFactory // ignore: cast_nullable_to_non_nullable
-              as Factory?,
     ));
   }
 }
@@ -145,24 +98,15 @@ class __$$ForgeStateImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$ForgeStateImpl extends _ForgeState {
-  const _$ForgeStateImpl(
-      {this.showFactoryDetail = false,
-      this.showGenerateFactoryModal = false,
-      this.selectedFactory})
-      : super._();
+  const _$ForgeStateImpl({this.showGenerateFactoryModal = false}) : super._();
 
-  @override
-  @JsonKey()
-  final bool showFactoryDetail;
   @override
   @JsonKey()
   final bool showGenerateFactoryModal;
-  @override
-  final Factory? selectedFactory;
 
   @override
   String toString() {
-    return 'ForgeState(showFactoryDetail: $showFactoryDetail, showGenerateFactoryModal: $showGenerateFactoryModal, selectedFactory: $selectedFactory)';
+    return 'ForgeState(showGenerateFactoryModal: $showGenerateFactoryModal)';
   }
 
   @override
@@ -170,18 +114,13 @@ class _$ForgeStateImpl extends _ForgeState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$ForgeStateImpl &&
-            (identical(other.showFactoryDetail, showFactoryDetail) ||
-                other.showFactoryDetail == showFactoryDetail) &&
             (identical(
                     other.showGenerateFactoryModal, showGenerateFactoryModal) ||
-                other.showGenerateFactoryModal == showGenerateFactoryModal) &&
-            (identical(other.selectedFactory, selectedFactory) ||
-                other.selectedFactory == selectedFactory));
+                other.showGenerateFactoryModal == showGenerateFactoryModal));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, showFactoryDetail,
-      showGenerateFactoryModal, selectedFactory);
+  int get hashCode => Object.hash(runtimeType, showGenerateFactoryModal);
 
   /// Create a copy of ForgeState
   /// with the given fields replaced by the non-null parameter values.
@@ -193,18 +132,12 @@ class _$ForgeStateImpl extends _ForgeState {
 }
 
 abstract class _ForgeState extends ForgeState {
-  const factory _ForgeState(
-      {final bool showFactoryDetail,
-      final bool showGenerateFactoryModal,
-      final Factory? selectedFactory}) = _$ForgeStateImpl;
+  const factory _ForgeState({final bool showGenerateFactoryModal}) =
+      _$ForgeStateImpl;
   const _ForgeState._() : super._();
 
   @override
-  bool get showFactoryDetail;
-  @override
   bool get showGenerateFactoryModal;
-  @override
-  Factory? get selectedFactory;
 
   /// Create a copy of ForgeState
   /// with the given fields replaced by the non-null parameter values.

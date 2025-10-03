@@ -16,7 +16,6 @@ import 'package:clones_desktop/ui/views/home/layouts/home_view.dart';
 import 'package:clones_desktop/ui/views/leaderboards/layouts/leaderboards_view.dart';
 import 'package:clones_desktop/ui/views/record_overlay/layouts/record_overlay_view.dart';
 import 'package:clones_desktop/ui/views/referral/layouts/referral_view.dart';
-import 'package:clones_desktop/ui/views/training_session/layouts/training_session_view.dart';
 import 'package:clones_desktop/utils/window_alignment.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -120,22 +119,6 @@ final _router = GoRouter(
           ),
         ),
         GoRoute(
-          path: TrainingSessionView.routeName,
-          pageBuilder: (context, state) {
-            final extraData = state.extra as Map<String, dynamic>?;
-            final appParam = extraData?['appParam'];
-            final poolId = extraData?['poolId'];
-            final prompt = extraData?['prompt'];
-            return NoTransitionPage(
-              child: TrainingSessionView(
-                appParam: appParam,
-                poolId: poolId,
-                prompt: prompt,
-              ),
-            );
-          },
-        ),
-        GoRoute(
           path: ReferralView.routeName,
           pageBuilder: (context, state) => const NoTransitionPage(
             child: ReferralView(),
@@ -236,21 +219,8 @@ class _ClonesAppState extends ConsumerState<ClonesApp> {
           _router.go(FactoryView.routeName);
           return;
         }
-
-        // Example deeplink: clones://training-session?poolId=some-id
-        // You can expand this logic to handle different routes.
-        if (uri.host == 'training-session') {
-          _router.go(
-            TrainingSessionView.routeName,
-            extra: {
-              'poolId': uri.queryParameters['poolId'],
-              'prompt': uri.queryParameters['prompt'],
-            },
-          );
-        } else {
-          // Fallback or navigate to other routes based on the host
-          _router.go('/${uri.host}');
-        }
+        // Fallback or navigate to other routes based on the host
+        _router.go('/${uri.host}');
       }
     });
 

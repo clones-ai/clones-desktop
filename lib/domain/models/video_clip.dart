@@ -31,16 +31,16 @@ class VideoClip with _$VideoClip {
   bool contains(double timeMs) => timeMs >= start && timeMs <= end;
 
   bool canSplitAt(double timeMs, {double minSegmentSize = 50.0}) {
-    return contains(timeMs) && 
-           (timeMs - start) > minSegmentSize && 
-           (end - timeMs) > minSegmentSize;
+    return contains(timeMs) &&
+        (timeMs - start) > minSegmentSize &&
+        (end - timeMs) > minSegmentSize;
   }
 
   (VideoClip left, VideoClip right) splitAt(double timeMs) {
     if (!canSplitAt(timeMs)) {
       throw ArgumentError('Cannot split clip at $timeMs');
     }
-    
+
     return (
       VideoClip.create(start: start, end: timeMs),
       VideoClip.create(start: timeMs, end: end),

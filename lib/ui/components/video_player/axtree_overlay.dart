@@ -30,12 +30,12 @@ class AxTreeOverlay extends StatelessWidget {
 
     // Extract AxTree data from the event
     final axTreeData = axTreeEvent.data;
-    
+
     final rawTree = axTreeData['tree'];
     if (rawTree == null) {
       return const SizedBox.shrink();
     }
-    
+
     // Handle different tree structures
     List<dynamic> tree;
     if (rawTree is List<dynamic>) {
@@ -82,14 +82,14 @@ class AxTreeOverlay extends StatelessWidget {
 
     void processElement(dynamic element) {
       if (element is! Map<String, dynamic>) return;
-      
-      final elementMap = element as Map<String, dynamic>;
-      
+
+      final elementMap = element;
+
       // Extract bbox if it exists and is valid
       final bboxData = elementMap['bbox'];
       if (bboxData != null) {
         double x = 0, y = 0, width = 0, height = 0;
-        
+
         if (bboxData is Map<String, dynamic>) {
           // bbox as object: {x: 10, y: 20, width: 100, height: 50}
           x = (bboxData['x'] as num?)?.toDouble() ?? 0;
@@ -110,16 +110,18 @@ class AxTreeOverlay extends StatelessWidget {
 
         // Only add boxes with valid dimensions
         if (width > 0 && height > 0) {
-          boxes.add(AxTreeBox(
-            x: x,
-            y: y,
-            width: width,
-            height: height,
-            name: elementMap['name'] as String? ?? '',
-            role: elementMap['role'] as String? ?? '',
-            description: elementMap['description'] as String? ?? '',
-            value: elementMap['value']?.toString() ?? '',
-          ),);
+          boxes.add(
+            AxTreeBox(
+              x: x,
+              y: y,
+              width: width,
+              height: height,
+              name: elementMap['name'] as String? ?? '',
+              role: elementMap['role'] as String? ?? '',
+              description: elementMap['description'] as String? ?? '',
+              value: elementMap['value']?.toString() ?? '',
+            ),
+          );
         }
       }
 
@@ -171,7 +173,6 @@ class AxTreeOverlay extends StatelessWidget {
                       Shadow(
                         offset: Offset(1, 1),
                         blurRadius: 2,
-                        color: Colors.black,
                       ),
                     ],
                   ),

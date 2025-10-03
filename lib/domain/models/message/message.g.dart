@@ -32,5 +32,4 @@ const _$MessageTypeEnumMap = {
   MessageType.start: 'start',
   MessageType.end: 'end',
   MessageType.action: 'action',
-  MessageType.delete: 'delete',
 };
