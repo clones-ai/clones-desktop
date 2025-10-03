@@ -120,13 +120,19 @@ pub fn start_input_listener<R: Runtime>(app_handle: tauri::AppHandle<R>) -> Resu
                             State::Pressed => Some(InputEvent::new(
                                 "keydown",
                                 serde_json::json!({
-                                    "key": format!("{:?}", key)
+                                    "key": format!("{:?}", key),
+                                    "actual_char": "", // multiinput doesn't provide char info
+                                    "layout_dependent": true,
+                                    "detection_method": "multiinput_windows"
                                 }),
                             )),
                             State::Released => Some(InputEvent::new(
                                 "keyup",
                                 serde_json::json!({
-                                    "key": format!("{:?}", key)
+                                    "key": format!("{:?}", key),
+                                    "actual_char": "", // multiinput doesn't provide char info
+                                    "layout_dependent": true,
+                                    "detection_method": "multiinput_windows"
                                 }),
                             )),
                         },
@@ -230,13 +236,25 @@ pub fn start_input_listener<R: Runtime>(app_handle: tauri::AppHandle<R>) -> Resu
                     RdevEventType::KeyPress(key) => Some(InputEvent::new(
                         "keydown",
                         serde_json::json!({
-                            "key": format!("{:?}", key)
+                            "key": format!("{:?}", key),
+                            "actual_char": match &event.unicode {
+                                Some(unicode_info) => format!("{:?}", unicode_info),
+                                None => String::new(),
+                            },
+                            "layout_dependent": true,
+                            "detection_method": "rdev_cross_platform"
                         }),
                     )),
                     RdevEventType::KeyRelease(key) => Some(InputEvent::new(
                         "keyup",
                         serde_json::json!({
-                            "key": format!("{:?}", key)
+                            "key": format!("{:?}", key),
+                            "actual_char": match &event.unicode {
+                                Some(unicode_info) => format!("{:?}", unicode_info),
+                                None => String::new(),
+                            },
+                            "layout_dependent": true,
+                            "detection_method": "rdev_cross_platform"
                         }),
                     )),
                     RdevEventType::ButtonPress(button) => Some(InputEvent::new(

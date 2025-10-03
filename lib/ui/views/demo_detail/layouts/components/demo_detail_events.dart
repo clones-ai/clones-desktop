@@ -9,6 +9,7 @@ import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.d
 import 'package:clones_desktop/ui/components/wallet_not_connected.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
+import 'package:clones_desktop/ui/views/demo_detail/layouts/components/input_event_display.dart';
 import 'package:clones_desktop/utils/format_time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -246,12 +247,9 @@ class DemoDetailEvents extends ConsumerWidget {
                             Row(
                               children: [
                                 Expanded(
-                                  child: Text(
-                                    const JsonEncoder.withIndent('  ')
-                                        .convert(event.data),
-                                    style: theme.textTheme.bodySmall!.copyWith(
-                                      fontFamily: 'monospace',
-                                    ),
+                                  child: InputEventDisplay(
+                                    eventData: event.data,
+                                    eventType: event.event,
                                   ),
                                 ),
                               ],

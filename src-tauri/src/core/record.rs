@@ -6,6 +6,7 @@ use crate::core::input;
 use crate::tools::axtree;
 use crate::tools::cqa;
 use crate::tools::ffmpeg::{init_ffmpeg, FFmpegRecorder, FFMPEG_PATH};
+use crate::utils::keyboard_layout;
 use crate::utils::logger::Logger;
 use crate::utils::settings::get_custom_app_local_data_dir;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
@@ -33,6 +34,7 @@ pub struct RecordingMeta {
     arch: String,
     version: String,
     locale: String,
+    keyboard_layout: Option<String>,
     primary_monitor: MonitorInfo,
     // TODO: rename to demonstration when backend is updated
     quest: Option<Demonstration>,
@@ -432,6 +434,9 @@ pub async fn start_recording(
         arch: tauri_plugin_os::arch().to_string(),
         version: tauri_plugin_os::version().to_string(),
         locale: tauri_plugin_os::locale().unwrap_or_default(),
+        keyboard_layout: keyboard_layout::get_current_keyboard_layout()
+            .map(|info| info.layout_id)
+            .ok(),
         primary_monitor: MonitorInfo {
             width: physical_width,
             height: physical_height,

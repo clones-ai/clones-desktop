@@ -5,6 +5,7 @@
 // Re-export all utility modules
 pub mod downloader;
 pub mod github_release;
+pub mod keyboard_layout;
 pub mod logger;
 pub mod permissions;
 pub mod platform;
