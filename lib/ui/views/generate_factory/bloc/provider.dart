@@ -200,11 +200,6 @@ class GenerateFactoryNotifier extends _$GenerateFactoryNotifier
     await _predictPoolAddress();
   }
 
-  /// Reset the factory creation state
-  void resetState() {
-    state = const GenerateFactoryState();
-  }
-
   Future<void> _calculateGasEstimation() async {
     if (state.fundingAmount == null ||
         state.fundingAmount!.isEmpty ||

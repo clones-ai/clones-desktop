@@ -75,10 +75,6 @@ class VideoStateNotifier extends StateNotifier<VideoState> {
     );
   }
 
-  void setDuration(Duration duration) {
-    state = state.copyWith(totalDuration: duration);
-  }
-
   void setSpeed(double speed) {
     state = state.copyWith(currentSpeed: speed);
   }

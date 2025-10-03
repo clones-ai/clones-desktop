@@ -18,7 +18,6 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
 use tauri::{Emitter, State};
-use tauri_plugin_opener::OpenerExt;
 use zip::{write::FileOptions, ZipWriter};
 /// Metadata for a recording session, including quest, platform, and monitor info.
 #[derive(Serialize, Deserialize, Clone)]
@@ -685,26 +684,6 @@ pub async fn write_recording_file(
     Ok(())
 }
 
-pub async fn open_recording_folder(
-    app: tauri::AppHandle,
-    recording_id: String,
-) -> Result<(), String> {
-    let mut recordings_dir = get_custom_app_local_data_dir(&app)?.join("recordings");
-    // only add the ID if requested
-    if !recording_id.is_empty() {
-        recordings_dir = recordings_dir.join(&recording_id);
-    }
-
-    if !recordings_dir.exists() {
-        return Err(format!("Recording folder not found: {}", recording_id));
-    }
-
-    app.opener()
-        .open_path(recordings_dir.to_string_lossy().to_string(), None::<&str>)
-        .map_err(|e| format!("Failed to open folder: {}", e))?;
-    Ok(())
-}
-
 pub async fn delete_recording(app: tauri::AppHandle, recording_id: String) -> Result<(), String> {
     let recordings_dir = get_custom_app_local_data_dir(&app)?
         .join("recordings")
@@ -863,9 +842,9 @@ fn filter_input_log(
                         let adjusted_time_seconds = time_seconds - deleted_time_before;
                         let adjusted_time_ms = adjusted_time_seconds * 1000.0;
 
-                        // Update the timestamp in the JSON entry
+                        // Update the timestamp in the JSON entry (convert to integer)
                         let mut json_entry = json.clone();
-                        json_entry["time"] = serde_json::Value::from(adjusted_time_ms);
+                        json_entry["time"] = serde_json::Value::from(adjusted_time_ms as i64);
 
                         // Serialize the adjusted entry
                         match serde_json::to_string(&json_entry) {
@@ -937,8 +916,8 @@ fn filter_sft_json(
                 let adjusted_timestamp_seconds = timestamp_seconds - deleted_time_before;
                 let adjusted_timestamp_ms = adjusted_timestamp_seconds * 1000.0;
 
-                // Update the timestamp in the entry
-                entry["timestamp"] = serde_json::Value::from(adjusted_timestamp_ms);
+                // Update the timestamp in the entry (convert to integer)
+                entry["timestamp"] = serde_json::Value::from(adjusted_timestamp_ms as i64);
                 filtered_sft_data.push(entry);
             }
             // If in deleted range, skip this entry entirely
@@ -1031,7 +1010,7 @@ fn apply_video_edits(
         .map(|(start_ms, end_ms)| (start_ms / 1000.0, end_ms / 1000.0))
         .collect();
     sorted_ranges.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-    
+
     log::info!(
         "[apply_video_edits] Converted deleted ranges from ms to seconds: {:?}",
         sorted_ranges
@@ -1196,7 +1175,7 @@ fn concatenate_video_segments(
             concat_file.to_str().unwrap(),
             "-c:v",
             "libx264",
-            "-c:a", 
+            "-c:a",
             "aac",
             "-preset",
             "ultrafast",

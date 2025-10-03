@@ -152,21 +152,6 @@ pub async fn write_recording_file(
     record::write_recording_file(app, recording_id, filename, content).await
 }
 
-/// Opens the folder containing a recording.
-///
-/// # Arguments
-/// * `app` - The Tauri `AppHandle`.
-/// * `recording_id` - The recording ID.
-///
-/// # Returns
-/// * `Ok(())` if the folder was opened.
-/// * `Err` if opening failed.
-#[tauri::command]
-pub async fn open_recording_folder(app: AppHandle, recording_id: String) -> Result<(), String> {
-    validate_id(&recording_id)?;
-    record::open_recording_folder(app, recording_id).await
-}
-
 /// Deletes a recording and its files.
 ///
 /// # Arguments

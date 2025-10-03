@@ -21,6 +21,7 @@ mixin _$RecordOverlayState {
   bool get isLocked => throw _privateConstructorUsedError;
   bool get isCollapsed => throw _privateConstructorUsedError;
   bool get focused => throw _privateConstructorUsedError;
+  bool get close => throw _privateConstructorUsedError;
 
   /// Create a copy of RecordOverlayState
   /// with the given fields replaced by the non-null parameter values.
@@ -40,7 +41,8 @@ abstract class $RecordOverlayStateCopyWith<$Res> {
       int seconds,
       bool isLocked,
       bool isCollapsed,
-      bool focused});
+      bool focused,
+      bool close});
 }
 
 /// @nodoc
@@ -63,6 +65,7 @@ class _$RecordOverlayStateCopyWithImpl<$Res, $Val extends RecordOverlayState>
     Object? isLocked = null,
     Object? isCollapsed = null,
     Object? focused = null,
+    Object? close = null,
   }) {
     return _then(_value.copyWith(
       timer: freezed == timer
@@ -85,6 +88,10 @@ class _$RecordOverlayStateCopyWithImpl<$Res, $Val extends RecordOverlayState>
           ? _value.focused
           : focused // ignore: cast_nullable_to_non_nullable
               as bool,
+      close: null == close
+          ? _value.close
+          : close // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -102,7 +109,8 @@ abstract class _$$RecordOverlayStateImplCopyWith<$Res>
       int seconds,
       bool isLocked,
       bool isCollapsed,
-      bool focused});
+      bool focused,
+      bool close});
 }
 
 /// @nodoc
@@ -123,6 +131,7 @@ class __$$RecordOverlayStateImplCopyWithImpl<$Res>
     Object? isLocked = null,
     Object? isCollapsed = null,
     Object? focused = null,
+    Object? close = null,
   }) {
     return _then(_$RecordOverlayStateImpl(
       timer: freezed == timer
@@ -145,6 +154,10 @@ class __$$RecordOverlayStateImplCopyWithImpl<$Res>
           ? _value.focused
           : focused // ignore: cast_nullable_to_non_nullable
               as bool,
+      close: null == close
+          ? _value.close
+          : close // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -157,7 +170,8 @@ class _$RecordOverlayStateImpl extends _RecordOverlayState {
       this.seconds = 0,
       this.isLocked = false,
       this.isCollapsed = false,
-      this.focused = true})
+      this.focused = true,
+      this.close = false})
       : super._();
 
   @override
@@ -175,10 +189,13 @@ class _$RecordOverlayStateImpl extends _RecordOverlayState {
   @override
   @JsonKey()
   final bool focused;
+  @override
+  @JsonKey()
+  final bool close;
 
   @override
   String toString() {
-    return 'RecordOverlayState(timer: $timer, seconds: $seconds, isLocked: $isLocked, isCollapsed: $isCollapsed, focused: $focused)';
+    return 'RecordOverlayState(timer: $timer, seconds: $seconds, isLocked: $isLocked, isCollapsed: $isCollapsed, focused: $focused, close: $close)';
   }
 
   @override
@@ -192,12 +209,13 @@ class _$RecordOverlayStateImpl extends _RecordOverlayState {
                 other.isLocked == isLocked) &&
             (identical(other.isCollapsed, isCollapsed) ||
                 other.isCollapsed == isCollapsed) &&
-            (identical(other.focused, focused) || other.focused == focused));
+            (identical(other.focused, focused) || other.focused == focused) &&
+            (identical(other.close, close) || other.close == close));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, timer, seconds, isLocked, isCollapsed, focused);
+  int get hashCode => Object.hash(
+      runtimeType, timer, seconds, isLocked, isCollapsed, focused, close);
 
   /// Create a copy of RecordOverlayState
   /// with the given fields replaced by the non-null parameter values.
@@ -215,7 +233,8 @@ abstract class _RecordOverlayState extends RecordOverlayState {
       final int seconds,
       final bool isLocked,
       final bool isCollapsed,
-      final bool focused}) = _$RecordOverlayStateImpl;
+      final bool focused,
+      final bool close}) = _$RecordOverlayStateImpl;
   const _RecordOverlayState._() : super._();
 
   @override
@@ -228,6 +247,8 @@ abstract class _RecordOverlayState extends RecordOverlayState {
   bool get isCollapsed;
   @override
   bool get focused;
+  @override
+  bool get close;
 
   /// Create a copy of RecordOverlayState
   /// with the given fields replaced by the non-null parameter values.

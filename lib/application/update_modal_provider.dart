@@ -53,7 +53,7 @@ class UpdateModalNotifier extends StateNotifier<UpdateModalState> {
 
   Future<void> checkForUpdate() async {
     state = state.copyWith(status: UpdateStatus.checking, error: null);
-    
+
     try {
       final updateInfo = await _repository.checkForUpdate();
       if (updateInfo != null) {
@@ -89,14 +89,5 @@ class UpdateModalNotifier extends StateNotifier<UpdateModalState> {
         error: e.toString(),
       );
     }
-  }
-
-  void dismissError() {
-    state = state.copyWith(error: null, status: UpdateStatus.idle);
-  }
-
-  double get downloadProgressPercent {
-    if (state.totalBytes <= 0) return 0;
-    return state.downloadProgress / state.totalBytes;
   }
 }

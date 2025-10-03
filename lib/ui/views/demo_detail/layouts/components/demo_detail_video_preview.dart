@@ -27,25 +27,25 @@ class _DemoDetailVideoPreviewState
     extends ConsumerState<DemoDetailVideoPreview> {
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(demoDetailNotifierProvider);
+    final demoDetail = ref.watch(demoDetailNotifierProvider);
 
     final theme = Theme.of(context);
 
     return CardWidget(
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Video Preview',
-                  style: theme.textTheme.titleMedium,
-                ),
-                Row(
-                  children: [
-                    // TODO: Add AxTree toggle button
-                    /*  // AxTree toggle button
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Video Preview',
+                style: theme.textTheme.titleMedium,
+              ),
+              Row(
+                children: [
+                  // TODO: Add AxTree toggle button
+                  /*  // AxTree toggle button
                     if (_hasAxTreeEvents())
                       IconButton(
                         icon: Icon(
@@ -59,20 +59,45 @@ class _DemoDetailVideoPreviewState
                         },
                         tooltip: state.showAxTreeOverlay ? 'Hide AxTree overlay' : 'Show AxTree overlay',
                       ),*/
-                    if (widget.onExpand != null)
-                      IconButton(
-                        icon: const Icon(
-                          Icons.fullscreen,
-                          color: ClonesColors.secondary,
-                        ),
-                        onPressed: widget.onExpand,
-                        tooltip: 'Fullscreen',
+                  if (widget.onExpand != null)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.fullscreen,
+                        color: ClonesColors.secondary,
                       ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
+                      onPressed: widget.onExpand,
+                      tooltip: 'Fullscreen',
+                    ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (demoDetail.isLoading)
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(
+                    height: 50,
+                    width: 50,
+                    child: CircularProgressIndicator(
+                      color: ClonesColors.primary,
+                      strokeWidth: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Loading video preview...',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: ClonesColors.secondaryText,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            )
+          else
             Expanded(
               child: widget.videoWidget == null
                   ? Center(
@@ -80,18 +105,16 @@ class _DemoDetailVideoPreviewState
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            state.recording?.location == 'cloud' 
-                                ? Icons.cloud_outlined 
+                            demoDetail.recording?.location == 'cloud'
+                                ? Icons.cloud_outlined
                                 : Icons.videocam_off,
                             size: 48,
                             color: ClonesColors.secondaryText,
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            state.recording?.location == 'cloud'
-                                ? state.isLoading
-                                    ? 'Loading video from cloud...'
-                                    : 'No video available for this cloud recording'
+                            demoDetail.recording?.location == 'cloud'
+                                ? 'No video available for this cloud recording'
                                 : 'No video found',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: ClonesColors.secondaryText,
@@ -102,26 +125,10 @@ class _DemoDetailVideoPreviewState
                       ),
                     )
                   : MouseRegion(
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          if (state.isLoading)
-                            const Center(
-                              child: SizedBox(
-                                width: 50,
-                                height: 50,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 1,
-                                ),
-                              ),
-                            )
-                          else
-                            _buildVideoWithOverlay(),
-                        ],
-                      ),
+                      child: _buildVideoContainer(),
                     ),
             ),
-          ],
+        ],
       ),
     );
   }
@@ -129,6 +136,21 @@ class _DemoDetailVideoPreviewState
   bool _hasAxTreeEvents() {
     final state = ref.read(demoDetailNotifierProvider);
     return state.events.any((e) => e.event == 'axtree');
+  }
+
+  Widget _buildVideoContainer() {
+    if (widget.videoWidget == null) {
+      return const SizedBox.shrink();
+    }
+
+    // Use a reasonable default aspect ratio for videos
+    // Most recordings are likely to be in 16:9 or similar
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        _buildVideoWithOverlay(),
+      ],
+    );
   }
 
   Widget _buildVideoWithOverlay() {
@@ -162,7 +184,8 @@ class _DemoDetailVideoPreviewState
           child: IgnorePointer(
             child: ColoredBox(
               color: Colors.red.withValues(
-                  alpha: 0.3), // Debug: Red overlay to see if it's working
+                alpha: 0.3,
+              ),
               child: AxTreeOverlay(
                 axTreeEvent: currentAxTreeEvent,
                 videoSize: videoSize,

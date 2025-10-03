@@ -49,7 +49,7 @@ class RecordOverlayControls extends ConsumerWidget {
                         .read(trainingSessionNotifierProvider.notifier)
                         .recordingComplete(),
                   );
-                  context.pop();
+                  ref.read(recordOverlayNotifierProvider.notifier).close();
                 },
               ),
             ),

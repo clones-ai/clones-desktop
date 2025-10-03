@@ -23,16 +23,4 @@ class OnboardingNotifier extends _$OnboardingNotifier {
     state = state.copyWith(privacyAccepted: false);
     ref.read(rejectPrivacyProvider);
   }
-
-  void nextStep() {
-    switch (state.currentStep) {
-      case OnboardingStep.privacy:
-        if (state.privacyAccepted) {
-          state = state.copyWith(currentStep: OnboardingStep.completed);
-        }
-        break;
-      case OnboardingStep.completed:
-        break;
-    }
-  }
 }

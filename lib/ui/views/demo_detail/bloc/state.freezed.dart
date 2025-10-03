@@ -38,8 +38,7 @@ mixin _$DemoDetailState {
   List<List<VideoClip>> get deletedClipsHistory =>
       throw _privateConstructorUsedError; // Legacy support for RangeValues (deprecated)
   List<RangeValues> get clipSegments => throw _privateConstructorUsedError;
-  Set<int> get selectedClipIndexes => throw _privateConstructorUsedError;
-  bool get isApplyingEdits =>
+  Set<int> get selectedClipIndexes =>
       throw _privateConstructorUsedError; // New states for button handling
   bool get isProcessing => throw _privateConstructorUsedError;
   bool get isExporting => throw _privateConstructorUsedError;
@@ -50,7 +49,16 @@ mixin _$DemoDetailState {
   String? get uploadError =>
       throw _privateConstructorUsedError; // AxTree overlay state
   bool get showAxTreeOverlay => throw _privateConstructorUsedError;
-  RecordingEvent? get currentAxTreeEvent => throw _privateConstructorUsedError;
+  RecordingEvent? get currentAxTreeEvent =>
+      throw _privateConstructorUsedError; // Pre-upload messages animation state
+  String get firstMessage => throw _privateConstructorUsedError;
+  String get secondMessage => throw _privateConstructorUsedError;
+  String get thirdMessage => throw _privateConstructorUsedError;
+  bool get showFirstMessage => throw _privateConstructorUsedError;
+  bool get showSecondMessage => throw _privateConstructorUsedError;
+  bool get showThirdMessage => throw _privateConstructorUsedError;
+  int get currentTypingIndex => throw _privateConstructorUsedError;
+  int get currentMessageIndex => throw _privateConstructorUsedError;
 
   /// Create a copy of DemoDetailState
   /// with the given fields replaced by the non-null parameter values.
@@ -82,7 +90,6 @@ abstract class $DemoDetailStateCopyWith<$Res> {
       List<List<VideoClip>> deletedClipsHistory,
       List<RangeValues> clipSegments,
       Set<int> selectedClipIndexes,
-      bool isApplyingEdits,
       bool isProcessing,
       bool isExporting,
       bool isUploading,
@@ -91,7 +98,15 @@ abstract class $DemoDetailStateCopyWith<$Res> {
       String? exportError,
       String? uploadError,
       bool showAxTreeOverlay,
-      RecordingEvent? currentAxTreeEvent});
+      RecordingEvent? currentAxTreeEvent,
+      String firstMessage,
+      String secondMessage,
+      String thirdMessage,
+      bool showFirstMessage,
+      bool showSecondMessage,
+      bool showThirdMessage,
+      int currentTypingIndex,
+      int currentMessageIndex});
 
   $ApiRecordingCopyWith<$Res>? get recording;
   $VideoClipCopyWith<$Res>? get clipboardClip;
@@ -129,7 +144,6 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
     Object? deletedClipsHistory = null,
     Object? clipSegments = null,
     Object? selectedClipIndexes = null,
-    Object? isApplyingEdits = null,
     Object? isProcessing = null,
     Object? isExporting = null,
     Object? isUploading = null,
@@ -139,6 +153,14 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
     Object? uploadError = freezed,
     Object? showAxTreeOverlay = null,
     Object? currentAxTreeEvent = freezed,
+    Object? firstMessage = null,
+    Object? secondMessage = null,
+    Object? thirdMessage = null,
+    Object? showFirstMessage = null,
+    Object? showSecondMessage = null,
+    Object? showThirdMessage = null,
+    Object? currentTypingIndex = null,
+    Object? currentMessageIndex = null,
   }) {
     return _then(_value.copyWith(
       isLoading: null == isLoading
@@ -205,10 +227,6 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
           ? _value.selectedClipIndexes
           : selectedClipIndexes // ignore: cast_nullable_to_non_nullable
               as Set<int>,
-      isApplyingEdits: null == isApplyingEdits
-          ? _value.isApplyingEdits
-          : isApplyingEdits // ignore: cast_nullable_to_non_nullable
-              as bool,
       isProcessing: null == isProcessing
           ? _value.isProcessing
           : isProcessing // ignore: cast_nullable_to_non_nullable
@@ -245,6 +263,38 @@ class _$DemoDetailStateCopyWithImpl<$Res, $Val extends DemoDetailState>
           ? _value.currentAxTreeEvent
           : currentAxTreeEvent // ignore: cast_nullable_to_non_nullable
               as RecordingEvent?,
+      firstMessage: null == firstMessage
+          ? _value.firstMessage
+          : firstMessage // ignore: cast_nullable_to_non_nullable
+              as String,
+      secondMessage: null == secondMessage
+          ? _value.secondMessage
+          : secondMessage // ignore: cast_nullable_to_non_nullable
+              as String,
+      thirdMessage: null == thirdMessage
+          ? _value.thirdMessage
+          : thirdMessage // ignore: cast_nullable_to_non_nullable
+              as String,
+      showFirstMessage: null == showFirstMessage
+          ? _value.showFirstMessage
+          : showFirstMessage // ignore: cast_nullable_to_non_nullable
+              as bool,
+      showSecondMessage: null == showSecondMessage
+          ? _value.showSecondMessage
+          : showSecondMessage // ignore: cast_nullable_to_non_nullable
+              as bool,
+      showThirdMessage: null == showThirdMessage
+          ? _value.showThirdMessage
+          : showThirdMessage // ignore: cast_nullable_to_non_nullable
+              as bool,
+      currentTypingIndex: null == currentTypingIndex
+          ? _value.currentTypingIndex
+          : currentTypingIndex // ignore: cast_nullable_to_non_nullable
+              as int,
+      currentMessageIndex: null == currentMessageIndex
+          ? _value.currentMessageIndex
+          : currentMessageIndex // ignore: cast_nullable_to_non_nullable
+              as int,
     ) as $Val);
   }
 
@@ -316,7 +366,6 @@ abstract class _$$DemoDetailStateImplCopyWith<$Res>
       List<List<VideoClip>> deletedClipsHistory,
       List<RangeValues> clipSegments,
       Set<int> selectedClipIndexes,
-      bool isApplyingEdits,
       bool isProcessing,
       bool isExporting,
       bool isUploading,
@@ -325,7 +374,15 @@ abstract class _$$DemoDetailStateImplCopyWith<$Res>
       String? exportError,
       String? uploadError,
       bool showAxTreeOverlay,
-      RecordingEvent? currentAxTreeEvent});
+      RecordingEvent? currentAxTreeEvent,
+      String firstMessage,
+      String secondMessage,
+      String thirdMessage,
+      bool showFirstMessage,
+      bool showSecondMessage,
+      bool showThirdMessage,
+      int currentTypingIndex,
+      int currentMessageIndex});
 
   @override
   $ApiRecordingCopyWith<$Res>? get recording;
@@ -364,7 +421,6 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
     Object? deletedClipsHistory = null,
     Object? clipSegments = null,
     Object? selectedClipIndexes = null,
-    Object? isApplyingEdits = null,
     Object? isProcessing = null,
     Object? isExporting = null,
     Object? isUploading = null,
@@ -374,6 +430,14 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
     Object? uploadError = freezed,
     Object? showAxTreeOverlay = null,
     Object? currentAxTreeEvent = freezed,
+    Object? firstMessage = null,
+    Object? secondMessage = null,
+    Object? thirdMessage = null,
+    Object? showFirstMessage = null,
+    Object? showSecondMessage = null,
+    Object? showThirdMessage = null,
+    Object? currentTypingIndex = null,
+    Object? currentMessageIndex = null,
   }) {
     return _then(_$DemoDetailStateImpl(
       isLoading: null == isLoading
@@ -440,10 +504,6 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
           ? _value._selectedClipIndexes
           : selectedClipIndexes // ignore: cast_nullable_to_non_nullable
               as Set<int>,
-      isApplyingEdits: null == isApplyingEdits
-          ? _value.isApplyingEdits
-          : isApplyingEdits // ignore: cast_nullable_to_non_nullable
-              as bool,
       isProcessing: null == isProcessing
           ? _value.isProcessing
           : isProcessing // ignore: cast_nullable_to_non_nullable
@@ -480,6 +540,38 @@ class __$$DemoDetailStateImplCopyWithImpl<$Res>
           ? _value.currentAxTreeEvent
           : currentAxTreeEvent // ignore: cast_nullable_to_non_nullable
               as RecordingEvent?,
+      firstMessage: null == firstMessage
+          ? _value.firstMessage
+          : firstMessage // ignore: cast_nullable_to_non_nullable
+              as String,
+      secondMessage: null == secondMessage
+          ? _value.secondMessage
+          : secondMessage // ignore: cast_nullable_to_non_nullable
+              as String,
+      thirdMessage: null == thirdMessage
+          ? _value.thirdMessage
+          : thirdMessage // ignore: cast_nullable_to_non_nullable
+              as String,
+      showFirstMessage: null == showFirstMessage
+          ? _value.showFirstMessage
+          : showFirstMessage // ignore: cast_nullable_to_non_nullable
+              as bool,
+      showSecondMessage: null == showSecondMessage
+          ? _value.showSecondMessage
+          : showSecondMessage // ignore: cast_nullable_to_non_nullable
+              as bool,
+      showThirdMessage: null == showThirdMessage
+          ? _value.showThirdMessage
+          : showThirdMessage // ignore: cast_nullable_to_non_nullable
+              as bool,
+      currentTypingIndex: null == currentTypingIndex
+          ? _value.currentTypingIndex
+          : currentTypingIndex // ignore: cast_nullable_to_non_nullable
+              as int,
+      currentMessageIndex: null == currentMessageIndex
+          ? _value.currentMessageIndex
+          : currentMessageIndex // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
@@ -504,7 +596,6 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
       final List<List<VideoClip>> deletedClipsHistory = const [],
       final List<RangeValues> clipSegments = const [],
       final Set<int> selectedClipIndexes = const {},
-      this.isApplyingEdits = false,
       this.isProcessing = false,
       this.isExporting = false,
       this.isUploading = false,
@@ -513,7 +604,15 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
       this.exportError,
       this.uploadError,
       this.showAxTreeOverlay = false,
-      this.currentAxTreeEvent})
+      this.currentAxTreeEvent,
+      this.firstMessage = '',
+      this.secondMessage = '',
+      this.thirdMessage = '',
+      this.showFirstMessage = false,
+      this.showSecondMessage = false,
+      this.showThirdMessage = false,
+      this.currentTypingIndex = 0,
+      this.currentMessageIndex = 0})
       : _events = events,
         _sftMessages = sftMessages,
         _eventTypes = eventTypes,
@@ -635,9 +734,6 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
     return EqualUnmodifiableSetView(_selectedClipIndexes);
   }
 
-  @override
-  @JsonKey()
-  final bool isApplyingEdits;
 // New states for button handling
   @override
   @JsonKey()
@@ -663,10 +759,35 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
   final bool showAxTreeOverlay;
   @override
   final RecordingEvent? currentAxTreeEvent;
+// Pre-upload messages animation state
+  @override
+  @JsonKey()
+  final String firstMessage;
+  @override
+  @JsonKey()
+  final String secondMessage;
+  @override
+  @JsonKey()
+  final String thirdMessage;
+  @override
+  @JsonKey()
+  final bool showFirstMessage;
+  @override
+  @JsonKey()
+  final bool showSecondMessage;
+  @override
+  @JsonKey()
+  final bool showThirdMessage;
+  @override
+  @JsonKey()
+  final int currentTypingIndex;
+  @override
+  @JsonKey()
+  final int currentMessageIndex;
 
   @override
   String toString() {
-    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoController: $videoController, videoSource: $videoSource, showTrainingSessionModal: $showTrainingSessionModal, clips: $clips, selectedClipIds: $selectedClipIds, clipboardClip: $clipboardClip, deletedClipsHistory: $deletedClipsHistory, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, isApplyingEdits: $isApplyingEdits, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, showUploadConfirmModal: $showUploadConfirmModal, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError, showAxTreeOverlay: $showAxTreeOverlay, currentAxTreeEvent: $currentAxTreeEvent)';
+    return 'DemoDetailState(isLoading: $isLoading, recording: $recording, events: $events, sftMessages: $sftMessages, eventTypes: $eventTypes, enabledEventTypes: $enabledEventTypes, startTime: $startTime, videoController: $videoController, videoSource: $videoSource, showTrainingSessionModal: $showTrainingSessionModal, clips: $clips, selectedClipIds: $selectedClipIds, clipboardClip: $clipboardClip, deletedClipsHistory: $deletedClipsHistory, clipSegments: $clipSegments, selectedClipIndexes: $selectedClipIndexes, isProcessing: $isProcessing, isExporting: $isExporting, isUploading: $isUploading, showUploadConfirmModal: $showUploadConfirmModal, exportPath: $exportPath, exportError: $exportError, uploadError: $uploadError, showAxTreeOverlay: $showAxTreeOverlay, currentAxTreeEvent: $currentAxTreeEvent, firstMessage: $firstMessage, secondMessage: $secondMessage, thirdMessage: $thirdMessage, showFirstMessage: $showFirstMessage, showSecondMessage: $showSecondMessage, showThirdMessage: $showThirdMessage, currentTypingIndex: $currentTypingIndex, currentMessageIndex: $currentMessageIndex)';
   }
 
   @override
@@ -705,8 +826,6 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
                 .equals(other._clipSegments, _clipSegments) &&
             const DeepCollectionEquality()
                 .equals(other._selectedClipIndexes, _selectedClipIndexes) &&
-            (identical(other.isApplyingEdits, isApplyingEdits) ||
-                other.isApplyingEdits == isApplyingEdits) &&
             (identical(other.isProcessing, isProcessing) ||
                 other.isProcessing == isProcessing) &&
             (identical(other.isExporting, isExporting) ||
@@ -724,7 +843,23 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
             (identical(other.showAxTreeOverlay, showAxTreeOverlay) ||
                 other.showAxTreeOverlay == showAxTreeOverlay) &&
             (identical(other.currentAxTreeEvent, currentAxTreeEvent) ||
-                other.currentAxTreeEvent == currentAxTreeEvent));
+                other.currentAxTreeEvent == currentAxTreeEvent) &&
+            (identical(other.firstMessage, firstMessage) ||
+                other.firstMessage == firstMessage) &&
+            (identical(other.secondMessage, secondMessage) ||
+                other.secondMessage == secondMessage) &&
+            (identical(other.thirdMessage, thirdMessage) ||
+                other.thirdMessage == thirdMessage) &&
+            (identical(other.showFirstMessage, showFirstMessage) ||
+                other.showFirstMessage == showFirstMessage) &&
+            (identical(other.showSecondMessage, showSecondMessage) ||
+                other.showSecondMessage == showSecondMessage) &&
+            (identical(other.showThirdMessage, showThirdMessage) ||
+                other.showThirdMessage == showThirdMessage) &&
+            (identical(other.currentTypingIndex, currentTypingIndex) ||
+                other.currentTypingIndex == currentTypingIndex) &&
+            (identical(other.currentMessageIndex, currentMessageIndex) ||
+                other.currentMessageIndex == currentMessageIndex));
   }
 
   @override
@@ -746,7 +881,6 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
         const DeepCollectionEquality().hash(_deletedClipsHistory),
         const DeepCollectionEquality().hash(_clipSegments),
         const DeepCollectionEquality().hash(_selectedClipIndexes),
-        isApplyingEdits,
         isProcessing,
         isExporting,
         isUploading,
@@ -755,7 +889,15 @@ class _$DemoDetailStateImpl extends _DemoDetailState {
         exportError,
         uploadError,
         showAxTreeOverlay,
-        currentAxTreeEvent
+        currentAxTreeEvent,
+        firstMessage,
+        secondMessage,
+        thirdMessage,
+        showFirstMessage,
+        showSecondMessage,
+        showThirdMessage,
+        currentTypingIndex,
+        currentMessageIndex
       ]);
 
   /// Create a copy of DemoDetailState
@@ -787,7 +929,6 @@ abstract class _DemoDetailState extends DemoDetailState {
       final List<List<VideoClip>> deletedClipsHistory,
       final List<RangeValues> clipSegments,
       final Set<int> selectedClipIndexes,
-      final bool isApplyingEdits,
       final bool isProcessing,
       final bool isExporting,
       final bool isUploading,
@@ -796,7 +937,15 @@ abstract class _DemoDetailState extends DemoDetailState {
       final String? exportError,
       final String? uploadError,
       final bool showAxTreeOverlay,
-      final RecordingEvent? currentAxTreeEvent}) = _$DemoDetailStateImpl;
+      final RecordingEvent? currentAxTreeEvent,
+      final String firstMessage,
+      final String secondMessage,
+      final String thirdMessage,
+      final bool showFirstMessage,
+      final bool showSecondMessage,
+      final bool showThirdMessage,
+      final int currentTypingIndex,
+      final int currentMessageIndex}) = _$DemoDetailStateImpl;
   const _DemoDetailState._() : super._();
 
   @override
@@ -835,9 +984,7 @@ abstract class _DemoDetailState extends DemoDetailState {
   @override
   List<RangeValues> get clipSegments;
   @override
-  Set<int> get selectedClipIndexes;
-  @override
-  bool get isApplyingEdits; // New states for button handling
+  Set<int> get selectedClipIndexes; // New states for button handling
   @override
   bool get isProcessing;
   @override
@@ -855,7 +1002,23 @@ abstract class _DemoDetailState extends DemoDetailState {
   @override
   bool get showAxTreeOverlay;
   @override
-  RecordingEvent? get currentAxTreeEvent;
+  RecordingEvent? get currentAxTreeEvent; // Pre-upload messages animation state
+  @override
+  String get firstMessage;
+  @override
+  String get secondMessage;
+  @override
+  String get thirdMessage;
+  @override
+  bool get showFirstMessage;
+  @override
+  bool get showSecondMessage;
+  @override
+  bool get showThirdMessage;
+  @override
+  int get currentTypingIndex;
+  @override
+  int get currentMessageIndex;
 
   /// Create a copy of DemoDetailState
   /// with the given fields replaced by the non-null parameter values.

@@ -1,10 +1,10 @@
+use crate::utils::settings::get_custom_app_local_data_dir;
 use anyhow::{Context, Result};
 use axum::{routing::get_service, Router};
 use once_cell::sync::OnceCell;
 use std::{net::SocketAddr, path::PathBuf};
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 use tower_http::services::ServeDir;
-use crate::utils::settings::get_custom_app_local_data_dir;
 
 static SERVER_ADDR: OnceCell<SocketAddr> = OnceCell::new();
 
@@ -13,43 +13,49 @@ fn validate_recording_id(recording_id: &str) -> Result<(), String> {
     if recording_id.is_empty() {
         return Err("Recording ID cannot be empty".to_string());
     }
-    
+
     if recording_id.len() > 100 {
         return Err("Recording ID too long".to_string());
     }
-    
+
     // Prevent path traversal attacks
-    if recording_id.contains("..") || 
-       recording_id.contains("/") || 
-       recording_id.contains("\\") ||
-       recording_id.contains('\0') {
+    if recording_id.contains("..")
+        || recording_id.contains("/")
+        || recording_id.contains("\\")
+        || recording_id.contains('\0')
+    {
         return Err("Invalid characters in recording ID".to_string());
     }
-    
+
     // Only allow alphanumeric, underscore, hyphen
-    if !recording_id.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
+    if !recording_id
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '_' || c == '-')
+    {
         return Err("Recording ID contains invalid characters".to_string());
     }
-    
+
     Ok(())
 }
 
 /// Verifies that the recording file actually exists
 fn verify_recording_exists(app_handle: &AppHandle, recording_id: &str) -> Result<PathBuf, String> {
-    let recordings_dir = get_custom_app_local_data_dir(app_handle)?
-        .join("recordings");
-        
+    let recordings_dir = get_custom_app_local_data_dir(app_handle)?.join("recordings");
+
     let recording_dir = recordings_dir.join(recording_id);
     let video_file = recording_dir.join("recording.mp4");
-    
+
     if !recording_dir.exists() {
         return Err(format!("Recording directory not found: {}", recording_id));
     }
-    
+
     if !video_file.exists() {
-        return Err(format!("Video file not found for recording: {}", recording_id));
+        return Err(format!(
+            "Video file not found for recording: {}",
+            recording_id
+        ));
     }
-    
+
     Ok(video_file)
 }
 
@@ -96,7 +102,7 @@ fn ensure_server_is_running(app_handle: AppHandle) -> Result<&'static SocketAddr
     if let Some(addr) = SERVER_ADDR.get() {
         return Ok(addr);
     }
-    
+
     // If not set, start server and set address
     match start_server(app_handle) {
         Ok(addr) => {
@@ -108,8 +114,8 @@ fn ensure_server_is_running(app_handle: AppHandle) -> Result<&'static SocketAddr
                     Ok(SERVER_ADDR.get().unwrap())
                 }
             }
-        },
-        Err(e) => Err(format!("Failed to start video server: {}", e))
+        }
+        Err(e) => Err(format!("Failed to start video server: {}", e)),
     }
 }
 
@@ -118,80 +124,13 @@ fn ensure_server_is_running(app_handle: AppHandle) -> Result<&'static SocketAddr
 pub fn get_video_url(app_handle: AppHandle, recording_id: &str) -> Result<String, String> {
     // Step 1: Validate recording ID for security
     validate_recording_id(recording_id)?;
-    
+
     // Step 2: Verify the recording file actually exists
     verify_recording_exists(&app_handle, recording_id)?;
-    
+
     // Step 3: Ensure server is running
     let addr = ensure_server_is_running(app_handle)?;
-    
+
     // Step 4: Build URL (no need for encoding since validation ensures safe chars)
     Ok(format!("http://{}/{}/recording.mp4", addr, recording_id))
-}
-
-/// Simplified version that works with basic validation
-pub fn get_video_url_simple(app_handle: AppHandle, recording_id: &str) -> Result<String, String> {
-    // Basic security check
-    if recording_id.is_empty() || recording_id.contains("..") || recording_id.contains("/") {
-        return Err("Invalid recording ID".to_string());
-    }
-    
-    // Get app data dir using the proper function
-    let recordings_dir = match get_custom_app_local_data_dir(&app_handle) {
-        Ok(dir) => dir.join("recordings"),
-        Err(e) => return Err(format!("Failed to get data dir: {}", e)),
-    };
-    
-    // Check if recording exists
-    let recording_file = recordings_dir.join(recording_id).join("recording.mp4");
-    if !recording_file.exists() {
-        return Err(format!("Recording not found: {}", recording_id));
-    }
-    
-    // Start server with simplified error handling
-    match ensure_server_is_running_simple(app_handle, recordings_dir) {
-        Ok(addr) => Ok(format!("http://{}/{}/recording.mp4", addr, recording_id)),
-        Err(e) => Err(format!("Server error: {}", e)),
-    }
-}
-
-/// Simplified server starter that actually works
-fn ensure_server_is_running_simple(app_handle: AppHandle, recordings_dir: std::path::PathBuf) -> Result<&'static SocketAddr, String> {
-    // If server already running, return existing address
-    if let Some(addr) = SERVER_ADDR.get() {
-        return Ok(addr);
-    }
-    
-    // Start server on available port
-    let addr = SocketAddr::from(([127, 0, 0, 1], 0));
-    let std_listener = std::net::TcpListener::bind(addr)
-        .map_err(|e| format!("Failed to bind: {}", e))?;
-    let local_addr = std_listener.local_addr()
-        .map_err(|e| format!("Failed to get address: {}", e))?;
-    
-    // Create service
-    let service = axum::routing::get_service(
-        tower_http::services::ServeDir::new(recordings_dir)
-            .append_index_html_on_directories(false)
-    );
-    let app = axum::Router::new().nest_service("/", service);
-    
-    // Start server
-    let tokio_listener = tokio::net::TcpListener::from_std(std_listener)
-        .map_err(|e| format!("Failed to convert listener: {}", e))?;
-    
-    tokio::spawn(async move {
-        if let Err(e) = axum::serve(tokio_listener, app).await {
-            log::error!("Video server error: {}", e);
-        }
-    });
-    
-    log::info!("Video server started at http://{}", local_addr);
-    
-    // Store address
-    if SERVER_ADDR.set(local_addr).is_err() {
-        // Another thread set it, use that one
-    }
-    
-    Ok(SERVER_ADDR.get().unwrap())
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:clones_desktop/application/tauri_api.dart';
+import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
 import 'package:clones_desktop/ui/views/record_overlay/bloc/state.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/state.dart';
@@ -27,12 +28,26 @@ class RecordOverlayNotifier extends _$RecordOverlayNotifier {
     return const RecordOverlayState();
   }
 
+  void close() {
+    state = state.copyWith(close: true);
+  }
+
   void startTimer() {
     stopTimer();
     setSeconds(0);
     state = state.copyWith(
       timer: Timer.periodic(const Duration(seconds: 1), (timer) {
         setSeconds(state.seconds + 1);
+
+        if (state.seconds >= kMaxRecordingDuration) {
+          timer.cancel();
+          unawaited(
+            ref
+                .read(trainingSessionNotifierProvider.notifier)
+                .recordingComplete(),
+          );
+          close();
+        }
       }),
     );
   }

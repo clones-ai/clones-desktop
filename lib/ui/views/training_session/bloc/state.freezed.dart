@@ -22,23 +22,15 @@ mixin _$TrainingSessionState {
       throw _privateConstructorUsedError;
   Demonstration? get recordingDemonstration =>
       throw _privateConstructorUsedError;
-  bool get recordingLoading => throw _privateConstructorUsedError;
   bool get recordingProcessing => throw _privateConstructorUsedError;
   bool get showUploadConfirmModal => throw _privateConstructorUsedError;
-  bool get showUploadBlock => throw _privateConstructorUsedError;
   String? get currentRecordingId => throw _privateConstructorUsedError;
   bool get isUploading => throw _privateConstructorUsedError;
   Size? get originalWindowSize => throw _privateConstructorUsedError;
-  bool get loadingSftData => throw _privateConstructorUsedError;
   RecordingState get recordingState => throw _privateConstructorUsedError;
   List<Message> get chatMessages => throw _privateConstructorUsedError;
   TypingMessage? get typingMessage => throw _privateConstructorUsedError;
   bool get isWaitingForResponse => throw _privateConstructorUsedError;
-  int? get hoveredMessageIndex => throw _privateConstructorUsedError;
-  List<Map<String, dynamic>> get deletedRanges =>
-      throw _privateConstructorUsedError;
-  List<SftMessage>? get originalSftData => throw _privateConstructorUsedError;
-  List<SftMessage> get availableSftData => throw _privateConstructorUsedError;
   AppInfo? get app => throw _privateConstructorUsedError;
   int get scrollToBottomNonce => throw _privateConstructorUsedError;
   bool get hasGivenUp => throw _privateConstructorUsedError;
@@ -61,22 +53,15 @@ abstract class $TrainingSessionStateCopyWith<$Res> {
       Factory? factory,
       Demonstration? recordedDemonstration,
       Demonstration? recordingDemonstration,
-      bool recordingLoading,
       bool recordingProcessing,
       bool showUploadConfirmModal,
-      bool showUploadBlock,
       String? currentRecordingId,
       bool isUploading,
       Size? originalWindowSize,
-      bool loadingSftData,
       RecordingState recordingState,
       List<Message> chatMessages,
       TypingMessage? typingMessage,
       bool isWaitingForResponse,
-      int? hoveredMessageIndex,
-      List<Map<String, dynamic>> deletedRanges,
-      List<SftMessage>? originalSftData,
-      List<SftMessage> availableSftData,
       AppInfo? app,
       int scrollToBottomNonce,
       bool hasGivenUp});
@@ -108,22 +93,15 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
     Object? factory = freezed,
     Object? recordedDemonstration = freezed,
     Object? recordingDemonstration = freezed,
-    Object? recordingLoading = null,
     Object? recordingProcessing = null,
     Object? showUploadConfirmModal = null,
-    Object? showUploadBlock = null,
     Object? currentRecordingId = freezed,
     Object? isUploading = null,
     Object? originalWindowSize = freezed,
-    Object? loadingSftData = null,
     Object? recordingState = null,
     Object? chatMessages = null,
     Object? typingMessage = freezed,
     Object? isWaitingForResponse = null,
-    Object? hoveredMessageIndex = freezed,
-    Object? deletedRanges = null,
-    Object? originalSftData = freezed,
-    Object? availableSftData = null,
     Object? app = freezed,
     Object? scrollToBottomNonce = null,
     Object? hasGivenUp = null,
@@ -145,10 +123,6 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
           ? _value.recordingDemonstration
           : recordingDemonstration // ignore: cast_nullable_to_non_nullable
               as Demonstration?,
-      recordingLoading: null == recordingLoading
-          ? _value.recordingLoading
-          : recordingLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
       recordingProcessing: null == recordingProcessing
           ? _value.recordingProcessing
           : recordingProcessing // ignore: cast_nullable_to_non_nullable
@@ -156,10 +130,6 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
       showUploadConfirmModal: null == showUploadConfirmModal
           ? _value.showUploadConfirmModal
           : showUploadConfirmModal // ignore: cast_nullable_to_non_nullable
-              as bool,
-      showUploadBlock: null == showUploadBlock
-          ? _value.showUploadBlock
-          : showUploadBlock // ignore: cast_nullable_to_non_nullable
               as bool,
       currentRecordingId: freezed == currentRecordingId
           ? _value.currentRecordingId
@@ -173,10 +143,6 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
           ? _value.originalWindowSize
           : originalWindowSize // ignore: cast_nullable_to_non_nullable
               as Size?,
-      loadingSftData: null == loadingSftData
-          ? _value.loadingSftData
-          : loadingSftData // ignore: cast_nullable_to_non_nullable
-              as bool,
       recordingState: null == recordingState
           ? _value.recordingState
           : recordingState // ignore: cast_nullable_to_non_nullable
@@ -193,22 +159,6 @@ class _$TrainingSessionStateCopyWithImpl<$Res,
           ? _value.isWaitingForResponse
           : isWaitingForResponse // ignore: cast_nullable_to_non_nullable
               as bool,
-      hoveredMessageIndex: freezed == hoveredMessageIndex
-          ? _value.hoveredMessageIndex
-          : hoveredMessageIndex // ignore: cast_nullable_to_non_nullable
-              as int?,
-      deletedRanges: null == deletedRanges
-          ? _value.deletedRanges
-          : deletedRanges // ignore: cast_nullable_to_non_nullable
-              as List<Map<String, dynamic>>,
-      originalSftData: freezed == originalSftData
-          ? _value.originalSftData
-          : originalSftData // ignore: cast_nullable_to_non_nullable
-              as List<SftMessage>?,
-      availableSftData: null == availableSftData
-          ? _value.availableSftData
-          : availableSftData // ignore: cast_nullable_to_non_nullable
-              as List<SftMessage>,
       app: freezed == app
           ? _value.app
           : app // ignore: cast_nullable_to_non_nullable
@@ -309,22 +259,15 @@ abstract class _$$TrainingSessionStateImplCopyWith<$Res>
       Factory? factory,
       Demonstration? recordedDemonstration,
       Demonstration? recordingDemonstration,
-      bool recordingLoading,
       bool recordingProcessing,
       bool showUploadConfirmModal,
-      bool showUploadBlock,
       String? currentRecordingId,
       bool isUploading,
       Size? originalWindowSize,
-      bool loadingSftData,
       RecordingState recordingState,
       List<Message> chatMessages,
       TypingMessage? typingMessage,
       bool isWaitingForResponse,
-      int? hoveredMessageIndex,
-      List<Map<String, dynamic>> deletedRanges,
-      List<SftMessage>? originalSftData,
-      List<SftMessage> availableSftData,
       AppInfo? app,
       int scrollToBottomNonce,
       bool hasGivenUp});
@@ -358,22 +301,15 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
     Object? factory = freezed,
     Object? recordedDemonstration = freezed,
     Object? recordingDemonstration = freezed,
-    Object? recordingLoading = null,
     Object? recordingProcessing = null,
     Object? showUploadConfirmModal = null,
-    Object? showUploadBlock = null,
     Object? currentRecordingId = freezed,
     Object? isUploading = null,
     Object? originalWindowSize = freezed,
-    Object? loadingSftData = null,
     Object? recordingState = null,
     Object? chatMessages = null,
     Object? typingMessage = freezed,
     Object? isWaitingForResponse = null,
-    Object? hoveredMessageIndex = freezed,
-    Object? deletedRanges = null,
-    Object? originalSftData = freezed,
-    Object? availableSftData = null,
     Object? app = freezed,
     Object? scrollToBottomNonce = null,
     Object? hasGivenUp = null,
@@ -395,10 +331,6 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
           ? _value.recordingDemonstration
           : recordingDemonstration // ignore: cast_nullable_to_non_nullable
               as Demonstration?,
-      recordingLoading: null == recordingLoading
-          ? _value.recordingLoading
-          : recordingLoading // ignore: cast_nullable_to_non_nullable
-              as bool,
       recordingProcessing: null == recordingProcessing
           ? _value.recordingProcessing
           : recordingProcessing // ignore: cast_nullable_to_non_nullable
@@ -406,10 +338,6 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
       showUploadConfirmModal: null == showUploadConfirmModal
           ? _value.showUploadConfirmModal
           : showUploadConfirmModal // ignore: cast_nullable_to_non_nullable
-              as bool,
-      showUploadBlock: null == showUploadBlock
-          ? _value.showUploadBlock
-          : showUploadBlock // ignore: cast_nullable_to_non_nullable
               as bool,
       currentRecordingId: freezed == currentRecordingId
           ? _value.currentRecordingId
@@ -423,10 +351,6 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
           ? _value.originalWindowSize
           : originalWindowSize // ignore: cast_nullable_to_non_nullable
               as Size?,
-      loadingSftData: null == loadingSftData
-          ? _value.loadingSftData
-          : loadingSftData // ignore: cast_nullable_to_non_nullable
-              as bool,
       recordingState: null == recordingState
           ? _value.recordingState
           : recordingState // ignore: cast_nullable_to_non_nullable
@@ -443,22 +367,6 @@ class __$$TrainingSessionStateImplCopyWithImpl<$Res>
           ? _value.isWaitingForResponse
           : isWaitingForResponse // ignore: cast_nullable_to_non_nullable
               as bool,
-      hoveredMessageIndex: freezed == hoveredMessageIndex
-          ? _value.hoveredMessageIndex
-          : hoveredMessageIndex // ignore: cast_nullable_to_non_nullable
-              as int?,
-      deletedRanges: null == deletedRanges
-          ? _value._deletedRanges
-          : deletedRanges // ignore: cast_nullable_to_non_nullable
-              as List<Map<String, dynamic>>,
-      originalSftData: freezed == originalSftData
-          ? _value._originalSftData
-          : originalSftData // ignore: cast_nullable_to_non_nullable
-              as List<SftMessage>?,
-      availableSftData: null == availableSftData
-          ? _value._availableSftData
-          : availableSftData // ignore: cast_nullable_to_non_nullable
-              as List<SftMessage>,
       app: freezed == app
           ? _value.app
           : app // ignore: cast_nullable_to_non_nullable
@@ -483,29 +391,19 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
       this.factory,
       this.recordedDemonstration,
       this.recordingDemonstration,
-      this.recordingLoading = false,
       this.recordingProcessing = false,
       this.showUploadConfirmModal = false,
-      this.showUploadBlock = false,
       this.currentRecordingId,
       this.isUploading = false,
       this.originalWindowSize,
-      this.loadingSftData = false,
       this.recordingState = RecordingState.off,
       final List<Message> chatMessages = const [],
       this.typingMessage = null,
       this.isWaitingForResponse = false,
-      this.hoveredMessageIndex = null,
-      final List<Map<String, dynamic>> deletedRanges = const [],
-      final List<SftMessage>? originalSftData = null,
-      final List<SftMessage> availableSftData = const [],
       this.app,
       this.scrollToBottomNonce = 0,
       this.hasGivenUp = false})
       : _chatMessages = chatMessages,
-        _deletedRanges = deletedRanges,
-        _originalSftData = originalSftData,
-        _availableSftData = availableSftData,
         super._();
 
   @override
@@ -518,16 +416,10 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
   final Demonstration? recordingDemonstration;
   @override
   @JsonKey()
-  final bool recordingLoading;
-  @override
-  @JsonKey()
   final bool recordingProcessing;
   @override
   @JsonKey()
   final bool showUploadConfirmModal;
-  @override
-  @JsonKey()
-  final bool showUploadBlock;
   @override
   final String? currentRecordingId;
   @override
@@ -535,9 +427,6 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
   final bool isUploading;
   @override
   final Size? originalWindowSize;
-  @override
-  @JsonKey()
-  final bool loadingSftData;
   @override
   @JsonKey()
   final RecordingState recordingState;
@@ -557,39 +446,6 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
   @JsonKey()
   final bool isWaitingForResponse;
   @override
-  @JsonKey()
-  final int? hoveredMessageIndex;
-  final List<Map<String, dynamic>> _deletedRanges;
-  @override
-  @JsonKey()
-  List<Map<String, dynamic>> get deletedRanges {
-    if (_deletedRanges is EqualUnmodifiableListView) return _deletedRanges;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_deletedRanges);
-  }
-
-  final List<SftMessage>? _originalSftData;
-  @override
-  @JsonKey()
-  List<SftMessage>? get originalSftData {
-    final value = _originalSftData;
-    if (value == null) return null;
-    if (_originalSftData is EqualUnmodifiableListView) return _originalSftData;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
-  }
-
-  final List<SftMessage> _availableSftData;
-  @override
-  @JsonKey()
-  List<SftMessage> get availableSftData {
-    if (_availableSftData is EqualUnmodifiableListView)
-      return _availableSftData;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_availableSftData);
-  }
-
-  @override
   final AppInfo? app;
   @override
   @JsonKey()
@@ -600,7 +456,7 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
 
   @override
   String toString() {
-    return 'TrainingSessionState(prompt: $prompt, factory: $factory, recordedDemonstration: $recordedDemonstration, recordingDemonstration: $recordingDemonstration, recordingLoading: $recordingLoading, recordingProcessing: $recordingProcessing, showUploadConfirmModal: $showUploadConfirmModal, showUploadBlock: $showUploadBlock, currentRecordingId: $currentRecordingId, isUploading: $isUploading, originalWindowSize: $originalWindowSize, loadingSftData: $loadingSftData, recordingState: $recordingState, chatMessages: $chatMessages, typingMessage: $typingMessage, isWaitingForResponse: $isWaitingForResponse, hoveredMessageIndex: $hoveredMessageIndex, deletedRanges: $deletedRanges, originalSftData: $originalSftData, availableSftData: $availableSftData, app: $app, scrollToBottomNonce: $scrollToBottomNonce, hasGivenUp: $hasGivenUp)';
+    return 'TrainingSessionState(prompt: $prompt, factory: $factory, recordedDemonstration: $recordedDemonstration, recordingDemonstration: $recordingDemonstration, recordingProcessing: $recordingProcessing, showUploadConfirmModal: $showUploadConfirmModal, currentRecordingId: $currentRecordingId, isUploading: $isUploading, originalWindowSize: $originalWindowSize, recordingState: $recordingState, chatMessages: $chatMessages, typingMessage: $typingMessage, isWaitingForResponse: $isWaitingForResponse, app: $app, scrollToBottomNonce: $scrollToBottomNonce, hasGivenUp: $hasGivenUp)';
   }
 
   @override
@@ -614,22 +470,16 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
                 other.recordedDemonstration == recordedDemonstration) &&
             (identical(other.recordingDemonstration, recordingDemonstration) ||
                 other.recordingDemonstration == recordingDemonstration) &&
-            (identical(other.recordingLoading, recordingLoading) ||
-                other.recordingLoading == recordingLoading) &&
             (identical(other.recordingProcessing, recordingProcessing) ||
                 other.recordingProcessing == recordingProcessing) &&
             (identical(other.showUploadConfirmModal, showUploadConfirmModal) ||
                 other.showUploadConfirmModal == showUploadConfirmModal) &&
-            (identical(other.showUploadBlock, showUploadBlock) ||
-                other.showUploadBlock == showUploadBlock) &&
             (identical(other.currentRecordingId, currentRecordingId) ||
                 other.currentRecordingId == currentRecordingId) &&
             (identical(other.isUploading, isUploading) ||
                 other.isUploading == isUploading) &&
             (identical(other.originalWindowSize, originalWindowSize) ||
                 other.originalWindowSize == originalWindowSize) &&
-            (identical(other.loadingSftData, loadingSftData) ||
-                other.loadingSftData == loadingSftData) &&
             (identical(other.recordingState, recordingState) ||
                 other.recordingState == recordingState) &&
             const DeepCollectionEquality()
@@ -638,14 +488,6 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
                 other.typingMessage == typingMessage) &&
             (identical(other.isWaitingForResponse, isWaitingForResponse) ||
                 other.isWaitingForResponse == isWaitingForResponse) &&
-            (identical(other.hoveredMessageIndex, hoveredMessageIndex) ||
-                other.hoveredMessageIndex == hoveredMessageIndex) &&
-            const DeepCollectionEquality()
-                .equals(other._deletedRanges, _deletedRanges) &&
-            const DeepCollectionEquality()
-                .equals(other._originalSftData, _originalSftData) &&
-            const DeepCollectionEquality()
-                .equals(other._availableSftData, _availableSftData) &&
             (identical(other.app, app) || other.app == app) &&
             (identical(other.scrollToBottomNonce, scrollToBottomNonce) ||
                 other.scrollToBottomNonce == scrollToBottomNonce) &&
@@ -654,32 +496,24 @@ class _$TrainingSessionStateImpl extends _TrainingSessionState {
   }
 
   @override
-  int get hashCode => Object.hashAll([
-        runtimeType,
-        prompt,
-        factory,
-        recordedDemonstration,
-        recordingDemonstration,
-        recordingLoading,
-        recordingProcessing,
-        showUploadConfirmModal,
-        showUploadBlock,
-        currentRecordingId,
-        isUploading,
-        originalWindowSize,
-        loadingSftData,
-        recordingState,
-        const DeepCollectionEquality().hash(_chatMessages),
-        typingMessage,
-        isWaitingForResponse,
-        hoveredMessageIndex,
-        const DeepCollectionEquality().hash(_deletedRanges),
-        const DeepCollectionEquality().hash(_originalSftData),
-        const DeepCollectionEquality().hash(_availableSftData),
-        app,
-        scrollToBottomNonce,
-        hasGivenUp
-      ]);
+  int get hashCode => Object.hash(
+      runtimeType,
+      prompt,
+      factory,
+      recordedDemonstration,
+      recordingDemonstration,
+      recordingProcessing,
+      showUploadConfirmModal,
+      currentRecordingId,
+      isUploading,
+      originalWindowSize,
+      recordingState,
+      const DeepCollectionEquality().hash(_chatMessages),
+      typingMessage,
+      isWaitingForResponse,
+      app,
+      scrollToBottomNonce,
+      hasGivenUp);
 
   /// Create a copy of TrainingSessionState
   /// with the given fields replaced by the non-null parameter values.
@@ -698,22 +532,15 @@ abstract class _TrainingSessionState extends TrainingSessionState {
       final Factory? factory,
       final Demonstration? recordedDemonstration,
       final Demonstration? recordingDemonstration,
-      final bool recordingLoading,
       final bool recordingProcessing,
       final bool showUploadConfirmModal,
-      final bool showUploadBlock,
       final String? currentRecordingId,
       final bool isUploading,
       final Size? originalWindowSize,
-      final bool loadingSftData,
       final RecordingState recordingState,
       final List<Message> chatMessages,
       final TypingMessage? typingMessage,
       final bool isWaitingForResponse,
-      final int? hoveredMessageIndex,
-      final List<Map<String, dynamic>> deletedRanges,
-      final List<SftMessage>? originalSftData,
-      final List<SftMessage> availableSftData,
       final AppInfo? app,
       final int scrollToBottomNonce,
       final bool hasGivenUp}) = _$TrainingSessionStateImpl;
@@ -728,21 +555,15 @@ abstract class _TrainingSessionState extends TrainingSessionState {
   @override
   Demonstration? get recordingDemonstration;
   @override
-  bool get recordingLoading;
-  @override
   bool get recordingProcessing;
   @override
   bool get showUploadConfirmModal;
-  @override
-  bool get showUploadBlock;
   @override
   String? get currentRecordingId;
   @override
   bool get isUploading;
   @override
   Size? get originalWindowSize;
-  @override
-  bool get loadingSftData;
   @override
   RecordingState get recordingState;
   @override
@@ -751,14 +572,6 @@ abstract class _TrainingSessionState extends TrainingSessionState {
   TypingMessage? get typingMessage;
   @override
   bool get isWaitingForResponse;
-  @override
-  int? get hoveredMessageIndex;
-  @override
-  List<Map<String, dynamic>> get deletedRanges;
-  @override
-  List<SftMessage>? get originalSftData;
-  @override
-  List<SftMessage> get availableSftData;
   @override
   AppInfo? get app;
   @override

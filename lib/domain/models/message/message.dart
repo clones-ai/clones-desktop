@@ -12,7 +12,6 @@ enum MessageType {
   start,
   end,
   action,
-  delete,
 }
 
 @freezed

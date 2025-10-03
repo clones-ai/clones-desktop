@@ -11,7 +11,6 @@ import 'package:clones_desktop/ui/views/home/layouts/home_view.dart';
 import 'package:clones_desktop/ui/views/leaderboards/layouts/leaderboards_view.dart';
 import 'package:clones_desktop/ui/views/record_overlay/layouts/record_overlay_view.dart';
 import 'package:clones_desktop/ui/views/referral/layouts/referral_view.dart';
-import 'package:clones_desktop/ui/views/training_session/layouts/training_session_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,14 +18,7 @@ import 'package:go_router/go_router.dart';
 class Sidebar extends ConsumerWidget {
   const Sidebar({
     super.key,
-    this.isRecording = false,
-    this.isRecordingLoading = false,
-    this.onStopRecording,
   });
-
-  final bool isRecording;
-  final bool isRecordingLoading;
-  final VoidCallback? onStopRecording;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -66,8 +58,7 @@ class Sidebar extends ConsumerWidget {
     ];
 
     var activeIndex = 0;
-    if (currentRoute.startsWith(TrainingSessionView.routeName) ||
-        currentRoute.startsWith(DemoDetailView.routeName) ||
+    if (currentRoute.startsWith(DemoDetailView.routeName) ||
         currentRoute.startsWith(RecordOverlayView.routeName)) {
       activeIndex = 2;
     } else {
@@ -93,39 +84,6 @@ class Sidebar extends ConsumerWidget {
               },
             ),
           ),
-          if (isRecording)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: IconButton(
-                icon: const Icon(Icons.stop, color: Colors.white, size: 32),
-                onPressed: onStopRecording,
-                tooltip: 'Stop Recording',
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  shape: const CircleBorder(),
-                ),
-              ),
-            )
-          else if (isRecordingLoading)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: IconButton(
-                icon: const SizedBox(
-                  width: 32,
-                  height: 32,
-                  child: CircularProgressIndicator(
-                    color: Colors.red,
-                    strokeWidth: 0.5,
-                  ),
-                ),
-                onPressed: null,
-                tooltip: 'Stop Recording',
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  shape: const CircleBorder(),
-                ),
-              ),
-            ),
           appVersion.when(
             data: (version) => Padding(
               padding: const EdgeInsets.only(bottom: 16, top: 8),

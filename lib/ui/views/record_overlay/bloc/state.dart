@@ -16,6 +16,7 @@ class RecordOverlayState with _$RecordOverlayState {
     @Default(false) bool isLocked,
     @Default(false) bool isCollapsed,
     @Default(true) bool focused,
+    @Default(false) bool close,
   }) = _RecordOverlayState;
   const RecordOverlayState._();
 }

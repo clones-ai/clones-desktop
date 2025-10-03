@@ -64,12 +64,15 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
     // Watch for current position changes to update AxTree overlay
     final videoState = ref.watch(videoStateNotifierProvider(_videoId));
     final demoDetail = ref.watch(demoDetailNotifierProvider);
-    
+
     // Update AxTree for current position
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        ref.read(demoDetailNotifierProvider.notifier)
-            .updateAxTreeForCurrentTime(videoState.currentPosition.inMilliseconds);
+        ref
+            .read(demoDetailNotifierProvider.notifier)
+            .updateAxTreeForCurrentTime(
+              videoState.currentPosition.inMilliseconds,
+            );
       }
     });
 
@@ -79,31 +82,29 @@ class _VideoPlayerState extends ConsumerVideoPlayerState<VideoPlayer>
         width: double.infinity,
         height: double.infinity,
         color: Colors.black,
-        child: FittedBox(
-          child: SizedBox(
-            width: videoController.value.size.width,
-            height: videoController.value.size.height,
-            child: Stack(
-              children: [
-                // Video player
-                video_player.VideoPlayer(videoController),
-                
-                // AxTree overlay
-                if (demoDetail.showAxTreeOverlay && demoDetail.currentAxTreeEvent != null)
-                  AxTreeOverlay(
-                    axTreeEvent: demoDetail.currentAxTreeEvent!,
-                    videoSize: Size(
-                      videoController.value.size.width,
-                      videoController.value.size.height,
-                    ),
-                    recordingResolution: Size(
-                      demoDetail.recording?.primaryMonitor?.width?.toDouble() ?? 1920,
-                      demoDetail.recording?.primaryMonitor?.height?.toDouble() ?? 1080,
-                    ),
-                  ),
-              ],
+        child: Stack(
+          children: [
+            // Video player - will take full container size
+            Positioned.fill(
+              child: video_player.VideoPlayer(videoController),
             ),
-          ),
+
+            // AxTree overlay
+            if (demoDetail.showAxTreeOverlay &&
+                demoDetail.currentAxTreeEvent != null)
+              AxTreeOverlay(
+                axTreeEvent: demoDetail.currentAxTreeEvent!,
+                videoSize: Size(
+                  videoController.value.size.width,
+                  videoController.value.size.height,
+                ),
+                recordingResolution: Size(
+                  demoDetail.recording?.primaryMonitor.width.toDouble() ?? 1920,
+                  demoDetail.recording?.primaryMonitor.height.toDouble() ??
+                      1080,
+                ),
+              ),
+          ],
         ),
       ),
     );

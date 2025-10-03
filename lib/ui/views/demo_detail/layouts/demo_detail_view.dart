@@ -50,8 +50,6 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
       vsync: this,
     );
 
-
-
     // Set modal state immediately if no recordingId
     if (widget.recordingId == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -151,14 +149,6 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
     }
 
     final demoDetail = ref.watch(demoDetailNotifierProvider);
-
-    if (demoDetail.isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          strokeWidth: 0.5,
-        ),
-      );
-    }
 
     if (demoDetail.recording == null && widget.recordingId != null) {
       return const Center(child: Text('Recording not found'));
@@ -377,7 +367,9 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
             child: const DemoDetailSteps(),
           ),
           const SizedBox(height: 20),
-          if (submission == null && recording != null && !showTrainingSessionModal)
+          if (submission == null &&
+              recording != null &&
+              !showTrainingSessionModal)
             AnimatedOpacity(
               opacity: 1 - _animationController.value,
               duration: const Duration(milliseconds: 300),
@@ -442,7 +434,6 @@ class _DemoDetailViewState extends ConsumerState<DemoDetailView>
       ),
     );
   }
-
 
   Widget _buildTrainingSessionModal() {
     return Stack(

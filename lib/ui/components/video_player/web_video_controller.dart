@@ -30,7 +30,6 @@ class WebVideoControllerImpl extends WebVideoController {
   StreamSubscription? _onRateChangeSubscription;
 
   String? get viewType => _viewType;
-  web.HTMLVideoElement? get videoElement => _video;
 
   @override
   Future<void> initialize() async {

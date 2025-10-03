@@ -2,8 +2,7 @@ import 'package:clones_desktop/ui/components/recording_badge.dart';
 import 'package:flutter/material.dart';
 
 class PrivacyPolicy extends StatelessWidget {
-  const PrivacyPolicy({super.key, this.className});
-  final String? className;
+  const PrivacyPolicy({super.key});
 
   @override
   Widget build(BuildContext context) {

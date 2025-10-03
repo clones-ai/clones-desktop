@@ -10,7 +10,6 @@ import 'package:clones_desktop/domain/models/api/api_error.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration_reward.dart';
 import 'package:clones_desktop/domain/models/message/message.dart';
-import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/message/typing_message.dart';
 import 'package:clones_desktop/ui/views/record_overlay/bloc/state.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/setters.dart';
@@ -37,7 +36,6 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
 
   Future<void> startRecording() async {
     try {
-      setRecordingLoading(true);
       if (state.recordingState == RecordingState.off) {
         final originalSize =
             await ref.read(tauriApiClientProvider).getWindowSize();
@@ -69,8 +67,6 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
       }
     } catch (error) {
       debugPrint('Recording error: $error');
-    } finally {
-      setRecordingLoading(false);
     }
   }
 
@@ -97,14 +93,6 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
 
         final variation = baseDelay * (0.8 + Random().nextDouble() * 0.4);
 
-        // TODO(reddwarf03): To fix
-        /* 
-         final isBlip = i % 4 == 0 || (i > 0 && content[i - 1] == ' ');
-        if (isBlip) {
-          await _toneAudio.seek(Duration.zero);
-          await _toneAudio.resume();
-        }*/
-
         triggerScrollToBottom();
         if (delay) {
           await Future.delayed(Duration(milliseconds: variation.toInt()));
@@ -119,7 +107,6 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
 
   Future<void> addMessage(
     Message msg, {
-    bool audio = true,
     bool delay = true,
   }) async {
     final messageIndex = state.chatMessages.length;
@@ -138,34 +125,11 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
       ]);
       triggerScrollToBottom();
     } else {
-      if (audio) {
-        // TODO(reddwarf03): To check
-        // await state.blipAudio!.seek(Duration.zero);
-        // await state.blipAudio!.resume();
-      }
-
       setChatMessages([
         ...state.chatMessages,
         msg,
       ]);
       triggerScrollToBottom();
-    }
-  }
-
-  Future<List<SftMessage>?> loadSftData() async {
-    setLoadingSftData(true);
-    try {
-      final sftString = await ref.read(tauriApiClientProvider).getRecordingFile(
-            recordingId: state.currentRecordingId!,
-            filename: 'sft.json',
-          );
-      final List<dynamic> sftJson = jsonDecode(sftString);
-      return sftJson.map((json) => SftMessage.fromJson(json)).toList();
-    } catch (error) {
-      debugPrint('Failed to load SFT data: $error');
-      return null;
-    } finally {
-      setLoadingSftData(false);
     }
   }
 
@@ -194,24 +158,6 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
 
       if (state.factory?.id != null) {
         try {
-          // TODO: `getRewardProvider` is deprecated. The new on-chain system does not have a
-          // direct equivalent for pre-calculating rewards. The backend now generates
-          // EIP-712 signatures for claims based on user performance. This logic
-          // needs to be re-evaluated and adapted to the new claim-based system.
-          // final taskId = state.app?.taskId;
-          //
-          // final rewardInfo = await ref.read(
-          //   getRewardProvider(poolId: state.poolId!, taskId: taskId).future,
-          // );
-          // currentDemonstration = currentDemonstration.copyWith(
-          //   poolId: state.poolId,
-          //   reward: DemonstrationReward(
-          //     time: rewardInfo.time,
-          //     maxReward: rewardInfo.maxReward,
-          //   ),
-          //   taskId: state.app!.taskId,
-          // );
-
           await addMessage(
             generateUserMessage("I'll show you how to do this task."),
           );
@@ -254,185 +200,15 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
     }
   }
 
-  List<Message> _sftToChatMessages(List<SftMessage> sftMessages) {
-    final chatMessages = <Message>[];
-    for (final msg in sftMessages) {
-      if (msg.role == 'user' &&
-          msg.content is Map &&
-          msg.content['type'] == 'image') {
-        chatMessages.add(
-          generateAssistantMessage(
-            msg.content['data'],
-            type: MessageType.image,
-            timestamp: msg.timestamp,
-          ),
-        );
-      } else if (msg.role == 'assistant') {
-        dynamic content = msg.content;
-        var typeMessage = MessageType.text;
-        if (content is String && content.contains('```python')) {
-          final match = RegExp(r'```python\s*\n(.*?)\n```', dotAll: true)
-              .firstMatch(content);
-          if (match != null && match.group(1) != null) {
-            content = match.group(1)!.trim();
-            typeMessage = MessageType.action;
-          }
-        } else if (msg.content is! String) {
-          content = jsonEncode(msg.content);
-        }
-        chatMessages.add(
-          generateAssistantMessage(
-            content,
-            timestamp: msg.timestamp,
-            type: typeMessage,
-          ),
-        );
-      }
-    }
-    return chatMessages;
-  }
-
-  Future<void> removeMessage() async {
-    // Remove the last message from the chatMessages array
-    if (state.chatMessages.isNotEmpty) {
-      setChatMessages(
-        state.chatMessages.sublist(0, state.chatMessages.length - 1),
-      );
-      triggerScrollToBottom();
-    }
-  }
-
-
-  Future<void> handleDeleteMessage(int index, Message msg) async {
-    if (msg.timestamp == null || state.originalSftData == null) {
-      return;
-    }
-
-    // Find previous and next messages in originalSftData
-    final sortedMessages = [...state.originalSftData!]
-      ..sort((a, b) => a.timestamp - b.timestamp)
-      ..where((msg) => msg.role == 'assistant');
-    final currentIndex =
-        sortedMessages.indexWhere((m) => m.timestamp == msg.timestamp);
-
-    int startTimestamp;
-    int endTimestamp;
-
-    // Calculate start timestamp by averaging with previous message if available
-    if (currentIndex > 0) {
-      final prevMsg = sortedMessages[currentIndex - 1];
-      startTimestamp = (prevMsg.timestamp + msg.timestamp!) ~/ 2;
-    } else {
-      // No previous message, use fallback
-      startTimestamp = msg.timestamp! - 5000;
-    }
-
-    // Calculate end timestamp by averaging with next message if available
-    if (currentIndex < sortedMessages.length - 1) {
-      final nextMsg = sortedMessages[currentIndex + 1];
-      endTimestamp = (msg.timestamp! + nextMsg.timestamp) ~/ 2;
-    } else {
-      // No next message, use fallback
-      endTimestamp = msg.timestamp! + 5000;
-    }
-
-    final count = state.originalSftData!
-        .where(
-          (m) => m.timestamp >= startTimestamp && m.timestamp <= endTimestamp,
-        )
-        .length;
-    setDeletedRanges([
-      ...state.deletedRanges,
-      {
-        'start': startTimestamp,
-        'end': endTimestamp,
-        'count': count,
-      },
-    ]);
-
-    // Update available SFT data
-    _updateAvailableSftData();
-
-    setChatMessages([
-      ...state.chatMessages.sublist(0, index),
-      generateUserMessage(
-        '---$startTimestamp $endTimestamp $count',
-        type: MessageType.delete,
-      ),
-      ...state.chatMessages.sublist(index + 1),
-    ]);
-  }
-
-  Future<void> undoDelete(int? clickedMessageIndex) async {
-    // Parse the start, end, and count from the delete message
-    if (clickedMessageIndex != null && state.originalSftData != null) {
-      final deleteMsg = state.chatMessages[clickedMessageIndex];
-      if (deleteMsg.type == MessageType.delete) {
-        final content = deleteMsg.content.substring(3);
-        final parts = content.trim().split(' ').map(int.parse).toList();
-        final start = parts[0];
-        final end = parts[1];
-
-        // Remove the range from deletedRanges
-        setDeletedRanges(
-          state.deletedRanges.where((r) => r['start'] != start).toList(),
-        );
-
-        // Update available SFT data
-        _updateAvailableSftData();
-
-        // Find messages in originalSftData that fall within this time range
-        final messagesToRestore = state.originalSftData!.where(
-          (msg) => msg.timestamp >= start && msg.timestamp <= end,
-        );
-
-        // Create new messages to insert
-        final newMessages = _sftToChatMessages(messagesToRestore.toList());
-
-        // Replace the delete message with the restored messages
-        setChatMessages([
-          ...state.chatMessages.sublist(0, clickedMessageIndex),
-          ...newMessages,
-          ...state.chatMessages.sublist(clickedMessageIndex + 1),
-        ]);
-      }
-    }
-  }
-
-  void _updateAvailableSftData() {
-    if (state.originalSftData == null) {
-      setAvailableSftData([]);
-      return;
-    }
-
-    // Filter out deleted messages for UI display
-    final available = state.originalSftData!.where((msg) {
-      return !state.deletedRanges.any(
-        (range) => msg.timestamp >= range['start'] && msg.timestamp <= range['end'],
-      );
-    }).toList();
-
-    setAvailableSftData(available);
-  }
-
   Future<void> recordingComplete() async {
-    if (state.recordingLoading || state.recordingProcessing) {
+    if (state.recordingProcessing) {
       return;
     }
 
-    setRecordingLoading(true);
     setRecordingProcessing(true);
     setRecordedDemonstration(state.recordingDemonstration);
     setRecordingDemonstration(null);
 
-    await addMessage(
-      generateUserMessage(
-        'Saving recording...',
-        type: MessageType.loading,
-      ),
-    );
-
-    setRecordingLoading(false);
     if (state.recordingState == RecordingState.recording) {
       try {
         if (state.originalWindowSize != null) {
@@ -458,91 +234,14 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
       }
     }
 
-    await removeMessage();
-
-    // Try to load SFT data
-    if (state.currentRecordingId != null) {
-      // show replaying status
-      await addMessage(
-        generateUserMessage(
-          'Replaying recording...',
-          type: MessageType.loading,
-        ),
-      );
-
-      // process the recording after stopping
-      try {
-        await ref
-            .read(tauriApiClientProvider)
-            .processRecording(state.currentRecordingId!);
-      } catch (processError) {
-        debugPrint('Failed to automatically process recording: $processError');
-      }
-
-      final sftData = await loadSftData();
-      await removeMessage();
-
-      if (sftData != null && sftData.isNotEmpty) {
-        // Store original SFT data for filtering
-        setOriginalSftData([...sftData]);
-
-        // Initialize available SFT data
-        _updateAvailableSftData();
-
-        // Add styled start replay message
-        await addMessage(
-          generateAssistantMessage(
-            '--- demonstration replay ---',
-            type: MessageType.start,
-          ),
-          audio: false,
-          delay: false,
-        );
-
-        // Process SFT messages properly alternating between VM (assistant) and user
-        final replayMessages = _sftToChatMessages(sftData);
-        setChatMessages([...state.chatMessages, ...replayMessages]);
-        triggerScrollToBottom();
-
-        // Add end replay message
-        await addMessage(
-          generateAssistantMessage(
-            '--- end of replay ---',
-            type: MessageType.end,
-          ),
-          delay: false,
-        );
-        await addMessage(
-          generateUserMessage('I completed the task! 🎉'),
-        );
-        await addMessage(
-          generateAssistantMessage('Great job completing the task!'),
-        );
-      } else {
-        await addMessage(
-          generateUserMessage(
-            state.currentRecordingId!,
-            type: MessageType.recording,
-          ),
-        );
-        await addMessage(
-          generateUserMessage('I completed the task! 🎉'),
-        );
-        await addMessage(
-          generateAssistantMessage('Great job completing the task!'),
-        );
-      }
+    // process the recording after stopping
+    try {
+      await ref
+          .read(tauriApiClientProvider)
+          .processRecording(state.currentRecordingId!);
+    } catch (processError) {
+      debugPrint('Failed to automatically process recording: $processError');
     }
-
-    await addMessage(
-      generateAssistantMessage(
-        "Review your demonstration before uploading. You can hover over messages to delete any sections containing sensitive information. Once you're ready, upload to get scored or do it later from the history page.",
-      ),
-    );
-    setShowUploadBlock(true);
-
-    setRecordingProcessing(false);
-    triggerScrollToBottom();
   }
 
   Future<void> giveUp() async {
@@ -567,7 +266,7 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
 
         setRecordingDemonstration(null);
         setRecordingState(RecordingState.off);
-        
+
         // Mark that user has given up to skip confirmation on close
         state = state.copyWith(hasGivenUp: true);
 
@@ -652,47 +351,8 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
     }
   }
 
-  Future<bool> deleteRecording() async {
-    if (state.currentRecordingId == null) return false;
-
-    try {
-      final deleted = await ref
-          .read(tauriApiClientProvider)
-          .deleteRecording(state.currentRecordingId!);
-
-      if (deleted.isNotEmpty) {
-        final messages = state.chatMessages
-            .where((m) => m.type != MessageType.uploadButton)
-            .toList()
-          ..add(
-            generateAssistantMessage(
-              'The recording has been deleted.',
-            ),
-          );
-
-        setChatMessages(messages);
-        triggerScrollToBottom();
-
-        setCurrentRecordingId(null);
-        setRecordedDemonstration(null);
-        return true;
-      }
-      return false;
-    } catch (e) {
-      debugPrint('Error deleting recording: $e');
-      return false;
-    } finally {
-      setShowUploadBlock(false);
-    }
-  }
-
-  void handleHover(int index) => setHoveredMessageIndex(index);
-
-  void handleHoverEnd() => setHoveredMessageIndex(null);
-
   Future<void> uploadRecording(String recordingId) async {
     setIsUploading(true);
-    setShowUploadBlock(false);
 
     try {
       final demonstrationTitle = state.recordingDemonstration?.title ??
@@ -779,8 +439,6 @@ class TrainingSessionNotifier extends _$TrainingSessionNotifier
         ),
       );
       setIsUploading(false);
-    } finally {
-      setShowUploadBlock(false);
     }
   }
 

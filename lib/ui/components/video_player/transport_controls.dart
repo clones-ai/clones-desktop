@@ -32,8 +32,8 @@ class TransportControls extends ConsumerWidget {
     return CardWidget(
       variant: CardVariant.secondary,
       child: Container(
-        height: 60,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        height: 30,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -45,7 +45,7 @@ class TransportControls extends ConsumerWidget {
                     speed: videoState.currentSpeed,
                     onSpeedChange: onSpeedChange,
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 8),
                 ],
               ],
             ),
@@ -57,9 +57,9 @@ class TransportControls extends ConsumerWidget {
                   icon: Icons.skip_previous,
                   onPressed: onSeekBackward,
                   tooltip: 'Previous frame (←)',
-                  size: 28,
+                  size: 14,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 _TransportButton(
                   icon: videoState.isLoading
                       ? Icons.hourglass_empty
@@ -68,27 +68,27 @@ class TransportControls extends ConsumerWidget {
                   tooltip:
                       videoState.isPlaying ? 'Pause (Space)' : 'Play (Space)',
                   isPrimary: true,
-                  size: 36,
+                  size: 18,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 _TransportButton(
                   icon: Icons.stop,
                   onPressed: onStop,
                   tooltip: 'Stop',
-                  size: 28,
+                  size: 14,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 _TransportButton(
                   icon: Icons.skip_next,
                   onPressed: onSeekForward,
                   tooltip: 'Next frame (→)',
-                  size: 28,
+                  size: 14,
                 ),
               ],
             ),
 
             // Time indicator (right side)
-            _TimeIndicator(videoId: videoId)
+            _TimeIndicator(videoId: videoId),
           ],
         ),
       ),
@@ -117,13 +117,13 @@ class _TransportButton extends StatelessWidget {
       message: tooltip,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(isPrimary ? 24 : 20),
+        borderRadius: BorderRadius.circular(isPrimary ? 12 : 10),
         child: Container(
-          width: isPrimary ? 48 : 40,
-          height: isPrimary ? 48 : 40,
+          width: isPrimary ? 24 : 20,
+          height: isPrimary ? 24 : 20,
           decoration: BoxDecoration(
             color: isPrimary ? ClonesColors.secondary : Colors.transparent,
-            borderRadius: BorderRadius.circular(isPrimary ? 24 : 20),
+            borderRadius: BorderRadius.circular(isPrimary ? 12 : 10),
             border: isPrimary
                 ? null
                 : Border.all(
@@ -191,11 +191,11 @@ class __SpeedButtonState extends State<_SpeedButton> {
         );
       }).toList(),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
           border:
               Border.all(color: ClonesColors.primary.withValues(alpha: 0.2)),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -206,10 +206,10 @@ class __SpeedButtonState extends State<_SpeedButton> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 2),
             Icon(
               Icons.keyboard_arrow_down,
-              size: 16,
+              size: 12,
               color: ClonesColors.primaryText.withValues(alpha: 0.8),
             ),
           ],
@@ -221,7 +221,7 @@ class __SpeedButtonState extends State<_SpeedButton> {
 
 class _TimeIndicator extends ConsumerWidget {
   const _TimeIndicator({required this.videoId});
-  
+
   final String videoId;
 
   @override
@@ -230,17 +230,17 @@ class _TimeIndicator extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         '${formatVideoTime(videoState.currentPosition)} / ${formatVideoTime(videoState.totalDuration)}',
         style: theme.textTheme.bodySmall?.copyWith(
           fontFamily: 'monospace',
           fontWeight: FontWeight.w600,
-          fontSize: 11,
+          fontSize: 9,
         ),
       ),
     );

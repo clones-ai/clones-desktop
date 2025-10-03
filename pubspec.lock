@@ -241,14 +241,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.1"
-  daunused:
-    dependency: "direct dev"
-    description:
-      name: daunused
-      sha256: f68f9e03b246bf387e995a25e086ec8b9894c353bf9f5926e81db645f6eb3974
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.7.4"
   decimal:
     dependency: "direct main"
     description:

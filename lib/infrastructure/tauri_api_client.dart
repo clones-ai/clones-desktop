@@ -43,70 +43,6 @@ class TauriApiClient {
     }
   }
 
-  Future<String> getRecordingVideoUrl(String recordingId) async {
-    // Client-side validation to prevent malicious input
-    if (recordingId.isEmpty) {
-      throw ArgumentError('Recording ID cannot be empty');
-    }
-
-    if (recordingId.length > 100) {
-      throw ArgumentError('Recording ID too long');
-    }
-
-    // Prevent path traversal attacks
-    if (recordingId.contains('..') ||
-        recordingId.contains('/') ||
-        recordingId.contains(r'\') ||
-        recordingId.contains('\x00')) {
-      throw ArgumentError('Invalid characters in recording ID');
-    }
-
-    // Only allow safe characters
-    final safePattern = RegExp(r'^[a-zA-Z0-9_-]+$');
-    if (!safePattern.hasMatch(recordingId)) {
-      throw ArgumentError('Recording ID contains invalid characters');
-    }
-
-    final response = await _client.get(
-      Uri.parse('$_baseUrl/recordings/$recordingId/video_url'),
-    );
-
-    if (response.statusCode == 200) {
-      try {
-        final jsonResponse = json.decode(response.body);
-        if (jsonResponse is! Map<String, dynamic>) {
-          throw const FormatException(
-            'Invalid response format: expected JSON object',
-          );
-        }
-
-        final url = jsonResponse['url'];
-        if (url == null) {
-          throw const FormatException('Missing URL in response');
-        }
-
-        if (url is! String) {
-          throw const FormatException('Invalid URL format: expected string');
-        }
-
-        // Basic URL validation
-        if (url.isEmpty || !url.startsWith('http')) {
-          throw const FormatException('Invalid URL format');
-        }
-
-        return url;
-      } on FormatException catch (e) {
-        throw FormatException('Failed to parse response: ${e.message}');
-      } catch (e) {
-        throw Exception('Unexpected error parsing response: $e');
-      }
-    } else {
-      throw Exception(
-        'Failed to get recording video url (${response.statusCode}): ${response.body}',
-      );
-    }
-  }
-
   Future<String> getRecordingFile({
     required String recordingId,
     required String filename,
@@ -256,26 +192,6 @@ class TauriApiClient {
     }
   }
 
-  Future<bool> getOnboardingComplete() async {
-    final response =
-        await _client.get(Uri.parse('$_baseUrl/onboarding/complete'));
-    if (response.statusCode == 200) {
-      return (json.decode(response.body)['has_permission']) ?? false;
-    }
-    throw Exception('Failed to get onboarding status: ${response.body}');
-  }
-
-  Future<void> setOnboardingComplete(bool complete) async {
-    final response = await _client.post(
-      Uri.parse('$_baseUrl/onboarding/complete'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'complete': complete}),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to set onboarding status: ${response.body}');
-    }
-  }
-
   // --- Tools ---
 
   Future<void> initTools() async {
@@ -305,23 +221,6 @@ class TauriApiClient {
     }
   }
 
-  Future<void> openRecordingsFolder() async {
-    final response =
-        await _client.post(Uri.parse('$_baseUrl/recordings//open'));
-    if (response.statusCode != 200) {
-      throw Exception('Failed to open recording folder: ${response.body}');
-    }
-  }
-
-  Future<void> openRecordingFolder(String recordingId) async {
-    final response =
-        await _client.post(Uri.parse('$_baseUrl/recordings/$recordingId/open'));
-    if (response.statusCode != 200) {
-      throw Exception('Failed to open recording folder: ${response.body}');
-    }
-  }
-
-
   Future<Uint8List> getRecordingZip(String recordingId) async {
     final response =
         await _client.get(Uri.parse('$_baseUrl/recordings/$recordingId/zip'));
@@ -332,8 +231,10 @@ class TauriApiClient {
     }
   }
 
-  Future<Uint8List> getFilteredRecordingZip(String recordingId, List<Map<String, double>> deletedRanges) async {
-    debugPrint('🔍 [getFilteredRecordingZip] Called with recordingId: $recordingId, deletedRanges: $deletedRanges');
+  Future<Uint8List> getFilteredRecordingZip(
+    String recordingId,
+    List<Map<String, double>> deletedRanges,
+  ) async {
     final response = await _client.post(
       Uri.parse('$_baseUrl/recordings/$recordingId/filtered-zip'),
       headers: {'Content-Type': 'application/json'},
@@ -465,19 +366,6 @@ class TauriApiClient {
           .toList();
     } else {
       throw Exception('Failed to get displays size: ${response.body}');
-    }
-  }
-
-  // --- Transaction Methods ---
-
-  /// Generate a new session token for secure transaction workflow
-  Future<String> generateSessionToken() async {
-    final response =
-        await _client.get(Uri.parse('$_baseUrl/transaction/session'));
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to generate session token: ${response.body}');
     }
   }
 

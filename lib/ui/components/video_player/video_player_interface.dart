@@ -76,61 +76,33 @@ abstract class ConsumerVideoPlayerState<T extends ConsumerStatefulWidget>
       },
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final needsScroll = constraints.maxHeight < 400;
-
-          if (needsScroll) {
-            return SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Column(
-                children: [
-                  Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1200),
-                      child: AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: DecoratedBox(
-                          decoration: const BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.all(Radius.circular(8)),
-                          ),
-                          child: videoState.hasError
-                              ? _buildErrorWidget(context, videoState)
-                              : videoState.isLoading
-                                  ? const Center(
-                                      child: CircularProgressIndicator())
-                                  : buildVideoPlayer(context),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TimelineWidget(
-                    videoId: videoId,
-                    onSeek: _handleSeek,
-                  ),
-                  const SizedBox(height: 16),
-                  TransportControls(
-                    videoId: videoId,
-                    onPlayPause: _handlePlayPause,
-                    onStop: _handleStop,
-                    onSeekBackward: _handleSeekBackward,
-                    onSeekForward: _handleSeekForward,
-                    onSpeedChange: _handleSpeedChange,
-                  ),
-                ],
-              ),
-            );
+          // Calculate available height minus controls and spacing
+          const controlsHeight = 120; // Approximate height for timeline + transport controls + spacing
+          final availableVideoHeight = constraints.maxHeight - controlsHeight;
+          final maxVideoWidth = constraints.maxWidth;
+          
+          // Calculate optimal video size maintaining 16:9 aspect ratio
+          final aspectRatio = 16 / 9;
+          double videoWidth = maxVideoWidth;
+          double videoHeight = videoWidth / aspectRatio;
+          
+          // If calculated height exceeds available space, constrain by height
+          if (videoHeight > availableVideoHeight) {
+            videoHeight = availableVideoHeight;
+            videoWidth = videoHeight * aspectRatio;
           }
-
-          // Normal layout
+          
           return Column(
             children: [
               Expanded(
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1200),
+                    constraints: BoxConstraints(
+                      maxWidth: videoWidth,
+                      maxHeight: videoHeight,
+                    ),
                     child: AspectRatio(
-                      aspectRatio: 16 / 9,
+                      aspectRatio: aspectRatio,
                       child: DecoratedBox(
                         decoration: const BoxDecoration(
                           color: Colors.black,
@@ -140,7 +112,8 @@ abstract class ConsumerVideoPlayerState<T extends ConsumerStatefulWidget>
                             ? _buildErrorWidget(context, videoState)
                             : videoState.isLoading
                                 ? const Center(
-                                    child: CircularProgressIndicator())
+                                    child: CircularProgressIndicator(),
+                                  )
                                 : buildVideoPlayer(context),
                       ),
                     ),

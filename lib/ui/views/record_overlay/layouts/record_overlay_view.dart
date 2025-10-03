@@ -1,3 +1,4 @@
+import 'package:clones_desktop/ui/views/record_overlay/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/record_overlay/layouts/components/record_overlay_header.dart';
 import 'package:clones_desktop/ui/views/record_overlay/layouts/components/record_overlay_objectives.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +17,9 @@ class _RecordOverlayViewState extends ConsumerState<RecordOverlayView> {
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
+    if (ref.watch(recordOverlayNotifierProvider).close) {
+      Navigator.of(context).pop();
+    }
 
     return Container(
       width: mediaQuery.size.width,

@@ -261,28 +261,22 @@ class _StatusCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    Color backgroundColor;
     Color textColor;
 
     switch (submission.status.toLowerCase()) {
       case 'completed':
-        backgroundColor = const Color(0xFF10b981).withValues(alpha: 0.2);
         textColor = const Color(0xFF10b981);
         break;
       case 'failed':
-        backgroundColor = const Color(0xFFef4444).withValues(alpha: 0.2);
         textColor = const Color(0xFFf87171);
         break;
       case 'pending':
-        backgroundColor = const Color(0xFFf59e0b).withValues(alpha: 0.2);
         textColor = const Color(0xFFfacc15);
         break;
       case 'processing':
-        backgroundColor = const Color(0xFFf97316).withValues(alpha: 0.2);
         textColor = const Color(0xFFfb923c);
         break;
       default:
-        backgroundColor = Colors.grey.withValues(alpha: 0.2);
         textColor = Colors.grey;
     }
 

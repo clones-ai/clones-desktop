@@ -27,7 +27,6 @@ class _RecordPanelState extends ConsumerState<RecordPanel> {
     final theme = Theme.of(context);
     final trainingSession = ref.watch(trainingSessionNotifierProvider);
     final recordingState = trainingSession.recordingState;
-    final recordingLoading = trainingSession.recordingLoading;
     final tokenPrice = ref.watch(
       convertTokenPriceProvider(
         trainingSession.factory?.token.symbol ?? '',
@@ -131,8 +130,16 @@ Once the recording is finished, you’ll be able to trim segments—for example,
                 ),
               ),
             ),
+            const SizedBox(height: 10),
+            Text(
+              '''
+Warning: The maximum length of a recording is 2 minutes.''',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: ClonesColors.uploadLimit,
+              ),
+            ),
             const SizedBox(height: 20),
-            _buildActionButtons(recordingState, recordingLoading),
+            _buildActionButtons(recordingState),
           ],
         ),
       ],
@@ -141,7 +148,6 @@ Once the recording is finished, you’ll be able to trim segments—for example,
 
   Widget _buildActionButtons(
     RecordingState recordingState,
-    bool recordingLoading,
   ) {
     if (recordingState == RecordingState.recording) {
       return Row(
@@ -176,7 +182,6 @@ Once the recording is finished, you’ll be able to trim segments—for example,
           );
         },
         buttonText: 'Start Recording',
-        isLoading: recordingLoading,
       );
     }
   }

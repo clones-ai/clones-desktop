@@ -2,7 +2,6 @@ import 'package:clones_desktop/domain/app_info.dart';
 import 'package:clones_desktop/domain/models/demonstration/demonstration.dart';
 import 'package:clones_desktop/domain/models/factory/factory.dart';
 import 'package:clones_desktop/domain/models/message/message.dart';
-import 'package:clones_desktop/domain/models/message/sft_message.dart';
 import 'package:clones_desktop/domain/models/message/typing_message.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/state.dart';
 import 'package:riverpod/riverpod.dart';
@@ -24,10 +23,6 @@ mixin TrainingSessionSetters on AutoDisposeNotifier<TrainingSessionState> {
     state = state.copyWith(recordingDemonstration: demonstration);
   }
 
-  void setRecordingLoading(bool recordingLoading) {
-    state = state.copyWith(recordingLoading: recordingLoading);
-  }
-
   void setRecordingProcessing(bool recordingProcessing) {
     state = state.copyWith(recordingProcessing: recordingProcessing);
   }
@@ -36,20 +31,12 @@ mixin TrainingSessionSetters on AutoDisposeNotifier<TrainingSessionState> {
     state = state.copyWith(showUploadConfirmModal: showUploadConfirmModal);
   }
 
-  void setShowUploadBlock(bool showUploadBlock) {
-    state = state.copyWith(showUploadBlock: showUploadBlock);
-  }
-
   void setCurrentRecordingId(String? currentRecordingId) {
     state = state.copyWith(currentRecordingId: currentRecordingId);
   }
 
   void setIsUploading(bool isUploading) {
     state = state.copyWith(isUploading: isUploading);
-  }
-
-  void setLoadingSftData(bool loadingSftData) {
-    state = state.copyWith(loadingSftData: loadingSftData);
   }
 
   void setRecordingState(RecordingState recordingState) {
@@ -66,22 +53,6 @@ mixin TrainingSessionSetters on AutoDisposeNotifier<TrainingSessionState> {
 
   void setIsWaitingForResponse(bool isWaitingForResponse) {
     state = state.copyWith(isWaitingForResponse: isWaitingForResponse);
-  }
-
-  void setHoveredMessageIndex(int? hoveredMessageIndex) {
-    state = state.copyWith(hoveredMessageIndex: hoveredMessageIndex);
-  }
-
-  void setDeletedRanges(List<Map<String, dynamic>> deletedRanges) {
-    state = state.copyWith(deletedRanges: deletedRanges);
-  }
-
-  void setOriginalSftData(List<SftMessage>? originalSftData) {
-    state = state.copyWith(originalSftData: originalSftData);
-  }
-
-  void setAvailableSftData(List<SftMessage> availableSftData) {
-    state = state.copyWith(availableSftData: availableSftData);
   }
 
   void setApp(AppInfo? app) {

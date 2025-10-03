@@ -1,3 +1,4 @@
+import 'package:clones_desktop/ui/views/demo_detail/bloc/state.dart';
 import 'package:clones_desktop/ui/views/record_overlay/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/state.dart';
@@ -5,11 +6,45 @@ import 'package:clones_desktop/utils/format_time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class RecordOverlayHeader extends ConsumerWidget {
+class RecordOverlayHeader extends ConsumerStatefulWidget {
   const RecordOverlayHeader({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RecordOverlayHeader> createState() =>
+      _RecordOverlayHeaderState();
+}
+
+class _RecordOverlayHeaderState extends ConsumerState<RecordOverlayHeader>
+    with TickerProviderStateMixin {
+  late AnimationController _blinkController;
+  late Animation<double> _blinkAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _blinkController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _blinkAnimation = Tween<double>(
+      begin: 1,
+      end: 0.3,
+    ).animate(
+      CurvedAnimation(
+        parent: _blinkController,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _blinkController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final trainingSession = ref.watch(trainingSessionNotifierProvider);
     final recordOverlay = ref.watch(recordOverlayNotifierProvider);
     String statusText;
@@ -55,10 +90,7 @@ class RecordOverlayHeader extends ConsumerWidget {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const Spacer(),
-          Text(
-            formatTimeWithHours(recordOverlay.seconds),
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          _buildTimer(context, recordOverlay.seconds),
           const SizedBox(width: 8),
           _buildIconButton(
             recordOverlay.isCollapsed
@@ -72,6 +104,42 @@ class RecordOverlayHeader extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTimer(BuildContext context, int seconds) {
+    final isWarning = seconds >= kMaxRecordingDuration - 15;
+
+    // Start/stop blinking based on warning state
+    if (isWarning && !_blinkController.isAnimating) {
+      _blinkController.repeat(reverse: true);
+    } else if (!isWarning && _blinkController.isAnimating) {
+      _blinkController
+        ..stop()
+        ..reset();
+    }
+
+    if (isWarning) {
+      return AnimatedBuilder(
+        animation: _blinkAnimation,
+        builder: (context, child) {
+          return Opacity(
+            opacity: _blinkAnimation.value,
+            child: Text(
+              formatTimeWithHours(seconds),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          );
+        },
+      );
+    }
+
+    return Text(
+      formatTimeWithHours(seconds),
+      style: Theme.of(context).textTheme.bodyMedium,
     );
   }
 

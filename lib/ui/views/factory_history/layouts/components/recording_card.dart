@@ -315,11 +315,6 @@ class RecordingCard extends ConsumerWidget {
             color: Colors.black.withValues(alpha: 0.9),
             onSelected: (value) async {
               switch (value) {
-                case 'open_folder':
-                  await ref
-                      .read(tauriApiClientProvider)
-                      .openRecordingFolder(recording.id);
-                  break;
                 case 'delete':
                   await AppDialogs.showConfirmDialog(
                     context,

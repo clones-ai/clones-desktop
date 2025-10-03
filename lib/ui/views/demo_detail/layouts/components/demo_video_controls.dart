@@ -54,7 +54,9 @@ class DemoVideoControls extends ConsumerWidget {
                   _AxTreeToggleButton(
                     isEnabled: demoDetail.showAxTreeOverlay,
                     onToggle: () {
-                      ref.read(demoDetailNotifierProvider.notifier).toggleAxTreeOverlay();
+                      ref
+                          .read(demoDetailNotifierProvider.notifier)
+                          .toggleAxTreeOverlay();
                     },
                   ),
                   const SizedBox(width: 16),
@@ -77,7 +79,8 @@ class DemoVideoControls extends ConsumerWidget {
                       ? Icons.hourglass_empty
                       : (videoState.isPlaying ? Icons.pause : Icons.play_arrow),
                   onPressed: videoState.isLoading ? null : onPlayPause,
-                  tooltip: videoState.isPlaying ? 'Pause (Space)' : 'Play (Space)',
+                  tooltip:
+                      videoState.isPlaying ? 'Pause (Space)' : 'Play (Space)',
                   isPrimary: true,
                   size: 36,
                 ),
@@ -128,21 +131,20 @@ class _AxTreeToggleButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: isEnabled 
+              color: isEnabled
                   ? ClonesColors.tertiary.withValues(alpha: 0.2)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: isEnabled 
+                color: isEnabled
                     ? ClonesColors.tertiary
                     : ClonesColors.tertiary.withValues(alpha: 0.3),
-                width: 1,
               ),
             ),
             child: Icon(
               Icons.account_tree,
               size: 20,
-              color: isEnabled 
+              color: isEnabled
                   ? ClonesColors.tertiary
                   : ClonesColors.tertiary.withValues(alpha: 0.7),
             ),
@@ -175,25 +177,24 @@ class _SpeedButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: ClonesColors.tertiary.withValues(alpha: 0.3),
-            width: 1,
           ),
         ),
         child: Text(
           '${speed}x',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: ClonesColors.tertiary,
-            fontWeight: FontWeight.w500,
-          ),
+                color: ClonesColors.tertiary,
+                fontWeight: FontWeight.w500,
+              ),
         ),
       ),
       itemBuilder: (context) => [
         const PopupMenuItem(value: 0.25, child: Text('0.25x')),
         const PopupMenuItem(value: 0.5, child: Text('0.5x')),
         const PopupMenuItem(value: 0.75, child: Text('0.75x')),
-        const PopupMenuItem(value: 1.0, child: Text('1x')),
+        const PopupMenuItem(value: 1, child: Text('1x')),
         const PopupMenuItem(value: 1.25, child: Text('1.25x')),
         const PopupMenuItem(value: 1.5, child: Text('1.5x')),
-        const PopupMenuItem(value: 2.0, child: Text('2x')),
+        const PopupMenuItem(value: 2, child: Text('2x')),
       ],
     );
   }
@@ -229,9 +230,7 @@ class _TransportButton extends StatelessWidget {
                 ? ClonesColors.primary.withValues(alpha: 0.2)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(size / 2),
-            border: isPrimary
-                ? Border.all(color: ClonesColors.primary, width: 1)
-                : null,
+            border: isPrimary ? Border.all(color: ClonesColors.primary) : null,
           ),
           child: Icon(
             icon,
@@ -244,9 +243,7 @@ class _TransportButton extends StatelessWidget {
       ),
     );
 
-    return tooltip != null
-        ? Tooltip(message: tooltip!, child: widget)
-        : widget;
+    return tooltip != null ? Tooltip(message: tooltip, child: widget) : widget;
   }
 }
 
@@ -272,15 +269,14 @@ class _TimeIndicator extends ConsumerWidget {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: ClonesColors.tertiary.withValues(alpha: 0.3),
-          width: 1,
         ),
       ),
       child: Text(
         '${_formatDuration(videoState.currentPosition)} / ${_formatDuration(videoState.totalDuration)}',
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: ClonesColors.tertiary,
-          fontFamily: 'monospace',
-        ),
+              color: ClonesColors.tertiary,
+              fontFamily: 'monospace',
+            ),
       ),
     );
   }

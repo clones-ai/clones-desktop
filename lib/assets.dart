@@ -93,7 +93,6 @@ class ClonesFonts {
 class ClonesColors {
   static const Color primaryText = Colors.white;
   static Color secondaryText = Colors.white.withValues(alpha: 0.6);
-  static Color tertiaryText = Colors.black.withValues(alpha: 0.9);
   static const Color primary = Color(0xFFC34EFF);
   static const Color secondary = Color(0xFF9050FF);
   static const Color tertiary = Color(0xFF5C51FF);
@@ -101,7 +100,6 @@ class ClonesColors {
 
   static const Color rewardInfo = Color(0xFF10B981);
   static const Color uploadLimit = Color.fromARGB(255, 203, 132, 46);
-  static Color deleteButton = Colors.red[300]!;
 
   static Gradient gradientBtnPrimary = const LinearGradient(
     colors: [

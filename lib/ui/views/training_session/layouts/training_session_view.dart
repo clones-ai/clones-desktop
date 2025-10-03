@@ -14,10 +14,8 @@ import 'package:clones_desktop/ui/views/training_session/bloc/provider.dart';
 import 'package:clones_desktop/ui/views/training_session/bloc/state.dart';
 import 'package:clones_desktop/ui/views/training_session/layouts/components/message_item.dart';
 import 'package:clones_desktop/ui/views/training_session/layouts/components/record_panel.dart';
-import 'package:clones_desktop/ui/views/training_session/layouts/components/replay_group.dart';
 import 'package:clones_desktop/ui/views/training_session/layouts/components/stream_message.dart';
 import 'package:clones_desktop/ui/views/training_session/layouts/components/typing_indicator.dart';
-import 'package:clones_desktop/ui/views/training_session/layouts/components/upload_button.dart';
 import 'package:clones_desktop/ui/views/training_session/layouts/components/upload_confirm_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,8 +33,6 @@ class TrainingSessionView extends ConsumerStatefulWidget {
   final String? appParam;
   final String? poolId;
   final Function(String recordingId)? onRecordingCompleted;
-
-  static const String routeName = '/training_session';
 
   @override
   ConsumerState<TrainingSessionView> createState() =>
@@ -216,15 +212,17 @@ class _TrainingSessionViewState extends ConsumerState<TrainingSessionView> {
                   padding: const EdgeInsets.only(right: 8),
                   child: IconButton(
                     onPressed: () {
-                      final trainingSessionState = ref.read(trainingSessionNotifierProvider);
-                      
+                      final trainingSessionState =
+                          ref.read(trainingSessionNotifierProvider);
+
                       // Skip confirmation if not recording or user has given up
-                      if (trainingSessionState.recordingState != RecordingState.recording || 
+                      if (trainingSessionState.recordingState !=
+                              RecordingState.recording ||
                           trainingSessionState.hasGivenUp) {
                         context.go(FactoryView.routeName);
                         return;
                       }
-                      
+
                       AppDialogs.showConfirmDialog(
                         context,
                         ref,
@@ -260,15 +258,12 @@ class _TrainingSessionViewState extends ConsumerState<TrainingSessionView> {
                     final item = processedItems[index];
                     Widget child;
 
-                    if (item is ReplayGroupItem) {
-                      child = ReplayGroup(group: item);
-                    } else {
-                      final single = item as SingleMessageItem;
-                      child = MessageItem(
-                        message: single.message,
-                        index: single.index,
-                      );
-                    }
+                    final single = item as SingleMessageItem;
+                    child = MessageItem(
+                      message: single.message,
+                      index: single.index,
+                    );
+
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 20),
                       child: child,
@@ -291,11 +286,6 @@ class _TrainingSessionViewState extends ConsumerState<TrainingSessionView> {
               const SliverPadding(
                 padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
                 sliver: SliverToBoxAdapter(child: TypingIndicator()),
-              ),
-            if (trainingSession.showUploadBlock)
-              const SliverPadding(
-                padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
-                sliver: SliverToBoxAdapter(child: UploadButton()),
               ),
             if (trainingSession.recordingDemonstration != null)
               SliverPadding(
