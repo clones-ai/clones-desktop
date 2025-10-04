@@ -21,7 +21,7 @@ fn convert_coordinates_to_integers(obj: &mut serde_json::Map<String, Value>) {
         for coord_key in ["x", "y", "width", "height"] {
             if let Some(coord_val) = bbox.get_mut(coord_key) {
                 if let Some(float_val) = coord_val.as_f64() {
-                    *coord_val = json!(float_val.round() as u32);
+                    *coord_val = json!(float_val.round().max(0.0) as u32);
                 }
             }
         }
@@ -170,6 +170,14 @@ pub fn trigger_ui_dump_on_interaction<R: tauri::Runtime>(
                             let _ = std::process::Command::new("kill")
                                 .arg("-9")
                                 .arg(child_id.to_string())
+                                .output();
+                        }
+                        #[cfg(windows)]
+                        {
+                            let _ = std::process::Command::new("taskkill")
+                                .arg("/PID")
+                                .arg(child_id.to_string())
+                                .arg("/F")
                                 .output();
                         }
                         Err(std::io::Error::new(
