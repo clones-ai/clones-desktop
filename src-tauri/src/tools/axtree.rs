@@ -432,7 +432,12 @@ fn capture_snapshot_with_event_type(app: tauri::AppHandle, event_type: &str) -> 
     }
 
     if let Ok(stdout) = String::from_utf8(output.stdout) {
-        info!("[AxTree] dump-tree stdout length: {} bytes", stdout.len());
+        info!("[AxTree] dump-tree stdout length: {} bytes for {}", stdout.len(), event_type);
+        if stdout.is_empty() {
+            info!("[AxTree] No stdout output for {}", event_type);
+        } else {
+            info!("[AxTree] First 200 chars of stdout for {}: {}", event_type, stdout.chars().take(200).collect::<String>());
+        }
         for line in stdout.lines() {
             if let Ok(mut json) = serde_json::from_str::<Value>(line) {
                 if let Some(obj) = json.as_object_mut() {
@@ -442,11 +447,16 @@ fn capture_snapshot_with_event_type(app: tauri::AppHandle, event_type: &str) -> 
                     convert_coordinates_to_integers(obj);
 
                     let final_value = serde_json::Value::Object(obj.clone());
+                    info!("[AxTree] Logging {} event to input_log.jsonl", event_type);
                     let _ = crate::core::record::log_input(final_value.clone());
                     let _ = app.emit(event_type, final_value);
                 }
+            } else {
+                info!("[AxTree] Failed to parse JSON line for {}: {}", event_type, line.chars().take(100).collect::<String>());
             }
         }
+    } else {
+        info!("[AxTree] Failed to decode stdout as UTF-8 for {}", event_type);
     }
 
     Ok(())
