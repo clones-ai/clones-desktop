@@ -5,20 +5,52 @@
 use crate::tools::helpers::lock_with_timeout;
 use log::info;
 use serde_json::{json, Value};
-use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tauri::Emitter;
 
 pub static DUMP_TREE_PATH: OnceLock<PathBuf> = OnceLock::new();
 static POLLING_ACTIVE: OnceLock<Arc<Mutex<bool>>> = OnceLock::new();
 static RECORDING_MODE: OnceLock<Arc<Mutex<bool>>> = OnceLock::new();
+static LAST_INTERACTION_TIME: OnceLock<Arc<Mutex<Option<Instant>>>> = OnceLock::new();
 
-const POLLING_SLEEP_SECS: u64 = 2;
-const POLLING_SLEEP_SECS_RECORDING: u64 = 60; // 60 seconds during recording to avoid focus stealing
+/// Recursively converts floating point coordinates to integers in JSON objects
+/// This ensures compatibility with the backend API which expects u32 coordinates
+fn convert_coordinates_to_integers(obj: &mut serde_json::Map<String, Value>) {
+    // Convert bbox coordinates
+    if let Some(bbox) = obj.get_mut("bbox").and_then(|v| v.as_object_mut()) {
+        for coord_key in ["x", "y", "width", "height"] {
+            if let Some(coord_val) = bbox.get_mut(coord_key) {
+                if let Some(float_val) = coord_val.as_f64() {
+                    *coord_val = json!(float_val.round() as u32);
+                }
+            }
+        }
+    }
+
+    // Recursively process children
+    if let Some(children) = obj.get_mut("children").and_then(|v| v.as_array_mut()) {
+        for child in children {
+            if let Some(child_obj) = child.as_object_mut() {
+                convert_coordinates_to_integers(child_obj);
+            }
+        }
+    }
+
+    // Process data.tree for event format
+    if let Some(data) = obj.get_mut("data").and_then(|v| v.as_object_mut()) {
+        if let Some(tree) = data.get_mut("tree").and_then(|v| v.as_array_mut()) {
+            for app in tree {
+                if let Some(app_obj) = app.as_object_mut() {
+                    convert_coordinates_to_integers(app_obj);
+                }
+            }
+        }
+    }
+}
 
 #[cfg(target_os = "windows")]
 fn get_dump_tree_url() -> String {
@@ -118,167 +150,160 @@ pub fn init_dump_tree() -> Result<(), String> {
     Ok(())
 }
 
-/// Starts polling the dump-tree binary in a background thread, capturing and logging its output.
-///
-/// # Arguments
-/// * `_` - The Tauri `AppHandle` (unused, but required for handler signature).
-///
-/// # Returns
-/// * `Ok(())` if polling started successfully.
-/// * `Err` if the binary is not initialized or polling could not start.
-pub fn start_dump_tree_polling(_: tauri::AppHandle) -> Result<(), String> {
+/// Triggers an immediate AX tree dump when significant user interaction occurs
+pub fn trigger_ui_dump_on_interaction<R: tauri::Runtime>(
+    _app: tauri::AppHandle<R>,
+) -> Result<(), String> {
     let dump_tree = DUMP_TREE_PATH
         .get()
         .ok_or_else(|| "dump-tree not initialized".to_string())?
         .clone();
 
-    let polling_active = POLLING_ACTIVE
-        .get()
-        .ok_or_else(|| "Polling state not initialized".to_string())?;
-    let lock = lock_with_timeout(polling_active, std::time::Duration::from_secs(2));
-    if let Some(mut active) = lock {
-        *active = true;
-    } else {
-        log::error!("[AxTree] Could not acquire polling_active lock");
+    // Only trigger during recording mode
+    let is_recording = {
+        if let Some(recording_mode) = RECORDING_MODE.get() {
+            let lock = lock_with_timeout(recording_mode, Duration::from_secs(1));
+            if let Some(recording) = lock {
+                *recording
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    };
+
+    if !is_recording {
+        return Ok(());
     }
 
-    info!("[AxTree] Starting dump-tree polling");
+    // Debounce: avoid multiple captures within 500ms
+    let last_time = LAST_INTERACTION_TIME.get_or_init(|| Arc::new(Mutex::new(None)));
+    if let Ok(mut last) = last_time.lock() {
+        let now = Instant::now();
+        if let Some(last_instant) = *last {
+            if now.duration_since(last_instant) < Duration::from_millis(500) {
+                return Ok(()); // Skip this capture, too recent
+            }
+        }
+        *last = Some(now);
+    }
 
+    info!("[AxTree] Triggering UI dump due to user interaction");
+
+    // Run single dump with no-focus-steal
     thread::spawn(move || {
-        info!("[AxTree] Polling thread started");
-        loop {
-            // Lock and check the active flag. The lock is released immediately after the check.
-            let should_continue = {
-                let active_lock = lock_with_timeout(
-                    POLLING_ACTIVE.get().unwrap(),
-                    std::time::Duration::from_secs(2),
-                );
-                if let Some(active) = active_lock {
-                    *active
-                } else {
-                    log::warn!(
-                        "[AxTree] Could not acquire polling_active lock in thread, stopping."
-                    );
-                    false
-                }
-            };
+        // Try local Python script first, fallback to PyInstaller binary
+        let script_path_exe = std::env::current_exe()
+            .ok()
+            .and_then(|exe| exe.parent().map(|p| p.join("axtree").join("dump-tree.py")));
+        let script_path_cwd = std::env::current_dir().ok().map(|p| p.join("axtree").join("dump-tree.py"));
+        
+        info!("[AxTree] Checking script paths:");
+        if let Some(path) = &script_path_exe {
+            info!("[AxTree] - Exe relative: {} (exists: {})", path.display(), path.exists());
+        }
+        if let Some(path) = &script_path_cwd {
+            info!("[AxTree] - Cwd relative: {} (exists: {})", path.display(), path.exists());
+        }
+        
+        let script_path = script_path_cwd.filter(|p| p.exists());
+        
+        let mut command = if let Some(script) = script_path {
+            info!("[AxTree] Using local Python script: {}", script.display());
+            let mut cmd = Command::new("python3");
+            cmd.arg(script);
+            cmd
+        } else if dump_tree.exists() {
+            info!("[AxTree] Using PyInstaller binary: {}", dump_tree.display());
+            Command::new(&dump_tree)
+        } else {
+            info!("[AxTree] No executable found");
+            return; // No executable found
+        };
 
-            if !should_continue {
-                break;
-            }
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            command.creation_flags(0x08000000);
+        }
 
-            info!("[AxTree] Starting new dump-tree process");
+        // Use timeout to prevent hanging like in capture_pre_recording_snapshot
+        let child = command
+            .arg("-e")
+            .arg("--display-index")
+            .arg("0") // TODO: Calculate actual display index used for recording
+            .arg("--no-focus-steal")
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn();
 
-            // Run dump-tree and capture output
-            let mut command = Command::new(&dump_tree);
-            #[cfg(windows)]
-            {
-                use std::os::windows::process::CommandExt;
-                command.creation_flags(0x08000000); // CREATE_NO_WINDOW constant
-            }
-            // Check if we're in recording mode to add appropriate flags
-            let is_recording = {
-                if let Some(recording_mode) = RECORDING_MODE.get() {
-                    let lock = lock_with_timeout(recording_mode, Duration::from_secs(1));
-                    if let Some(recording) = lock {
-                        *recording
-                    } else {
-                        false
+        let output = match child {
+            Ok(child) => {
+                let child_id = child.id();
+                let (tx, rx) = std::sync::mpsc::channel();
+
+                thread::spawn(move || {
+                    let result = child.wait_with_output();
+                    let _ = tx.send(result);
+                });
+
+                // Wait maximum 5 seconds for completion (interactions are less time-critical)
+                match rx.recv_timeout(Duration::from_secs(5)) {
+                    Ok(result) => result,
+                    Err(_) => {
+                        // Kill the process forcefully
+                        info!(
+                            "[AxTree] Timeout reached, killing dump-tree process {}",
+                            child_id
+                        );
+                        #[cfg(unix)]
+                        {
+                            let _ = std::process::Command::new("kill")
+                                .arg("-9")
+                                .arg(child_id.to_string())
+                                .output();
+                        }
+                        Err(std::io::Error::new(
+                            std::io::ErrorKind::TimedOut,
+                            "dump-tree process timed out after 5 seconds",
+                        ))
                     }
-                } else {
-                    false
                 }
-            };
-
-            let mut cmd = command.arg("-e").arg("--recording-display").arg("0");
-            
-            if is_recording {
-                cmd = cmd.arg("--low-frequency");
             }
+            Err(e) => Err(e),
+        };
 
-            let proc = cmd
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
-                .spawn();
+        match output {
+            Ok(output) => {
+                if let Ok(stdout) = String::from_utf8(output.stdout) {
+                    for line in stdout.lines() {
+                        if let Ok(mut json) = serde_json::from_str::<Value>(&line) {
+                            if let Some(obj) = json.as_object_mut() {
+                                obj.insert("event".to_string(), json!("axtree_interaction"));
 
-            match proc {
-                Ok(mut child) => {
-                    // Create separate threads for handling stdout and stderr
-                    let stdout_thread = if let Some(stdout) = child.stdout.take() {
-                        let stdout_handle = thread::spawn(move || {
-                            let reader = BufReader::new(stdout);
-                            for line in reader.lines() {
-                                if let Ok(line) = line {
-                                    // info!("[AxTree] STDOUT line: {}", line);
-                                    // Try to parse as JSON
-                                    if let Ok(mut json) = serde_json::from_str::<Value>(&line) {
-                                        // Modify the event field
-                                        if let Some(obj) = json.as_object_mut() {
-                                            obj.insert("event".to_string(), json!("axtree"));
-                                            // Log the modified event
-                                            let _ = crate::core::record::log_input(json!(obj));
-                                        }
+                                // Convert floating point coordinates to integers for backend compatibility
+                                convert_coordinates_to_integers(obj);
+
+                                // Debug log the final JSON to check coordinate conversion
+                                if log::log_enabled!(log::Level::Debug) {
+                                    if let Ok(json_str) = serde_json::to_string(obj) {
+                                        log::debug!("[AxTree] Final JSON after coordinate conversion: {}", json_str.chars().take(200).collect::<String>());
                                     }
                                 }
+
+                                let _ = crate::core::record::log_input(serde_json::Value::Object(
+                                    obj.clone(),
+                                ));
                             }
-                        });
-                        Some(stdout_handle)
-                    } else {
-                        None
-                    };
-
-                    let stderr_thread = if let Some(stderr) = child.stderr.take() {
-                        let stderr_handle = thread::spawn(move || {
-                            let reader = BufReader::new(stderr);
-                            for line in reader.lines() {
-                                if let Ok(line) = line {
-                                    info!("[AxTree] STDERR line: {}", line);
-                                }
-                            }
-                        });
-                        Some(stderr_handle)
-                    } else {
-                        None
-                    };
-
-                    // Wait for process to finish
-                    match child.wait() {
-                        Ok(status) => info!("[AxTree] Process {}", status),
-                        Err(e) => info!("[AxTree] Error waiting for process: {}", e),
-                    }
-
-                    // Wait for output processing to complete
-                    if let Some(handle) = stdout_thread {
-                        if let Err(e) = handle.join() {
-                            info!("[AxTree] Error joining stdout thread: {:?}", e);
                         }
                     }
-
-                    if let Some(handle) = stderr_thread {
-                        if let Err(e) = handle.join() {
-                            info!("[AxTree] Error joining stderr thread: {:?}", e);
-                        }
-                    }
-                }
-                Err(e) => {
-                    info!("[AxTree] Error running dump-tree: {}", e);
                 }
             }
-
-            // Sleep before the next poll - use longer interval during recording
-            let sleep_duration = if is_recording {
-                POLLING_SLEEP_SECS_RECORDING
-            } else {
-                POLLING_SLEEP_SECS
-            };
-            
-            info!(
-                "[AxTree] Sleeping for {} seconds before next poll (recording mode: {})",
-                sleep_duration, is_recording
-            );
-            thread::sleep(Duration::from_secs(sleep_duration));
+            Err(e) => {
+                info!("[AxTree] Error in interaction dump: {}", e);
+            }
         }
-        info!("[AxTree] Polling thread exited.");
     });
 
     Ok(())
@@ -288,7 +313,7 @@ pub fn start_dump_tree_polling(_: tauri::AppHandle) -> Result<(), String> {
 /// When recording is true, polling frequency is reduced to avoid focus stealing.
 pub fn set_recording_mode(recording: bool) -> Result<(), String> {
     info!("[AxTree] Setting recording mode: {}", recording);
-    
+
     let recording_mode = RECORDING_MODE.get_or_init(|| Arc::new(Mutex::new(false)));
     let lock = lock_with_timeout(recording_mode, Duration::from_secs(2));
     if let Some(mut mode) = lock {
@@ -299,36 +324,126 @@ pub fn set_recording_mode(recording: bool) -> Result<(), String> {
     }
 }
 
-/// Captures a single AXTree snapshot before recording starts.
+/// Captures a single AXTree snapshot at recording start/stop.
 /// This provides detailed accessibility data without disrupting the recording.
 pub fn capture_pre_recording_snapshot(app: tauri::AppHandle) -> Result<(), String> {
-    info!("[AxTree] Capturing pre-recording AXTree snapshot");
-    
+    capture_snapshot_with_event_type(app, "axtree_pre_recording")
+}
+
+/// Captures a snapshot for recording stop events
+pub fn capture_post_recording_snapshot(app: tauri::AppHandle) -> Result<(), String> {
+    capture_snapshot_with_event_type(app, "axtree_post_recording")
+}
+
+/// Captures a single AXTree snapshot with the specified event type
+fn capture_snapshot_with_event_type(app: tauri::AppHandle, event_type: &str) -> Result<(), String> {
+    info!("[AxTree] Capturing AXTree snapshot for event: {}", event_type);
+
     let dump_tree = DUMP_TREE_PATH
         .get()
         .ok_or("Dump tree path not initialized")?;
 
-    let mut command = Command::new(dump_tree);
+    // Try local Python script first, fallback to PyInstaller binary
+    let script_path_exe = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(|p| p.join("axtree").join("dump-tree.py")));
+    let script_path_cwd = std::env::current_dir().ok().map(|p| p.join("axtree").join("dump-tree.py"));
+    
+    info!("[AxTree] Checking script paths for {}", event_type);
+    if let Some(path) = &script_path_exe {
+        info!("[AxTree] - Exe relative: {} (exists: {})", path.display(), path.exists());
+    }
+    if let Some(path) = &script_path_cwd {
+        info!("[AxTree] - Cwd relative: {} (exists: {})", path.display(), path.exists());
+    }
+    
+    let script_path = script_path_cwd.filter(|p| p.exists());
+    
+    let mut command = if let Some(script) = script_path {
+        info!("[AxTree] Using local Python script for {}: {}", event_type, script.display());
+        let mut cmd = Command::new("python3");
+        cmd.arg(script);
+        cmd
+    } else {
+        info!("[AxTree] Using PyInstaller binary for {}: {}", event_type, dump_tree.display());
+        Command::new(dump_tree)
+    };
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
         command.creation_flags(0x08000000); // CREATE_NO_WINDOW constant
     }
 
-    let output = command
+    // Workaround for PyInstaller hanging issue: use timeout with process killing
+    info!("[AxTree] Waiting for dump-tree to complete...");
+
+    let child = command
         .arg("-e")
-        .arg("--recording-display")
-        .arg("0")
-        .output()
-        .map_err(|e| format!("Failed to execute dump-tree: {}", e))?;
+        .arg("--display-index")
+        .arg("0") // TODO: Calculate actual display index used for recording
+        .arg("--no-focus-steal") // Always use no-focus-steal for pre-recording snapshot
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("Failed to spawn dump-tree: {}", e))?;
+
+    let child_id = child.id();
+
+    // Use timeout with forced process termination
+    let (tx, rx) = std::sync::mpsc::channel();
+
+    thread::spawn(move || {
+        let result = child.wait_with_output();
+        let _ = tx.send(result);
+    });
+
+    // Wait maximum 5 seconds for completion
+    let output = match rx.recv_timeout(Duration::from_secs(5)) {
+        Ok(result) => result.map_err(|e| format!("Failed to execute dump-tree: {}", e))?,
+        Err(_) => {
+            // Kill the process forcefully
+            info!(
+                "[AxTree] Timeout reached, killing dump-tree process {}",
+                child_id
+            );
+            #[cfg(unix)]
+            {
+                let _ = std::process::Command::new("kill")
+                    .arg("-9")
+                    .arg(child_id.to_string())
+                    .output();
+            }
+            return Err(
+                "dump-tree process timed out after 5 seconds - killed forcefully".to_string(),
+            );
+        }
+    };
+
+    info!(
+        "[AxTree] dump-tree completed with exit status: {}",
+        output.status
+    );
+
+    // Log stderr for debugging
+    if !output.stderr.is_empty() {
+        if let Ok(stderr) = String::from_utf8(output.stderr.clone()) {
+            info!("[AxTree] dump-tree stderr: {}", stderr);
+        }
+    }
 
     if let Ok(stdout) = String::from_utf8(output.stdout) {
+        info!("[AxTree] dump-tree stdout length: {} bytes", stdout.len());
         for line in stdout.lines() {
             if let Ok(mut json) = serde_json::from_str::<Value>(line) {
                 if let Some(obj) = json.as_object_mut() {
-                    obj.insert("event".to_string(), json!("axtree_pre_recording"));
-                    let _ = crate::core::record::log_input(json!(obj));
-                    let _ = app.emit("axtree_pre_recording", json!(obj));
+                    obj.insert("event".to_string(), json!(event_type));
+
+                    // Convert floating point coordinates to integers for backend compatibility
+                    convert_coordinates_to_integers(obj);
+
+                    let final_value = serde_json::Value::Object(obj.clone());
+                    let _ = crate::core::record::log_input(final_value.clone());
+                    let _ = app.emit(event_type, final_value);
                 }
             }
         }

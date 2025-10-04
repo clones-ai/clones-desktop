@@ -469,8 +469,16 @@ pub async fn start_recording(
     // Start input listener
     input::start_input_listener(app.clone())?;
 
-    // Start dump-tree polling
-    axtree::start_dump_tree_polling(app.clone())?;
+    // Start event-driven UI dumps during recording
+    axtree::set_recording_mode(true)?;
+
+    // Capture initial UI state asynchronously (non-blocking)
+    let app_clone = app.clone();
+    std::thread::spawn(move || {
+        if let Err(e) = axtree::capture_pre_recording_snapshot(app_clone) {
+            log::warn!("[record] Failed to capture initial AXTree snapshot: {}", e);
+        }
+    });
 
     Ok(())
 }
@@ -500,8 +508,16 @@ pub async fn stop_recording(
     // Stop input listener
     input::stop_input_listener()?;
 
-    // Stop dump-tree polling
-    axtree::stop_dump_tree_polling()?;
+    // Stop event-driven UI dumps
+    axtree::set_recording_mode(false)?;
+
+    // Capture final UI state asynchronously (non-blocking)
+    let app_clone = app.clone();
+    std::thread::spawn(move || {
+        if let Err(e) = axtree::capture_post_recording_snapshot(app_clone) {
+            log::warn!("[record] Failed to capture final AXTree snapshot: {}", e);
+        }
+    });
 
     let mut rec_state = RECORDER_STATE.lock().map_err(|e| e.to_string())?;
     if let Some(mut recorder) = rec_state.take() {

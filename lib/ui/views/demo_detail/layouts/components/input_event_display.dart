@@ -27,6 +27,11 @@ class InputEventDisplay extends StatelessWidget {
       return _buildMouseEventUI(theme);
     }
 
+    // Check if this is an AXTree event
+    if (_isAxTreeEvent(eventType)) {
+      return _buildAxTreeEventUI(theme);
+    }
+
     // Fallback to JSON for other events
     return _buildJsonFallback(theme);
   }
@@ -37,6 +42,12 @@ class InputEventDisplay extends StatelessWidget {
 
   bool _isMouseEvent(String eventType) {
     return eventType == 'mousedown' || eventType == 'mouseup';
+  }
+
+  bool _isAxTreeEvent(String eventType) {
+    return eventType == 'axtree_interaction' ||
+        eventType == 'axtree_pre_recording' ||
+        eventType == 'axtree_post_recording';
   }
 
   Widget _buildKeyboardEventUI(ThemeData theme) {
@@ -290,6 +301,235 @@ class InputEventDisplay extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildAxTreeEventUI(ThemeData theme) {
+    final tree = eventData['tree'] as List<dynamic>? ?? [];
+    final duration = eventData['duration'] as int? ?? 0;
+
+    // Extract applications from the tree
+    final applications = tree
+        .where(
+          (item) =>
+              item is Map<String, dynamic> && item['role'] == 'application',
+        )
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Main AXTree display
+        _buildAxTreeDisplay(applications.length, duration, theme),
+
+        const SizedBox(height: 8),
+
+        // Applications list
+        if (applications.isNotEmpty) ...[
+          _buildApplicationsList(applications, theme),
+          const SizedBox(height: 8),
+        ],
+
+        // Details section
+        _buildAxTreeDetailsSection(duration, theme),
+      ],
+    );
+  }
+
+  Widget _buildAxTreeDisplay(int appCount, int duration, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.blue.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          // AXTree icon
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.blue.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Icon(
+              Icons.account_tree,
+              size: 16,
+              color: Colors.blue[700],
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // AXTree information
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      '$appCount app. detected',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildApplicationsList(List<dynamic> applications, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.apps,
+                size: 12,
+                color: ClonesColors.secondaryText,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Detected Applications:',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ...applications.map((app) => _buildApplicationItem(app, theme)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildApplicationItem(dynamic app, ThemeData theme) {
+    final name = app['name'] as String? ?? 'Unknown';
+    final hasWindow =
+        app['children'] != null && (app['children'] as List).isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 4,
+            decoration: BoxDecoration(
+              color: hasWindow ? Colors.blue[400] : Colors.grey[400],
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              name,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontSize: 10,
+                color: hasWindow ? Colors.blue[700] : Colors.grey[600],
+                fontWeight: hasWindow ? FontWeight.w500 : FontWeight.normal,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (hasWindow)
+            Icon(
+              Icons.window,
+              size: 10,
+              color: Colors.blue[400],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAxTreeDetailsSection(int duration, ThemeData theme) {
+    final eventDescription = _getAxTreeEventDescription(eventType);
+    final triggerDescription = _getAxTreeTriggerDescription(eventType);
+    final triggerIcon = _getAxTreeTriggerIcon(eventType);
+
+    return Padding(
+      padding: const EdgeInsets.all(4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildDetailRow(
+            'Event Type',
+            eventDescription,
+            Icons.account_tree,
+            theme,
+          ),
+          _buildDetailRow(
+            'Capture Duration',
+            '${duration}ms',
+            Icons.timer,
+            theme,
+          ),
+          _buildDetailRow(
+            'Trigger',
+            triggerDescription,
+            triggerIcon,
+            theme,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getAxTreeEventDescription(String eventType) {
+    switch (eventType) {
+      case 'axtree_interaction':
+        return 'Accessibility Tree Capture';
+      case 'axtree_pre_recording':
+        return 'Initial State Capture';
+      case 'axtree_post_recording':
+        return 'Final State Capture';
+      default:
+        return 'Accessibility Tree Capture';
+    }
+  }
+
+  String _getAxTreeTriggerDescription(String eventType) {
+    switch (eventType) {
+      case 'axtree_interaction':
+        return 'User Interaction';
+      case 'axtree_pre_recording':
+        return 'Recording Start';
+      case 'axtree_post_recording':
+        return 'Recording Stop';
+      default:
+        return 'User Interaction';
+    }
+  }
+
+  IconData _getAxTreeTriggerIcon(String eventType) {
+    switch (eventType) {
+      case 'axtree_interaction':
+        return Icons.touch_app;
+      case 'axtree_pre_recording':
+        return Icons.play_arrow;
+      case 'axtree_post_recording':
+        return Icons.stop;
+      default:
+        return Icons.touch_app;
+    }
   }
 
   Widget _buildDetailsSection(

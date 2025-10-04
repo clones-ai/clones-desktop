@@ -44,21 +44,24 @@ class _DemoDetailVideoPreviewState
               ),
               Row(
                 children: [
-                  // TODO: Add AxTree toggle button
-                  /*  // AxTree toggle button
-                    if (_hasAxTreeEvents())
-                      IconButton(
-                        icon: Icon(
-                          Icons.account_tree,
-                          color: state.showAxTreeOverlay 
-                              ? ClonesColors.tertiary 
-                              : ClonesColors.tertiary.withValues(alpha: 0.5),
-                        ),
-                        onPressed: () {
-                          ref.read(demoDetailNotifierProvider.notifier).toggleAxTreeOverlay();
-                        },
-                        tooltip: state.showAxTreeOverlay ? 'Hide AxTree overlay' : 'Show AxTree overlay',
-                      ),*/
+                  // AxTree toggle button
+                  if (_hasAxTreeEvents())
+                    IconButton(
+                      icon: Icon(
+                        Icons.account_tree,
+                        color: demoDetail.showAxTreeOverlay
+                            ? ClonesColors.tertiary
+                            : ClonesColors.tertiary.withValues(alpha: 0.5),
+                      ),
+                      onPressed: () {
+                        ref
+                            .read(demoDetailNotifierProvider.notifier)
+                            .toggleAxTreeOverlay();
+                      },
+                      tooltip: demoDetail.showAxTreeOverlay
+                          ? 'Hide AxTree overlay'
+                          : 'Show AxTree overlay',
+                    ),
                   if (widget.onExpand != null)
                     IconButton(
                       icon: const Icon(
@@ -134,8 +137,10 @@ class _DemoDetailVideoPreviewState
   }
 
   bool _hasAxTreeEvents() {
+    // TODO: Hardcoded for now, we need to improve this
+    return false;
     final state = ref.read(demoDetailNotifierProvider);
-    return state.events.any((e) => e.event == 'axtree');
+    return state.events.any((e) => e.event.contains('axtree'));
   }
 
   Widget _buildVideoContainer() {
