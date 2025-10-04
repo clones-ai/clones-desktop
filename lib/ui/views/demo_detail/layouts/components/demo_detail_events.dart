@@ -96,7 +96,7 @@ class DemoDetailEvents extends ConsumerWidget {
           child: Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: eventTypes.map((type) {
+            children: (eventTypes.toList()..sort()).map((type) {
               final isEnabled = enabledEventTypes.contains(type);
               return OutlinedButton(
                 style: OutlinedButton.styleFrom(
