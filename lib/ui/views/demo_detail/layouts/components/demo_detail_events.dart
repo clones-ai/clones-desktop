@@ -91,41 +91,42 @@ class DemoDetailEvents extends ConsumerWidget {
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(10),
-          child: Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: (eventTypes.toList()..sort()).map((type) {
-              final isEnabled = enabledEventTypes.contains(type);
-              return OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  backgroundColor:
-                      isEnabled ? ClonesColors.tertiary : Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  side: BorderSide(
-                    color: isEnabled
-                        ? ClonesColors.primary
-                        : ClonesColors.tertiary,
-                    width: 0.1,
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        Wrap(
+          spacing: 5,
+          runSpacing: 5,
+          children: (eventTypes.toList()..sort()).map((type) {
+            final isEnabled = enabledEventTypes.contains(type);
+            final eventColor = ClonesColors.getEventTypeColor(type);
+            return OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                backgroundColor: isEnabled 
+                    ? eventColor.withValues(alpha: 0.2) 
+                    : Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
                 ),
-                onPressed: () {
-                  ref
-                      .read(demoDetailNotifierProvider.notifier)
-                      .toggleEventType(type);
-                },
-                child: Text(
-                  type,
-                  style: theme.textTheme.bodySmall,
+                side: BorderSide(
+                  color: isEnabled ? eventColor : eventColor.withValues(alpha: 0.5),
+                  width: 0.1,
                 ),
-              );
-            }).toList(),
-          ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                ),
+              ),
+              onPressed: () {
+                ref
+                    .read(demoDetailNotifierProvider.notifier)
+                    .toggleEventType(type);
+              },
+              child: Text(
+                type,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 10,
+                  color: eventColor,
+                ),
+              ),
+            );
+          }).toList(),
         ),
         const SizedBox(height: 10),
         Expanded(
