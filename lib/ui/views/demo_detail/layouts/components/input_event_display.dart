@@ -384,7 +384,7 @@ class InputEventDisplay extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'Focused App: $focusedAppName',
+                      focusedAppName,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,

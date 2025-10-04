@@ -472,14 +472,6 @@ pub async fn start_recording(
     // Start event-driven UI dumps during recording
     axtree::set_recording_mode(true)?;
 
-    // Capture initial UI state asynchronously (non-blocking)
-    let app_clone = app.clone();
-    std::thread::spawn(move || {
-        if let Err(e) = axtree::capture_pre_recording_snapshot(app_clone) {
-            log::warn!("[record] Failed to capture initial AXTree snapshot: {}", e);
-        }
-    });
-
     Ok(())
 }
 
@@ -504,13 +496,7 @@ pub async fn stop_recording(
     // Stop event-driven UI dumps
     axtree::set_recording_mode(false)?;
 
-    // Capture final UI state synchronously (before closing logger)
-    log::info!("[record] Starting final AXTree snapshot capture");
-    if let Err(e) = axtree::capture_post_recording_snapshot(app.clone()) {
-        log::warn!("[record] Failed to capture final AXTree snapshot: {}", e);
-    } else {
-        log::info!("[record] Final AXTree snapshot captured successfully");
-    }
+    // Note: No post-recording AXTree capture since it would only show Clones app
 
     // Stop input logging and listening after capturing final state
     let mut log_state = LOGGER_STATE.lock().map_err(|e| e.to_string())?;
