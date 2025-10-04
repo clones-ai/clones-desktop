@@ -72,11 +72,10 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
       final tauriApiClient = ref.read(tauriApiClientProvider);
       final status = await tauriApiClient.checkTools();
 
-      const totalTools = 4;
+      const totalTools = 3;
       var initializedTools = 0;
       if (status['ffmpeg'] ?? false) initializedTools++;
       if (status['ffprobe'] ?? false) initializedTools++;
-      if (status['dump_tree'] ?? false) initializedTools++;
       if (status['cqa'] ?? false) initializedTools++;
 
       final progress = (initializedTools / totalTools) * 100;
