@@ -501,23 +501,23 @@ pub async fn stop_recording(
     // Emit recording stopping event
     set_rec_state(&app, "stopping".to_string(), None)?;
 
-    // Stop input logging and listening first
+    // Stop event-driven UI dumps
+    axtree::set_recording_mode(false)?;
+
+    // Capture final UI state synchronously (before closing logger)
+    log::info!("[record] Starting final AXTree snapshot capture");
+    if let Err(e) = axtree::capture_post_recording_snapshot(app.clone()) {
+        log::warn!("[record] Failed to capture final AXTree snapshot: {}", e);
+    } else {
+        log::info!("[record] Final AXTree snapshot captured successfully");
+    }
+
+    // Stop input logging and listening after capturing final state
     let mut log_state = LOGGER_STATE.lock().map_err(|e| e.to_string())?;
     *log_state = None;
 
     // Stop input listener
     input::stop_input_listener()?;
-
-    // Stop event-driven UI dumps
-    axtree::set_recording_mode(false)?;
-
-    // Capture final UI state asynchronously (non-blocking)
-    let app_clone = app.clone();
-    std::thread::spawn(move || {
-        if let Err(e) = axtree::capture_post_recording_snapshot(app_clone) {
-            log::warn!("[record] Failed to capture final AXTree snapshot: {}", e);
-        }
-    });
 
     let mut rec_state = RECORDER_STATE.lock().map_err(|e| e.to_string())?;
     if let Some(mut recorder) = rec_state.take() {
