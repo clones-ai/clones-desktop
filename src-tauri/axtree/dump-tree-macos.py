@@ -213,8 +213,8 @@ def get_accessibility_tree_legacy(display_filter=None):
     return out
 
 def get_accessibility_tree(display_filter=None):
-    """Main accessibility tree function - chooses passive or legacy based on args"""
-    return get_accessibility_tree_legacy(display_filter)  # Default to legacy for backward compatibility
+ """Main accessibility tree function - uses passive extraction by default"""
+    return get_accessibility_tree_passive(display_filter=display_filter)
 
 def main():
     parser = argparse.ArgumentParser(description='Extract accessibility tree from macOS applications')

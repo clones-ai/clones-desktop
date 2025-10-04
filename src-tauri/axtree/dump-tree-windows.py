@@ -138,7 +138,6 @@ def get_control_states(control):
             
     return states
 
-# warning: this seems to modify window focus
 def get_control_properties(control):
     """Get additional control properties"""
     props = {}
