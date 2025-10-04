@@ -11,10 +11,46 @@ import atexit
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import win32gui
 import win32api
+import win32process
+import psutil
 from ctypes.wintypes import tagPOINT
 
 # Track active threads for cleanup
 active_threads = []
+
+def get_focused_app_info():
+    """Get information about the currently focused application on Windows"""
+    try:
+        # Get the foreground window
+        hwnd = win32gui.GetForegroundWindow()
+        if not hwnd:
+            return None
+        
+        # Get window title
+        window_title = win32gui.GetWindowText(hwnd)
+        
+        # Get process ID
+        _, pid = win32process.GetWindowThreadProcessId(hwnd)
+        
+        # Get process info using psutil
+        try:
+            process = psutil.Process(pid)
+            process_name = process.name()
+            process_path = process.exe()
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            process_name = "Unknown"
+            process_path = "Unknown"
+        
+        return {
+            "name": process_name,
+            "window_title": window_title,
+            "path": process_path,
+            "pid": pid,
+            "hwnd": hwnd
+        }
+    except Exception as e:
+        print(f"Error getting focused app info: {e}")
+        return None
 
 def cleanup_threads():
     """Clean up any active threads on program exit"""
@@ -334,6 +370,9 @@ def save_accessibility_tree(output_file=None, timeout=5, max_workers=None, event
     end_time = int(time.time() * 1000)
     duration = end_time - start_time
     
+    # Get focused app info
+    focused_app = get_focused_app_info()
+    
     if event_format:
         output = {
             "time": start_time,
@@ -341,6 +380,7 @@ def save_accessibility_tree(output_file=None, timeout=5, max_workers=None, event
                 "duration": duration,
                 "tree": tree,
                 "focused_element": focused,
+                "focused_app": focused_app,
                 "queries": queries
             }
         }
@@ -348,6 +388,7 @@ def save_accessibility_tree(output_file=None, timeout=5, max_workers=None, event
         output = {
             "tree": tree,
             "focused_element": focused,
+            "focused_app": focused_app,
             "queries": queries
         }
     

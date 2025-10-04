@@ -3,6 +3,30 @@ import argparse
 import time
 from macapptree import get_app_bundle, get_tree
 from custom_extractors import extract_system_wide_accessibility_tree
+try:
+    from AppKit import NSWorkspace
+except ImportError:
+    NSWorkspace = None
+
+def get_focused_app_info():
+    """Get information about the currently focused application"""
+    if NSWorkspace is None:
+        return None
+    
+    try:
+        workspace = NSWorkspace.sharedWorkspace()
+        active_app = workspace.activeApplication()
+        if active_app:
+            return {
+                "bundle_id": active_app.get("NSApplicationBundleIdentifier"),
+                "name": active_app.get("NSApplicationName"),
+                "path": active_app.get("NSApplicationPath"),
+                "pid": active_app.get("NSApplicationProcessIdentifier")
+            }
+    except Exception as e:
+        print(f"Error getting focused app info: {e}")
+    
+    return None
 
 def get_tree_with_display_info(bundle, max_depth=None):
     """Wrapper around get_tree for consistency with the rest of the codebase"""
@@ -230,13 +254,17 @@ def main():
     
     end_time = int(time.time() * 1000)
     duration = end_time - start_time
+    
+    # Get focused app info
+    focused_app = get_focused_app_info()
 
     if args.event:
         output = {
             "time": start_time,
             "data": {
                 "duration": duration,
-                "tree": tree
+                "tree": tree,
+                "focused_app": focused_app
             }
         }
     else:

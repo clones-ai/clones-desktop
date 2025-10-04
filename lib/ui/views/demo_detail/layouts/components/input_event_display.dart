@@ -306,6 +306,7 @@ class InputEventDisplay extends StatelessWidget {
   Widget _buildAxTreeEventUI(ThemeData theme) {
     final tree = eventData['tree'] as List<dynamic>? ?? [];
     final duration = eventData['duration'] as int? ?? 0;
+    final focusedApp = eventData['focused_app'] as Map<String, dynamic>?;
 
     // Extract applications from the tree
     final applications = tree
@@ -314,12 +315,14 @@ class InputEventDisplay extends StatelessWidget {
               item is Map<String, dynamic> && item['role'] == 'application',
         )
         .toList();
+    final focusedAppName = focusedApp?['name'] as String? ?? 'Unknown App';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Main AXTree display
-        _buildAxTreeDisplay(applications.length, duration, theme),
+        _buildAxTreeDisplay(
+            applications.length, duration, focusedAppName, theme),
 
         const SizedBox(height: 8),
 
@@ -335,7 +338,8 @@ class InputEventDisplay extends StatelessWidget {
     );
   }
 
-  Widget _buildAxTreeDisplay(int appCount, int duration, ThemeData theme) {
+  Widget _buildAxTreeDisplay(
+      int appCount, int duration, String focusedAppName, ThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -373,6 +377,17 @@ class InputEventDisplay extends StatelessWidget {
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         color: Colors.blue[700],
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text(
+                      'Focused App: $focusedAppName',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],

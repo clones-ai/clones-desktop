@@ -13,7 +13,6 @@ use std::time::{Duration, Instant};
 use tauri::Emitter;
 
 pub static DUMP_TREE_PATH: OnceLock<PathBuf> = OnceLock::new();
-static POLLING_ACTIVE: OnceLock<Arc<Mutex<bool>>> = OnceLock::new();
 static RECORDING_MODE: OnceLock<Arc<Mutex<bool>>> = OnceLock::new();
 static LAST_INTERACTION_TIME: OnceLock<Arc<Mutex<Option<Instant>>>> = OnceLock::new();
 
@@ -52,101 +51,25 @@ fn convert_coordinates_to_integers(obj: &mut serde_json::Map<String, Value>) {
     }
 }
 
-#[cfg(target_os = "windows")]
-fn get_dump_tree_url() -> String {
-    std::env::var("DUMP_TREE_URL_WIN").unwrap_or_else(|_| "https://github.com/clones-ai/ax-tree-parsers/releases/latest/download/dump-tree-windows.exe".to_string())
-}
 
-#[cfg(target_os = "linux")]
-fn get_dump_tree_url() -> String {
-    std::env::var("DUMP_TREE_URL_LINUX").unwrap_or_else(|_| "https://github.com/clones-ai/ax-tree-parsers/releases/latest/download/dump-tree-linux-x86_64".to_string())
-}
-
-#[cfg(target_os = "macos")]
-fn get_dump_tree_url() -> String {
-    std::env::var("DUMP_TREE_URL_MACOS").unwrap_or_else(|_| "https://github.com/clones-ai/ax-tree-parsers/releases/latest/download/dump-tree-macos-arm64".to_string())
-}
-
-const GITHUB_API_URL: &str =
-    "https://api.github.com/repos/clones-ai/ax-tree-parsers/releases/latest";
-
-fn get_temp_dir() -> PathBuf {
-    let mut temp = std::env::temp_dir();
-    temp.push("clones-desktop");
-    temp
-}
-
-/// Initializes the dump-tree binary by downloading the latest release if needed.
+/// Initializes the dump-tree system using local Python scripts.
 ///
 /// # Returns
 /// * `Ok(())` if initialization succeeded.
-/// * `Err` if the binary could not be downloaded or set up.
+/// * `Err` if initialization failed.
 pub fn init_dump_tree() -> Result<(), String> {
     if DUMP_TREE_PATH.get().is_some() {
         log::info!("[AxTree] Already initialized");
         return Ok(());
     }
 
-    log::info!("[AxTree] Initializing dump-tree");
+    log::info!("[AxTree] Initializing dump-tree with local scripts");
 
-    // Initialize polling state
-    POLLING_ACTIVE.get_or_init(|| Arc::new(Mutex::new(false)));
-
-    // Extract repo owner and name from the GitHub API URL
-    let url_parts: Vec<&str> = GITHUB_API_URL.split('/').collect();
-    let repo_owner = url_parts[4];
-    let repo_name = url_parts[5];
-    let temp_dir = get_temp_dir();
-    let asset_url = get_dump_tree_url();
-    let asset_split: Vec<&str> = asset_url.split('/').collect();
-    let asset_filename = asset_split[asset_url.split('/').count() - 1];
-    let asset_path = temp_dir.join(asset_filename);
-    let metadata_path = temp_dir.join(format!("{}.metadata.json", asset_filename));
-
-    // Try to load local metadata
-    let local_metadata = crate::utils::github_release::load_metadata(&metadata_path)?;
-    // Fetch latest metadata from GitHub
-    let latest_metadata =
-        crate::utils::github_release::fetch_latest_release_metadata(repo_owner, repo_name)?;
-
-    let needs_download = match &local_metadata {
-        Some(meta) => {
-            if meta.version != latest_metadata.version {
-                log::info!(
-                    "[AxTree] Local version {} is outdated (latest: {}), will update",
-                    meta.version,
-                    latest_metadata.version
-                );
-                true
-            } else {
-                log::info!("[AxTree] Local version {} is up to date", meta.version);
-                false
-            }
-        }
-        None => {
-            log::info!("[AxTree] No local dump-tree binary or metadata, will download");
-            true
-        }
-    };
-
-    if needs_download || !asset_path.exists() {
-        // Use the github_release module to get the latest release
-        let dump_tree_path = crate::utils::github_release::get_latest_release(
-            repo_owner, repo_name, &asset_url, &temp_dir,
-            true, // Make executable on Linux/macOS
-        )?;
-        log::info!(
-            "[AxTree] Downloaded and using dump-tree at {}",
-            dump_tree_path.display()
-        );
-        DUMP_TREE_PATH.set(dump_tree_path).unwrap();
-    } else {
-        log::info!(
-            "[AxTree] Using cached dump-tree at {}",
-            asset_path.display()
-        );
-        DUMP_TREE_PATH.set(asset_path).unwrap();
-    }
+    // Set a placeholder path - we don't actually use the binary anymore since we use Python scripts
+    let placeholder_path = std::path::PathBuf::from("local-python-scripts");
+    DUMP_TREE_PATH.set(placeholder_path).unwrap();
+    
+    log::info!("[AxTree] Initialized with local Python scripts");
     Ok(())
 }
 
@@ -474,21 +397,3 @@ fn capture_snapshot_with_event_type(app: tauri::AppHandle, event_type: &str) -> 
     Ok(())
 }
 
-/// Stops the dump-tree polling thread.
-///
-/// # Returns
-/// * `Ok(())` if polling was stopped.
-/// * `Err` if polling state was not initialized.
-pub fn stop_dump_tree_polling() -> Result<(), String> {
-    info!("[AxTree] Stopping dump-tree polling");
-
-    if let Some(polling_active) = POLLING_ACTIVE.get() {
-        let lock = lock_with_timeout(polling_active, std::time::Duration::from_secs(2));
-        if let Some(mut active) = lock {
-            *active = false;
-        } else {
-            log::error!("[AxTree] Could not acquire polling_active lock to stop polling");
-        }
-    }
-    Ok(())
-}
