@@ -193,11 +193,17 @@ pub fn trigger_ui_dump_on_interaction<R: tauri::Runtime>(
 
     // Run single dump with no-focus-steal
     thread::spawn(move || {
-        // Try local Python script first, fallback to PyInstaller binary
+        // Try local script first, fallback to PyInstaller binary
+        let (script_filename, script_command) = if cfg!(target_os = "windows") {
+            ("dump-tree-windows.py", "python3")
+        } else {
+            ("dump-tree-macos.py", "python3")
+        };
+        
         let script_path_exe = std::env::current_exe()
             .ok()
-            .and_then(|exe| exe.parent().map(|p| p.join("axtree").join("dump-tree.py")));
-        let script_path_cwd = std::env::current_dir().ok().map(|p| p.join("axtree").join("dump-tree.py"));
+            .and_then(|exe| exe.parent().map(|p| p.join("axtree").join(script_filename)));
+        let script_path_cwd = std::env::current_dir().ok().map(|p| p.join("axtree").join(script_filename));
         
         info!("[AxTree] Checking script paths:");
         if let Some(path) = &script_path_exe {
@@ -210,8 +216,8 @@ pub fn trigger_ui_dump_on_interaction<R: tauri::Runtime>(
         let script_path = script_path_cwd.filter(|p| p.exists());
         
         let mut command = if let Some(script) = script_path {
-            info!("[AxTree] Using local Python script: {}", script.display());
-            let mut cmd = Command::new("python3");
+            info!("[AxTree] Using local script: {}", script.display());
+            let mut cmd = Command::new(script_command);
             cmd.arg(script);
             cmd
         } else if dump_tree.exists() {
@@ -343,11 +349,17 @@ fn capture_snapshot_with_event_type(app: tauri::AppHandle, event_type: &str) -> 
         .get()
         .ok_or("Dump tree path not initialized")?;
 
-    // Try local Python script first, fallback to PyInstaller binary
+    // Try local script first, fallback to PyInstaller binary
+    let (script_filename, script_command) = if cfg!(target_os = "windows") {
+        ("dump-tree-windows.py", "python3")
+    } else {
+        ("dump-tree-macos.py", "python3")
+    };
+    
     let script_path_exe = std::env::current_exe()
         .ok()
-        .and_then(|exe| exe.parent().map(|p| p.join("axtree").join("dump-tree.py")));
-    let script_path_cwd = std::env::current_dir().ok().map(|p| p.join("axtree").join("dump-tree.py"));
+        .and_then(|exe| exe.parent().map(|p| p.join("axtree").join(script_filename)));
+    let script_path_cwd = std::env::current_dir().ok().map(|p| p.join("axtree").join(script_filename));
     
     info!("[AxTree] Checking script paths for {}", event_type);
     if let Some(path) = &script_path_exe {
@@ -360,8 +372,8 @@ fn capture_snapshot_with_event_type(app: tauri::AppHandle, event_type: &str) -> 
     let script_path = script_path_cwd.filter(|p| p.exists());
     
     let mut command = if let Some(script) = script_path {
-        info!("[AxTree] Using local Python script for {}: {}", event_type, script.display());
-        let mut cmd = Command::new("python3");
+        info!("[AxTree] Using local script for {}: {}", event_type, script.display());
+        let mut cmd = Command::new(script_command);
         cmd.arg(script);
         cmd
     } else {
