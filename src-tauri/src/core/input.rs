@@ -21,7 +21,7 @@ fn should_trigger_ui_dump(event: &InputEvent) -> bool {
     match event.event.as_str() {
         // Mouse clicks are significant UI interactions (layout-independent)
         "mousedown" | "mouseup" => true,
-        
+
         // Key navigation events (layout-independent function keys and navigation)
         "keydown" => {
             if let Some(key) = event.data.get("key").and_then(|k| k.as_str()) {
@@ -30,17 +30,17 @@ fn should_trigger_ui_dump(event: &InputEvent) -> bool {
                 false
             }
         }
-        
+
         // Significant scroll events (filter out tiny movements)
         "mousewheel" => {
             if let Some(delta) = event.data.get("delta").and_then(|d| d.as_f64()) {
-                delta.abs() > 1.0  // Only significant scroll movements
+                delta.abs() > 1.0 // Only significant scroll movements
             } else {
                 false
             }
         }
-        
-        _ => false
+
+        _ => false,
     }
 }
 
@@ -50,24 +50,32 @@ fn is_navigation_or_function_key(key: &str) -> bool {
     match key {
         // Layout-independent navigation keys
         "Tab" | "Return" | "Enter" | "Escape" | "Space" => true,
-        
+
         // Arrow keys (may appear as "ArrowUp", "Up", etc. depending on platform)
-        key if key.contains("Arrow") || key.contains("Up") || key.contains("Down") || 
-               key.contains("Left") || key.contains("Right") => true,
-        
+        key if key.contains("Arrow")
+            || key.contains("Up")
+            || key.contains("Down")
+            || key.contains("Left")
+            || key.contains("Right") =>
+        {
+            true
+        }
+
         // Function keys (universal across layouts)
-        "F1" | "F2" | "F3" | "F4" | "F5" | "F6" | "F7" | "F8" | "F9" | "F10" | "F11" | "F12" => true,
-        
+        "F1" | "F2" | "F3" | "F4" | "F5" | "F6" | "F7" | "F8" | "F9" | "F10" | "F11" | "F12" => {
+            true
+        }
+
         // Page navigation (universal)
         "PageUp" | "PageDown" | "Home" | "End" => true,
-        
+
         // Common modifier combinations that change UI context
         "Alt" | "Meta" | "Super" | "Cmd" | "Control" => true,
-        
+
         // Layout-independent special keys
         "Insert" | "Delete" | "Backspace" => true,
-        
-        _ => false
+
+        _ => false,
     }
 }
 
@@ -247,10 +255,18 @@ pub fn start_input_listener<R: Runtime>(app_handle: tauri::AppHandle<R>) -> Resu
                         }
                         // Log the input event
                         let _ = record::log_input(event.to_log_entry());
-                        
+
                         // Trigger UI dump for significant interactions
-                        if should_trigger_ui_dump(&event) {
-                            let _ = crate::tools::axtree::trigger_ui_dump_on_interaction(other_app_handle.clone());
+                        let should_dump = should_trigger_ui_dump(&event);
+                        info!(
+                            "[Input] Event: {}, should_trigger_ui_dump: {}",
+                            event.event, should_dump
+                        );
+                        if should_dump {
+                            info!("[Input] ⚡ Triggering UI dump for event: {}", event.event);
+                            let _ = crate::tools::axtree::trigger_ui_dump_on_interaction(
+                                other_app_handle.clone(),
+                            );
                         }
                     }
                 }
@@ -354,10 +370,18 @@ pub fn start_input_listener<R: Runtime>(app_handle: tauri::AppHandle<R>) -> Resu
                     }
                     // Log the input event
                     let _ = record::log_input(event.to_log_entry());
-                    
+
                     // Trigger UI dump for significant interactions
-                    if should_trigger_ui_dump(&event) {
-                        let _ = crate::tools::axtree::trigger_ui_dump_on_interaction(other_app_handle.clone());
+                    let should_dump = should_trigger_ui_dump(&event);
+                    info!(
+                        "[Input] Event: {}, should_trigger_ui_dump: {}",
+                        event.event, should_dump
+                    );
+                    if should_dump {
+                        info!("[Input] ⚡ Triggering UI dump for event: {}", event.event);
+                        let _ = crate::tools::axtree::trigger_ui_dump_on_interaction(
+                            other_app_handle.clone(),
+                        );
                     }
                 }
             };
@@ -368,7 +392,7 @@ pub fn start_input_listener<R: Runtime>(app_handle: tauri::AppHandle<R>) -> Resu
                 }
                 callback(event);
             }) {
-                info!("Error: {:?}", error)
+                error!("Input listener rdev failed: {:?}", error);
             }
         });
         input_listener.threads.push(handle);

@@ -3,6 +3,7 @@
 //! This module re-exports all tool submodules for use throughout the application.
 
 pub mod axtree;
+pub mod axtree_native;
 pub mod cqa;
 pub mod ffmpeg;
 pub mod helpers;
