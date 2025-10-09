@@ -99,6 +99,8 @@ class ClonesColors {
   static const Color error = Color(0xFFFB923C);
 
   static const Color rewardInfo = Color(0xFF10B981);
+  static const Color rewardInfoClaimed = Color(0xFF10B981);
+  static const Color rewardInfoShouldBeClaimed = Color(0xFFF472B6);
   static const Color uploadLimit = Color.fromARGB(255, 203, 132, 46);
 
   static Gradient gradientBtnPrimary = const LinearGradient(

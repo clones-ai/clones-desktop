@@ -38,6 +38,7 @@ mixin _$SubmissionStatus {
   double? get reward => throw _privateConstructorUsedError;
   ClaimAuthorization? get claimAuthorization =>
       throw _privateConstructorUsedError;
+  OnChainReward? get onChainReward => throw _privateConstructorUsedError;
 
   /// Serializes this SubmissionStatus to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -70,12 +71,14 @@ abstract class $SubmissionStatusCopyWith<$Res> {
       @JsonKey(name: 'grade_result') GradeResult? gradeResult,
       double? maxReward,
       double? reward,
-      ClaimAuthorization? claimAuthorization});
+      ClaimAuthorization? claimAuthorization,
+      OnChainReward? onChainReward});
 
   $SubmissionMetaCopyWith<$Res> get meta;
   $FileManifestCopyWith<$Res>? get fileManifest;
   $GradeResultCopyWith<$Res>? get gradeResult;
   $ClaimAuthorizationCopyWith<$Res>? get claimAuthorization;
+  $OnChainRewardCopyWith<$Res>? get onChainReward;
 }
 
 /// @nodoc
@@ -108,6 +111,7 @@ class _$SubmissionStatusCopyWithImpl<$Res, $Val extends SubmissionStatus>
     Object? maxReward = freezed,
     Object? reward = freezed,
     Object? claimAuthorization = freezed,
+    Object? onChainReward = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -170,6 +174,10 @@ class _$SubmissionStatusCopyWithImpl<$Res, $Val extends SubmissionStatus>
           ? _value.claimAuthorization
           : claimAuthorization // ignore: cast_nullable_to_non_nullable
               as ClaimAuthorization?,
+      onChainReward: freezed == onChainReward
+          ? _value.onChainReward
+          : onChainReward // ignore: cast_nullable_to_non_nullable
+              as OnChainReward?,
     ) as $Val);
   }
 
@@ -225,6 +233,20 @@ class _$SubmissionStatusCopyWithImpl<$Res, $Val extends SubmissionStatus>
       return _then(_value.copyWith(claimAuthorization: value) as $Val);
     });
   }
+
+  /// Create a copy of SubmissionStatus
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $OnChainRewardCopyWith<$Res>? get onChainReward {
+    if (_value.onChainReward == null) {
+      return null;
+    }
+
+    return $OnChainRewardCopyWith<$Res>(_value.onChainReward!, (value) {
+      return _then(_value.copyWith(onChainReward: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -250,7 +272,8 @@ abstract class _$$SubmissionStatusImplCopyWith<$Res>
       @JsonKey(name: 'grade_result') GradeResult? gradeResult,
       double? maxReward,
       double? reward,
-      ClaimAuthorization? claimAuthorization});
+      ClaimAuthorization? claimAuthorization,
+      OnChainReward? onChainReward});
 
   @override
   $SubmissionMetaCopyWith<$Res> get meta;
@@ -260,6 +283,8 @@ abstract class _$$SubmissionStatusImplCopyWith<$Res>
   $GradeResultCopyWith<$Res>? get gradeResult;
   @override
   $ClaimAuthorizationCopyWith<$Res>? get claimAuthorization;
+  @override
+  $OnChainRewardCopyWith<$Res>? get onChainReward;
 }
 
 /// @nodoc
@@ -290,6 +315,7 @@ class __$$SubmissionStatusImplCopyWithImpl<$Res>
     Object? maxReward = freezed,
     Object? reward = freezed,
     Object? claimAuthorization = freezed,
+    Object? onChainReward = freezed,
   }) {
     return _then(_$SubmissionStatusImpl(
       id: freezed == id
@@ -352,6 +378,10 @@ class __$$SubmissionStatusImplCopyWithImpl<$Res>
           ? _value.claimAuthorization
           : claimAuthorization // ignore: cast_nullable_to_non_nullable
               as ClaimAuthorization?,
+      onChainReward: freezed == onChainReward
+          ? _value.onChainReward
+          : onChainReward // ignore: cast_nullable_to_non_nullable
+              as OnChainReward?,
     ));
   }
 }
@@ -374,7 +404,8 @@ class _$SubmissionStatusImpl implements _SubmissionStatus {
       @JsonKey(name: 'grade_result') this.gradeResult,
       this.maxReward,
       this.reward,
-      this.claimAuthorization});
+      this.claimAuthorization,
+      this.onChainReward});
 
   factory _$SubmissionStatusImpl.fromJson(Map<String, dynamic> json) =>
       _$$SubmissionStatusImplFromJson(json);
@@ -411,10 +442,12 @@ class _$SubmissionStatusImpl implements _SubmissionStatus {
   final double? reward;
   @override
   final ClaimAuthorization? claimAuthorization;
+  @override
+  final OnChainReward? onChainReward;
 
   @override
   String toString() {
-    return 'SubmissionStatus(id: $id, address: $address, meta: $meta, status: $status, demoHash: $demoHash, fileManifest: $fileManifest, integrityVerified: $integrityVerified, error: $error, createdAt: $createdAt, updatedAt: $updatedAt, clampedScore: $clampedScore, gradeResult: $gradeResult, maxReward: $maxReward, reward: $reward, claimAuthorization: $claimAuthorization)';
+    return 'SubmissionStatus(id: $id, address: $address, meta: $meta, status: $status, demoHash: $demoHash, fileManifest: $fileManifest, integrityVerified: $integrityVerified, error: $error, createdAt: $createdAt, updatedAt: $updatedAt, clampedScore: $clampedScore, gradeResult: $gradeResult, maxReward: $maxReward, reward: $reward, claimAuthorization: $claimAuthorization, onChainReward: $onChainReward)';
   }
 
   @override
@@ -445,7 +478,9 @@ class _$SubmissionStatusImpl implements _SubmissionStatus {
                 other.maxReward == maxReward) &&
             (identical(other.reward, reward) || other.reward == reward) &&
             (identical(other.claimAuthorization, claimAuthorization) ||
-                other.claimAuthorization == claimAuthorization));
+                other.claimAuthorization == claimAuthorization) &&
+            (identical(other.onChainReward, onChainReward) ||
+                other.onChainReward == onChainReward));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -466,7 +501,8 @@ class _$SubmissionStatusImpl implements _SubmissionStatus {
       gradeResult,
       maxReward,
       reward,
-      claimAuthorization);
+      claimAuthorization,
+      onChainReward);
 
   /// Create a copy of SubmissionStatus
   /// with the given fields replaced by the non-null parameter values.
@@ -501,7 +537,8 @@ abstract class _SubmissionStatus implements SubmissionStatus {
       @JsonKey(name: 'grade_result') final GradeResult? gradeResult,
       final double? maxReward,
       final double? reward,
-      final ClaimAuthorization? claimAuthorization}) = _$SubmissionStatusImpl;
+      final ClaimAuthorization? claimAuthorization,
+      final OnChainReward? onChainReward}) = _$SubmissionStatusImpl;
 
   factory _SubmissionStatus.fromJson(Map<String, dynamic> json) =
       _$SubmissionStatusImpl.fromJson;
@@ -538,6 +575,8 @@ abstract class _SubmissionStatus implements SubmissionStatus {
   double? get reward;
   @override
   ClaimAuthorization? get claimAuthorization;
+  @override
+  OnChainReward? get onChainReward;
 
   /// Create a copy of SubmissionStatus
   /// with the given fields replaced by the non-null parameter values.

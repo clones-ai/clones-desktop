@@ -23,26 +23,26 @@ class DemoDetailFooter extends ConsumerWidget {
         if (recording != null && recording.status == 'completed') ...[
           if (demoDetail.sftMessages.isEmpty)
             BtnPrimary(
-              btnPrimaryType: BtnPrimaryType.outlinePrimary,
               onTap: demoDetailNotifier.processRecording,
               isLoading: demoDetail.isProcessing,
-              buttonText: 'Process',
+              buttonText: 'Analyse demo',
+            )
+          else
+            BtnPrimary(
+              onTap: demoDetailNotifier.uploadRecording,
+              isLoading: demoDetail.isUploading,
+              isLocked: demoDetail.isUploading ||
+                  walletAddress == null ||
+                  submission?.status == 'completed' ||
+                  (submission != null && submission.status != 'failed'),
+              buttonText: submission?.status == 'completed'
+                  ? '✓ Graded'
+                  : submission?.status == 'failed'
+                      ? 'Failed'
+                      : submission != null
+                          ? 'Processing...'
+                          : 'Submit Final Version for Scoring',
             ),
-          BtnPrimary(
-            onTap: demoDetailNotifier.uploadRecording,
-            isLoading: demoDetail.isUploading,
-            isLocked: demoDetail.isUploading ||
-                walletAddress == null ||
-                submission?.status == 'completed' ||
-                (submission != null && submission.status != 'failed'),
-            buttonText: submission?.status == 'completed'
-                ? '✓ Submitted'
-                : submission?.status == 'failed'
-                    ? 'Failed'
-                    : submission != null
-                        ? 'Processing...'
-                        : 'Submit Final Version for Scoring',
-          ),
         ],
       ],
     );

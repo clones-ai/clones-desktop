@@ -54,7 +54,7 @@ class FactoryWithdrawModalNotifier extends _$FactoryWithdrawModalNotifier {
     return const FactoryWithdrawModalState();
   }
 
-  void show(Factory factory) {
+  Future<void> show(Factory factory) async {
     state = state.copyWith(
       factory: factory,
       isShown: true,
@@ -62,11 +62,45 @@ class FactoryWithdrawModalNotifier extends _$FactoryWithdrawModalNotifier {
       error: null,
       estimatedGasCost: null,
       gasExceedsAmount: false,
+      maxSafeWithdrawal: null,
+      validationResult: null,
+      poolHealth: null,
+      validationLoading: true,
     );
+
+    // Fetch max safe withdrawal and pool health on modal open
+    try {
+      final maxWithdrawal = await ref.read(
+        getMaxWithdrawalProvider(poolAddress: factory.poolAddress).future,
+      );
+
+      final poolHealth = await ref.read(
+        getPoolHealthProvider(poolAddress: factory.poolAddress).future,
+      );
+
+      state = state.copyWith(
+        maxSafeWithdrawal: maxWithdrawal.maxSafeWithdrawal,
+        poolHealth: poolHealth,
+        validationLoading: false,
+      );
+
+      // Show warning if pool is unhealthy
+      if (!poolHealth.healthy && poolHealth.alerts.isNotEmpty) {
+        debugPrint('Pool health alerts: ${poolHealth.alerts.join(", ")}');
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch withdrawal validation data: $e');
+      state = state.copyWith(validationLoading: false);
+    }
   }
 
   void hide() {
-    state = state.copyWith(isShown: false);
+    state = state.copyWith(
+      isShown: false,
+      maxSafeWithdrawal: null,
+      validationResult: null,
+      poolHealth: null,
+    );
     ref.read(transactionManagerProvider.notifier).clearTransaction();
   }
 
@@ -214,6 +248,26 @@ class FactoryWithdrawModalNotifier extends _$FactoryWithdrawModalNotifier {
     state = state.copyWith(isWithdrawing: true, error: null);
 
     try {
+      final validation = await ref.read(
+        validateWithdrawalProvider(
+          poolAddress: state.factory!.poolAddress,
+          amount: state.withdrawAmount,
+        ).future,
+      );
+
+      // Store validation result
+      state = state.copyWith(validationResult: validation);
+
+      // Check if withdrawal is allowed by backend
+      if (!validation.allowed) {
+        state = state.copyWith(
+          isWithdrawing: false,
+          error:
+              'Withdrawal not allowed: ${validation.reason ?? "Unknown reason"}',
+        );
+        return;
+      }
+
       final transactionManager = ref.read(transactionManagerProvider.notifier);
       await transactionManager.withdrawPool(
         token: state.factory!.token.symbol,
@@ -231,7 +285,15 @@ class FactoryWithdrawModalNotifier extends _$FactoryWithdrawModalNotifier {
       debugPrint('error: $e');
       final errorString = e.toString().toLowerCase();
 
-      if (errorString.contains('only the pool creator can withdraw')) {
+      // Check for backend validation errors first
+      if (errorString.contains('withdrawal_locked') ||
+          errorString.contains('withdrawallocked')) {
+        errorMessage =
+            'Withdrawal locked: Must wait 24h after last deposit for security';
+      } else if (errorString.contains('insufficient funds for') ||
+          errorString.contains('pending claim')) {
+        errorMessage = 'Insufficient funds: $errorString';
+      } else if (errorString.contains('only the pool creator can withdraw')) {
         errorMessage = 'Only the pool creator can withdraw funds';
       } else if (errorString.contains('insufficient funds')) {
         errorMessage = 'Insufficient ETH balance for gas fees';

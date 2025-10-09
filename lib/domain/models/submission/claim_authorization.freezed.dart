@@ -26,6 +26,9 @@ mixin _$ClaimAuthorization {
   /// Cumulative amount in wei (string to preserve precision)
   String get cumulativeAmount => throw _privateConstructorUsedError;
 
+  /// Nonce for replay protection
+  int? get nonce => throw _privateConstructorUsedError;
+
   /// Signature deadline (unix timestamp)
   int? get deadline => throw _privateConstructorUsedError;
 
@@ -40,6 +43,15 @@ mixin _$ClaimAuthorization {
 
   /// Token contract address
   String get tokenAddress => throw _privateConstructorUsedError;
+
+  /// Already claimed amount
+  double? get alreadyClaimed => throw _privateConstructorUsedError;
+
+  /// New claimable amount
+  double? get newClaimableAmount => throw _privateConstructorUsedError;
+
+  /// Platform fee percentage (e.g. 10.0 for 10%)
+  double? get feePercentage => throw _privateConstructorUsedError;
 
   /// Serializes this ClaimAuthorization to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -60,11 +72,15 @@ abstract class $ClaimAuthorizationCopyWith<$Res> {
   $Res call(
       {String account,
       String cumulativeAmount,
+      int? nonce,
       int? deadline,
       String signature,
       String publisherUsed,
       String poolAddress,
-      String tokenAddress});
+      String tokenAddress,
+      double? alreadyClaimed,
+      double? newClaimableAmount,
+      double? feePercentage});
 }
 
 /// @nodoc
@@ -84,11 +100,15 @@ class _$ClaimAuthorizationCopyWithImpl<$Res, $Val extends ClaimAuthorization>
   $Res call({
     Object? account = null,
     Object? cumulativeAmount = null,
+    Object? nonce = freezed,
     Object? deadline = freezed,
     Object? signature = null,
     Object? publisherUsed = null,
     Object? poolAddress = null,
     Object? tokenAddress = null,
+    Object? alreadyClaimed = freezed,
+    Object? newClaimableAmount = freezed,
+    Object? feePercentage = freezed,
   }) {
     return _then(_value.copyWith(
       account: null == account
@@ -99,6 +119,10 @@ class _$ClaimAuthorizationCopyWithImpl<$Res, $Val extends ClaimAuthorization>
           ? _value.cumulativeAmount
           : cumulativeAmount // ignore: cast_nullable_to_non_nullable
               as String,
+      nonce: freezed == nonce
+          ? _value.nonce
+          : nonce // ignore: cast_nullable_to_non_nullable
+              as int?,
       deadline: freezed == deadline
           ? _value.deadline
           : deadline // ignore: cast_nullable_to_non_nullable
@@ -119,6 +143,18 @@ class _$ClaimAuthorizationCopyWithImpl<$Res, $Val extends ClaimAuthorization>
           ? _value.tokenAddress
           : tokenAddress // ignore: cast_nullable_to_non_nullable
               as String,
+      alreadyClaimed: freezed == alreadyClaimed
+          ? _value.alreadyClaimed
+          : alreadyClaimed // ignore: cast_nullable_to_non_nullable
+              as double?,
+      newClaimableAmount: freezed == newClaimableAmount
+          ? _value.newClaimableAmount
+          : newClaimableAmount // ignore: cast_nullable_to_non_nullable
+              as double?,
+      feePercentage: freezed == feePercentage
+          ? _value.feePercentage
+          : feePercentage // ignore: cast_nullable_to_non_nullable
+              as double?,
     ) as $Val);
   }
 }
@@ -134,11 +170,15 @@ abstract class _$$ClaimAuthorizationImplCopyWith<$Res>
   $Res call(
       {String account,
       String cumulativeAmount,
+      int? nonce,
       int? deadline,
       String signature,
       String publisherUsed,
       String poolAddress,
-      String tokenAddress});
+      String tokenAddress,
+      double? alreadyClaimed,
+      double? newClaimableAmount,
+      double? feePercentage});
 }
 
 /// @nodoc
@@ -156,11 +196,15 @@ class __$$ClaimAuthorizationImplCopyWithImpl<$Res>
   $Res call({
     Object? account = null,
     Object? cumulativeAmount = null,
+    Object? nonce = freezed,
     Object? deadline = freezed,
     Object? signature = null,
     Object? publisherUsed = null,
     Object? poolAddress = null,
     Object? tokenAddress = null,
+    Object? alreadyClaimed = freezed,
+    Object? newClaimableAmount = freezed,
+    Object? feePercentage = freezed,
   }) {
     return _then(_$ClaimAuthorizationImpl(
       account: null == account
@@ -171,6 +215,10 @@ class __$$ClaimAuthorizationImplCopyWithImpl<$Res>
           ? _value.cumulativeAmount
           : cumulativeAmount // ignore: cast_nullable_to_non_nullable
               as String,
+      nonce: freezed == nonce
+          ? _value.nonce
+          : nonce // ignore: cast_nullable_to_non_nullable
+              as int?,
       deadline: freezed == deadline
           ? _value.deadline
           : deadline // ignore: cast_nullable_to_non_nullable
@@ -191,6 +239,18 @@ class __$$ClaimAuthorizationImplCopyWithImpl<$Res>
           ? _value.tokenAddress
           : tokenAddress // ignore: cast_nullable_to_non_nullable
               as String,
+      alreadyClaimed: freezed == alreadyClaimed
+          ? _value.alreadyClaimed
+          : alreadyClaimed // ignore: cast_nullable_to_non_nullable
+              as double?,
+      newClaimableAmount: freezed == newClaimableAmount
+          ? _value.newClaimableAmount
+          : newClaimableAmount // ignore: cast_nullable_to_non_nullable
+              as double?,
+      feePercentage: freezed == feePercentage
+          ? _value.feePercentage
+          : feePercentage // ignore: cast_nullable_to_non_nullable
+              as double?,
     ));
   }
 }
@@ -201,11 +261,15 @@ class _$ClaimAuthorizationImpl implements _ClaimAuthorization {
   const _$ClaimAuthorizationImpl(
       {required this.account,
       required this.cumulativeAmount,
+      this.nonce,
       this.deadline,
       required this.signature,
       required this.publisherUsed,
       required this.poolAddress,
-      required this.tokenAddress});
+      required this.tokenAddress,
+      this.alreadyClaimed,
+      this.newClaimableAmount,
+      this.feePercentage});
 
   factory _$ClaimAuthorizationImpl.fromJson(Map<String, dynamic> json) =>
       _$$ClaimAuthorizationImplFromJson(json);
@@ -217,6 +281,10 @@ class _$ClaimAuthorizationImpl implements _ClaimAuthorization {
   /// Cumulative amount in wei (string to preserve precision)
   @override
   final String cumulativeAmount;
+
+  /// Nonce for replay protection
+  @override
+  final int? nonce;
 
   /// Signature deadline (unix timestamp)
   @override
@@ -238,9 +306,21 @@ class _$ClaimAuthorizationImpl implements _ClaimAuthorization {
   @override
   final String tokenAddress;
 
+  /// Already claimed amount
+  @override
+  final double? alreadyClaimed;
+
+  /// New claimable amount
+  @override
+  final double? newClaimableAmount;
+
+  /// Platform fee percentage (e.g. 10.0 for 10%)
+  @override
+  final double? feePercentage;
+
   @override
   String toString() {
-    return 'ClaimAuthorization(account: $account, cumulativeAmount: $cumulativeAmount, deadline: $deadline, signature: $signature, publisherUsed: $publisherUsed, poolAddress: $poolAddress, tokenAddress: $tokenAddress)';
+    return 'ClaimAuthorization(account: $account, cumulativeAmount: $cumulativeAmount, nonce: $nonce, deadline: $deadline, signature: $signature, publisherUsed: $publisherUsed, poolAddress: $poolAddress, tokenAddress: $tokenAddress, alreadyClaimed: $alreadyClaimed, newClaimableAmount: $newClaimableAmount, feePercentage: $feePercentage)';
   }
 
   @override
@@ -251,6 +331,7 @@ class _$ClaimAuthorizationImpl implements _ClaimAuthorization {
             (identical(other.account, account) || other.account == account) &&
             (identical(other.cumulativeAmount, cumulativeAmount) ||
                 other.cumulativeAmount == cumulativeAmount) &&
+            (identical(other.nonce, nonce) || other.nonce == nonce) &&
             (identical(other.deadline, deadline) ||
                 other.deadline == deadline) &&
             (identical(other.signature, signature) ||
@@ -260,13 +341,30 @@ class _$ClaimAuthorizationImpl implements _ClaimAuthorization {
             (identical(other.poolAddress, poolAddress) ||
                 other.poolAddress == poolAddress) &&
             (identical(other.tokenAddress, tokenAddress) ||
-                other.tokenAddress == tokenAddress));
+                other.tokenAddress == tokenAddress) &&
+            (identical(other.alreadyClaimed, alreadyClaimed) ||
+                other.alreadyClaimed == alreadyClaimed) &&
+            (identical(other.newClaimableAmount, newClaimableAmount) ||
+                other.newClaimableAmount == newClaimableAmount) &&
+            (identical(other.feePercentage, feePercentage) ||
+                other.feePercentage == feePercentage));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, account, cumulativeAmount,
-      deadline, signature, publisherUsed, poolAddress, tokenAddress);
+  int get hashCode => Object.hash(
+      runtimeType,
+      account,
+      cumulativeAmount,
+      nonce,
+      deadline,
+      signature,
+      publisherUsed,
+      poolAddress,
+      tokenAddress,
+      alreadyClaimed,
+      newClaimableAmount,
+      feePercentage);
 
   /// Create a copy of ClaimAuthorization
   /// with the given fields replaced by the non-null parameter values.
@@ -289,11 +387,15 @@ abstract class _ClaimAuthorization implements ClaimAuthorization {
   const factory _ClaimAuthorization(
       {required final String account,
       required final String cumulativeAmount,
+      final int? nonce,
       final int? deadline,
       required final String signature,
       required final String publisherUsed,
       required final String poolAddress,
-      required final String tokenAddress}) = _$ClaimAuthorizationImpl;
+      required final String tokenAddress,
+      final double? alreadyClaimed,
+      final double? newClaimableAmount,
+      final double? feePercentage}) = _$ClaimAuthorizationImpl;
 
   factory _ClaimAuthorization.fromJson(Map<String, dynamic> json) =
       _$ClaimAuthorizationImpl.fromJson;
@@ -305,6 +407,10 @@ abstract class _ClaimAuthorization implements ClaimAuthorization {
   /// Cumulative amount in wei (string to preserve precision)
   @override
   String get cumulativeAmount;
+
+  /// Nonce for replay protection
+  @override
+  int? get nonce;
 
   /// Signature deadline (unix timestamp)
   @override
@@ -325,6 +431,18 @@ abstract class _ClaimAuthorization implements ClaimAuthorization {
   /// Token contract address
   @override
   String get tokenAddress;
+
+  /// Already claimed amount
+  @override
+  double? get alreadyClaimed;
+
+  /// New claimable amount
+  @override
+  double? get newClaimableAmount;
+
+  /// Platform fee percentage (e.g. 10.0 for 10%)
+  @override
+  double? get feePercentage;
 
   /// Create a copy of ClaimAuthorization
   /// with the given fields replaced by the non-null parameter values.

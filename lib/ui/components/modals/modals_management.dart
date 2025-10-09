@@ -1,3 +1,4 @@
+import 'package:clones_desktop/application/claim_reward_modal/provider.dart';
 import 'package:clones_desktop/application/factory_funds_modal/provider.dart';
 import 'package:clones_desktop/application/factory_withdraw_modal/provider.dart';
 import 'package:clones_desktop/application/gas_alert_provider.dart';
@@ -7,6 +8,7 @@ import 'package:clones_desktop/application/update_modal_provider.dart';
 import 'package:clones_desktop/application/upload_modal_provider.dart';
 import 'package:clones_desktop/application/wallet_modal_provider.dart';
 import 'package:clones_desktop/ui/components/gas_alert_widget.dart';
+import 'package:clones_desktop/ui/components/modals/claim_reward_modal.dart';
 import 'package:clones_desktop/ui/components/modals/factory_funds_modal.dart';
 import 'package:clones_desktop/ui/components/modals/factory_withdraw_modal.dart';
 import 'package:clones_desktop/ui/components/modals/permissions_modal.dart';
@@ -29,6 +31,8 @@ class ModalsManagement extends ConsumerWidget {
         ref.watch(factoryFundsModalNotifierProvider).isShown;
     final showFactoryWithdrawModal =
         ref.watch(factoryWithdrawModalNotifierProvider).isShown;
+    final showClaimRewardModal =
+        ref.watch(claimRewardModalNotifierProvider).isShown;
     final gasAlertState = ref.watch(gasAlertProvider);
     final showPrivacyModal = ref.watch(privacyModalProvider);
     final showPermissionsModal = ref.watch(permissionsModalProvider);
@@ -51,6 +55,7 @@ class ModalsManagement extends ConsumerWidget {
             ),
           if (showFactoryFundsModal) const FactoryFundsModal(),
           if (showFactoryWithdrawModal) const FactoryWithdrawModal(),
+          if (showClaimRewardModal) const ClaimRewardModal(),
           if (showPrivacyModal) const PrivacyModal(),
           if (showPermissionsModal) const PermissionsModal(),
           if (showUpdateModal) const UpdateModal(),

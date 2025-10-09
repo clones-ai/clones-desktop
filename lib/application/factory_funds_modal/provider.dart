@@ -120,7 +120,7 @@ class FactoryFundsModalNotifier extends _$FactoryFundsModalNotifier {
     try {
       final gasEstimation = await ref.read(
         estimateFactoryGasProvider(
-          type: 'fund',
+          type: 'fundPool',
           amount: state.fundingAmount,
           token: state.factory!.token.symbol,
         ).future,

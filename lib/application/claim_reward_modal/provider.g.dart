@@ -6,23 +6,22 @@ part of 'provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$factoryFundsModalNotifierHash() =>
-    r'685d27ec4569b9384a7d4471319b7f965e54bb26';
+String _$claimRewardModalNotifierHash() =>
+    r'0fdf9aed3741ae75e785767a1353ea10c829050d';
 
-/// See also [FactoryFundsModalNotifier].
-@ProviderFor(FactoryFundsModalNotifier)
-final factoryFundsModalNotifierProvider = AutoDisposeNotifierProvider<
-    FactoryFundsModalNotifier, FactoryFundsModalState>.internal(
-  FactoryFundsModalNotifier.new,
-  name: r'factoryFundsModalNotifierProvider',
+/// See also [ClaimRewardModalNotifier].
+@ProviderFor(ClaimRewardModalNotifier)
+final claimRewardModalNotifierProvider = AutoDisposeNotifierProvider<
+    ClaimRewardModalNotifier, ClaimRewardModalState>.internal(
+  ClaimRewardModalNotifier.new,
+  name: r'claimRewardModalNotifierProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$factoryFundsModalNotifierHash,
+      : _$claimRewardModalNotifierHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$FactoryFundsModalNotifier
-    = AutoDisposeNotifier<FactoryFundsModalState>;
+typedef _$ClaimRewardModalNotifier = AutoDisposeNotifier<ClaimRewardModalState>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

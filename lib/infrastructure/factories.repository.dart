@@ -4,6 +4,7 @@ import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/domain/models/factory/factory_search_criteria.dart';
 import 'package:clones_desktop/domain/models/factory/factory_search_result.dart';
 import 'package:clones_desktop/domain/models/supported_token.dart';
+import 'package:clones_desktop/domain/models/withdrawal/withdrawal_validation.dart';
 import 'package:clones_desktop/utils/api_client.dart';
 
 abstract class FactoriesRepository {
@@ -453,6 +454,62 @@ class FactoriesRepositoryImpl implements FactoriesRepository {
       return Factory.fromJson(responseData);
     } catch (e) {
       throw Exception('Failed to update factory apps: $e');
+    }
+  }
+
+  /// Validate a withdrawal before execution
+  /// Checks if the withdrawal would leave sufficient funds for pending claims
+  Future<WithdrawalValidation> validateWithdrawal({
+    required String poolAddress,
+    required String amount,
+  }) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/withdrawal/validate',
+        data: {
+          'poolAddress': poolAddress,
+          'amount': amount,
+        },
+        options: const RequestOptions(requiresAuth: true),
+        fromJson: (json) => json as Map<String, dynamic>,
+      );
+
+      return WithdrawalValidation.fromJson(response);
+    } catch (e) {
+      throw Exception('Failed to validate withdrawal: $e');
+    }
+  }
+
+  /// Get pool health status and metrics
+  Future<PoolHealth> getPoolHealth({
+    required String poolAddress,
+  }) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/withdrawal/pools/$poolAddress/health',
+        fromJson: (json) => json as Map<String, dynamic>,
+      );
+
+      return PoolHealth.fromJson(response);
+    } catch (e) {
+      throw Exception('Failed to get pool health: $e');
+    }
+  }
+
+  /// Get maximum safe withdrawal amount for a pool
+  Future<MaxWithdrawal> getMaxWithdrawal({
+    required String poolAddress,
+  }) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/withdrawal/pools/$poolAddress/max-withdrawal',
+        options: const RequestOptions(requiresAuth: true),
+        fromJson: (json) => json as Map<String, dynamic>,
+      );
+
+      return MaxWithdrawal.fromJson(response);
+    } catch (e) {
+      throw Exception('Failed to get max withdrawal: $e');
     }
   }
 }
