@@ -33,8 +33,8 @@ class UploadQueueNotifier extends StateNotifier<Map<String, UploadTaskState>> {
     ref.invalidate(isUploadDataAllowedProvider);
   }
 
-  Future<void> upload(String recordingId, String poolId, String name, {List<Map<String, double>>? deletedRanges}) async {
-    debugPrint('🔍 [upload] deletedRanges received: $deletedRanges');
+  Future<void> upload(String recordingId, String poolId, String name,
+      {List<Map<String, double>>? deletedRanges}) async {
     final address = ref.watch(sessionNotifierProvider).address;
     if (address == null) {
       throw Exception('Wallet address is null');
@@ -63,14 +63,14 @@ class UploadQueueNotifier extends StateNotifier<Map<String, UploadTaskState>> {
     );
 
     final useFiltered = deletedRanges != null && deletedRanges.isNotEmpty;
-    debugPrint('🔍 [upload] useFiltered: $useFiltered');
-    
+
     final zipBytes = useFiltered
-        ? await ref.read(tauriApiClientProvider).getFilteredRecordingZip(recordingId, deletedRanges)
+        ? await ref
+            .read(tauriApiClientProvider)
+            .getFilteredRecordingZip(recordingId, deletedRanges)
         : await ref.read(getRecordingZipProvider(recordingId).future);
 
-    final chunks =
-        _splitIntoChunks(zipBytes, 15 * 1024 * 1024);
+    final chunks = _splitIntoChunks(zipBytes, 15 * 1024 * 1024);
     final totalBytes = zipBytes.length;
 
     _updateTaskState(
