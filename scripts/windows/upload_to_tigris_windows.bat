@@ -24,6 +24,7 @@ echo.
 echo Files available at:
 echo   📦 Latest builds: %BUCKET_URL%/latest/windows/
 echo   📋 Version manifest: %BUCKET_URL%/latest/windows/version.json
+echo   🔄 Tauri updater: %BUCKET_URL%/latest/windows/latest.json
 echo   📚 All versions: %BUCKET_URL%/versions/
 goto :eof
 
@@ -207,6 +208,77 @@ echo } >> "%manifest_file%"
 
 goto :eof
 
+:create_tauri_manifest
+set "version=%~1"
+set "build_dir=%~2"
+set "tauri_manifest_file=%temp%\tauri_manifest_%random%.json"
+
+:: Get current date for manifest
+for /f "usebackq delims=" %%d in (`powershell -Command "Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ'"`) do set "upload_date=%%d"
+
+:: Start JSON
+echo { > "%tauri_manifest_file%"
+echo   "version": "%version%", >> "%tauri_manifest_file%"
+echo   "notes": "Update to version %version%", >> "%tauri_manifest_file%"
+echo   "pub_date": "%upload_date%", >> "%tauri_manifest_file%"
+echo   "platforms": { >> "%tauri_manifest_file%"
+
+set "platform_added=false"
+
+:: Look for .msi.zip and .nsis.zip files for Tauri updater
+for /d %%d in ("%build_dir%\msi_*") do (
+    for %%f in ("%%d\*.msi.zip") do (
+        if exist "%%f" (
+            set "filename=%%~nxf"
+            set "url=%BUCKET_URL%/latest/windows/!filename!"
+            
+            :: Try to find signature file
+            set "sig_file=%%~dpnf.sig"
+            set "signature="
+            if exist "!sig_file!" (
+                for /f "usebackq delims=" %%s in ("!sig_file!") do set "signature=%%s"
+            )
+            
+            if !platform_added!==true echo , >> "%tauri_manifest_file%"
+            echo     "windows-x86_64": { >> "%tauri_manifest_file%"
+            echo       "signature": "!signature!", >> "%tauri_manifest_file%"
+            echo       "url": "!url!" >> "%tauri_manifest_file%"
+            echo     } >> "%tauri_manifest_file%"
+            set "platform_added=true"
+        )
+    )
+)
+
+:: Look for .nsis.zip files for Tauri updater
+for /d %%d in ("%build_dir%\nsis_*") do (
+    for %%f in ("%%d\*.nsis.zip") do (
+        if exist "%%f" (
+            set "filename=%%~nxf"
+            set "url=%BUCKET_URL%/latest/windows/!filename!"
+            
+            :: Try to find signature file
+            set "sig_file=%%~dpnf.sig"
+            set "signature="
+            if exist "!sig_file!" (
+                for /f "usebackq delims=" %%s in ("!sig_file!") do set "signature=%%s"
+            )
+            
+            if !platform_added!==true echo , >> "%tauri_manifest_file%"
+            echo     "windows-x86_64": { >> "%tauri_manifest_file%"
+            echo       "signature": "!signature!", >> "%tauri_manifest_file%"
+            echo       "url": "!url!" >> "%tauri_manifest_file%"
+            echo     } >> "%tauri_manifest_file%"
+            set "platform_added=true"
+        )
+    )
+)
+
+:: Close JSON
+echo   } >> "%tauri_manifest_file%"
+echo } >> "%tauri_manifest_file%"
+
+goto :eof
+
 :main_upload
 call :clear_latest_directory
 call :find_latest_build
@@ -245,6 +317,47 @@ for /d %%d in ("%latest_build%\nsis_*") do (
     )
 )
 
+:: Upload Tauri updater files (.msi.zip, .nsis.zip, .sig)
+echo ℹ️ Uploading Tauri updater files...
+for /d %%d in ("%latest_build%\msi_*") do (
+    for %%f in ("%%d\*.msi.zip") do (
+        if exist "%%f" (
+            set "filename=%%~nxf"
+            echo ℹ️ Found updater file: %%f
+            call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "updater"
+            call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "updater"
+        )
+    )
+    for %%f in ("%%d\*.sig") do (
+        if exist "%%f" (
+            set "filename=%%~nxf"
+            echo ℹ️ Found signature file: %%f
+            call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "signature"
+            call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "signature"
+        )
+    )
+)
+
+:: Upload NSIS updater files (.nsis.zip, .sig)
+for /d %%d in ("%latest_build%\nsis_*") do (
+    for %%f in ("%%d\*.nsis.zip") do (
+        if exist "%%f" (
+            set "filename=%%~nxf"
+            echo ℹ️ Found NSIS updater file: %%f
+            call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "updater"
+            call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "updater"
+        )
+    )
+    for %%f in ("%%d\*.sig") do (
+        if exist "%%f" (
+            set "filename=%%~nxf"
+            echo ℹ️ Found NSIS signature file: %%f
+            call :upload_file "%%f" "versions/%app_version%/windows/!filename!" "%app_version%" "x64" "signature"
+            call :upload_file "%%f" "latest/windows/!filename!" "%app_version%" "x64" "signature"
+        )
+    )
+)
+
 :: Create and upload version manifest
 echo ℹ️ Creating version manifest...
 call :create_version_manifest "%app_version%" "%latest_build%"
@@ -256,7 +369,20 @@ if not exist "%manifest_file%" (
 
 echo ℹ️ Created manifest file: %manifest_file%
 call :upload_file "%manifest_file%" "latest/windows/version.json" "%app_version%" "all" "manifest"
-call :upload_file "%manifest_file%" "versions/%app_version%/version.json" "%app_version%" "all" "manifest"
+call :upload_file "%manifest_file%" "versions/%app_version%/windows/version.json" "%app_version%" "all" "manifest"
 del "%manifest_file%" >nul 2>&1
+
+:: Create and upload Tauri updater manifest
+echo ℹ️ Creating Tauri updater manifest...
+call :create_tauri_manifest "%app_version%" "%latest_build%"
+
+if not exist "%tauri_manifest_file%" (
+    echo ⚠️ Failed to create Tauri manifest, updater will not work
+) else (
+    echo ℹ️ Created Tauri manifest file: %tauri_manifest_file%
+    call :upload_file "%tauri_manifest_file%" "latest/windows/latest.json" "%app_version%" "all" "tauri_manifest"
+    call :upload_file "%tauri_manifest_file%" "versions/%app_version%/windows/latest.json" "%app_version%" "all" "tauri_manifest"
+    del "%tauri_manifest_file%" >nul 2>&1
+)
 
 goto :eof

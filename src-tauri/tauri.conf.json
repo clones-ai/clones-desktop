@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "clones-desktop",
-  "version": "0.1.20",
+  "version": "0.1.25",
   "identifier": "ai.clones.desktop",
   "build": {
     "frontendDist": "../build/web",
@@ -12,7 +12,7 @@
       "active": true,
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEYyQzI1NDIxMDEyMzk0RjMKUldUemxDTUJJVlRDOHAveDVIYngzTDBGVnVjR0k3K3FURWhFek95R2lDb1pzTTRxTkFsQnNRK28K",
       "endpoints": [
-        "https://releases-test.clones-ai.com/latest/latest.json"
+        "https://releases-test.clones-ai.com/latest/{{target}}/latest.json"
       ],
       "dialog": false
     },

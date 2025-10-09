@@ -155,15 +155,18 @@ class UpdateModal extends ConsumerWidget {
         );
 
       case UpdateStatus.completed:
-        return const Column(
+        return Column(
           children: [
-            Icon(Icons.check_circle, color: Colors.green, size: 48),
-            SizedBox(height: 16),
-            Text('Update downloaded and installer opened!'),
-            SizedBox(height: 8),
+            const Icon(Icons.check_circle, color: Colors.green, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              'Update downloaded and installer opened!',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 8),
             Text(
               'Please follow the installer instructions to complete the update.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: theme.textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
           ],
@@ -174,7 +177,7 @@ class UpdateModal extends ConsumerWidget {
           children: [
             const Icon(Icons.error, color: Colors.red, size: 48),
             const SizedBox(height: 16),
-            const Text('Failed to update'),
+            Text('Failed to update', style: theme.textTheme.bodyMedium),
             if (state.error != null) ...[
               const SizedBox(height: 8),
               Container(
@@ -185,7 +188,7 @@ class UpdateModal extends ConsumerWidget {
                 ),
                 child: Text(
                   state.error!,
-                  style: const TextStyle(fontSize: 12, color: Colors.red),
+                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.red),
                 ),
               ),
             ],
@@ -206,14 +209,12 @@ class UpdateModal extends ConsumerWidget {
       children: [
         Text(
           'Version ${updateInfo.version} is now available.',
-          style: theme.textTheme.bodyLarge,
+          style: theme.textTheme.bodyMedium,
         ),
         const SizedBox(height: 8),
         Text(
           'You are currently running version ${updateInfo.currentVersion}.',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: Colors.grey[400],
-          ),
+          style: theme.textTheme.bodyMedium,
         ),
         const SizedBox(height: 16),
         Container(
@@ -222,24 +223,25 @@ class UpdateModal extends ConsumerWidget {
             color: ClonesColors.tertiary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Row(
+          child: Row(
             children: [
-              Icon(Icons.security, size: 20),
-              SizedBox(width: 8),
+              const Icon(
+                Icons.security,
+                size: 20,
+                color: ClonesColors.containerIcon5,
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Secure Update via Tauri',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                      style: theme.textTheme.bodyMedium,
                     ),
                     Text(
                       'Cryptographically signed and verified',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
+                      style: theme.textTheme.bodySmall,
                     ),
                   ],
                 ),
@@ -263,7 +265,8 @@ class UpdateModal extends ConsumerWidget {
             value: progress,
             backgroundColor: ClonesColors.tertiary.withValues(alpha: 0.2),
             valueColor: const AlwaysStoppedAnimation<Color>(
-                ClonesColors.containerIcon5,),
+              ClonesColors.containerIcon5,
+            ),
             minHeight: 8,
           ),
         ),
@@ -279,20 +282,14 @@ class UpdateModal extends ConsumerWidget {
             ),
             Text(
               '${formatFileSize(state.downloadProgress)} / ${formatFileSize(state.totalBytes)}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[400],
-              ),
+              style: theme.textTheme.bodySmall,
             ),
           ],
         ),
         const SizedBox(height: 8),
         Text(
           'Downloading update...',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[400],
-          ),
+          style: theme.textTheme.bodySmall,
         ),
       ],
     );
@@ -304,22 +301,16 @@ class UpdateModal extends ConsumerWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            SizedBox(
-              width: 100,
-              child: BtnPrimary(
-                buttonText: 'Later',
-                onTap: () => notifier.hide(),
-                btnPrimaryType: BtnPrimaryType.outlinePrimary,
-              ),
+            BtnPrimary(
+              buttonText: 'Later',
+              onTap: () => notifier.hide(),
+              btnPrimaryType: BtnPrimaryType.outlinePrimary,
             ),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 120,
-              child: BtnPrimary(
-                buttonText: 'Update Now',
-                onTap: () => notifier.downloadAndInstallUpdate(),
-                widthExpanded: true,
-              ),
+            const SizedBox(width: 10),
+            BtnPrimary(
+              buttonText: 'Update Now',
+              onTap: () => notifier.downloadAndInstallUpdate(),
+              widthExpanded: true,
             ),
           ],
         );
@@ -332,6 +323,7 @@ class UpdateModal extends ConsumerWidget {
               width: 100,
               child: BtnPrimary(
                 buttonText: 'Close',
+                btnPrimaryType: BtnPrimaryType.outlinePrimary,
                 onTap: () => notifier.hide(),
                 widthExpanded: true,
               ),

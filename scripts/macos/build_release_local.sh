@@ -140,6 +140,24 @@ build_tauri_target() {
         log_success "DMG copied to build directory: dmg_$arch"
     fi
     
+    # Copy Tauri updater files (.app.tar.gz and .sig)
+    local updater_files_dir="$BUILD_DIR/updater_$arch"
+    mkdir -p "$updater_files_dir"
+    
+    # Copy .app.tar.gz file
+    local app_targz="$target_dir/macos/clones-desktop.app.tar.gz"
+    if [ -f "$app_targz" ]; then
+        cp "$app_targz" "$updater_files_dir/"
+        log_success "Updater .app.tar.gz copied to build directory: updater_$arch"
+    fi
+    
+    # Copy .sig file
+    local sig_file="$target_dir/macos/clones-desktop.app.tar.gz.sig"
+    if [ -f "$sig_file" ]; then
+        cp "$sig_file" "$updater_files_dir/"
+        log_success "Updater .sig copied to build directory: updater_$arch"
+    fi
+    
     cd "$ROOT_DIR"
 }
 
