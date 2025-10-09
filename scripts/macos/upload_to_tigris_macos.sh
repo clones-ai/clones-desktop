@@ -171,29 +171,34 @@ create_tauri_manifest() {
     while IFS= read -r -d '' targz_file; do
         local filename=$(basename "$targz_file")
         local arch=""
-        local url="$BUCKET_URL/latest/macos/$filename"
+        # Add architecture to filename to match upload
+        local arch_name=""
         
-        if [[ "$filename" == *"aarch64"* ]] || [[ "$filename" == *"arm64"* ]]; then
+        if [[ "$targz_file" == *"updater_arm64"* ]]; then
             arch="aarch64"
-            arm64_url="$url"
-            # Generate signature for arm64
-            if [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ] && command -v tauri &> /dev/null; then
-                arm64_signature=$(tauri signer sign "$targz_file" -k "$TAURI_SIGNING_PRIVATE_KEY" --silent 2>/dev/null | tail -n1 || echo "")
+            arch_name="arm64"
+            local arch_filename="${filename%.app.tar.gz}_${arch_name}.app.tar.gz"
+            arm64_url="$BUCKET_URL/latest/darwin/$arch_filename"
+            # Read signature file if it exists
+            if [ -f "$targz_file.sig" ]; then
+                arm64_signature=$(cat "$targz_file.sig" | tr -d '\n')
             fi
-        elif [[ "$filename" == *"x64"* ]] || [[ "$filename" == *"intel"* ]] || [[ "$filename" == *"x86_64"* ]]; then
+        elif [[ "$targz_file" == *"updater_intel"* ]]; then
             arch="x86_64"
-            intel_url="$url"
-            # Generate signature for intel
-            if [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ] && command -v tauri &> /dev/null; then
-                intel_signature=$(tauri signer sign "$targz_file" -k "$TAURI_SIGNING_PRIVATE_KEY" --silent 2>/dev/null | tail -n1 || echo "")
+            arch_name="intel"
+            local arch_filename="${filename%.app.tar.gz}_${arch_name}.app.tar.gz"
+            intel_url="$BUCKET_URL/latest/darwin/$arch_filename"
+            # Read signature file if it exists
+            if [ -f "$targz_file.sig" ]; then
+                intel_signature=$(cat "$targz_file.sig" | tr -d '\n')
             fi
         fi
         
-    done < <(find "$build_dir" -name "*.tar.gz" -print0)
+    done < <(find "$build_dir" -path "*/updater_*" -name "*.app.tar.gz" -print0)
     
-    # If no .tar.gz found, create manifest without platforms (will cause updater to report no update)
+    # If no .app.tar.gz found, create manifest without platforms (will cause updater to report no update)
     if [ -z "$arm64_url" ] && [ -z "$intel_url" ]; then
-        log_warning "No .tar.gz files found - creating empty manifest"
+        log_warning "No .app.tar.gz files found - creating empty manifest"
         cat > "$manifest_file" <<EOF
 {
   "version": "$version",
@@ -280,7 +285,7 @@ EOF
         
         entries+=("    \"macos_${arch}_dmg\": {
       \"filename\": \"$filename\",
-      \"url\": \"$BUCKET_URL/latest/macos/$filename\",
+      \"url\": \"$BUCKET_URL/latest/darwin/$filename\",
       \"size\": $size,
       \"arch\": \"$arch\",
       \"type\": \"dmg\"
@@ -304,7 +309,7 @@ EOF
         
         entries+=("    \"macos_${arch}_app\": {
       \"filename\": \"$zip_name\",
-      \"url\": \"$BUCKET_URL/latest/macos/$zip_name\",
+      \"url\": \"$BUCKET_URL/latest/darwin/$zip_name\",
       \"size\": $size,
       \"arch\": \"$arch\",
       \"type\": \"app\"
@@ -330,9 +335,9 @@ EOF
     echo "$manifest_file"
 }
 
-# Clear the 'latest/macos' directory on Tigris
+# Clear the 'latest/darwin' directory on Tigris
 clear_latest_directory() {
-    log_info "Clearing 'latest/macos' directory on Tigris..."
+    log_info "Clearing 'latest/darwin' directory on Tigris..."
 
     # Configure AWS CLI for Tigris
     export AWS_ACCESS_KEY_ID="$TIGRIS_ACCESS_KEY_ID"
@@ -342,10 +347,10 @@ clear_latest_directory() {
 
     # The command doesn't fail if the directory is empty or doesn't exist.
     # We wrap this in an if to prevent script exit on failure due to set -e.
-    if aws s3 rm "s3://$TIGRIS_BUCKET/latest/macos/" --recursive; then
-        log_success "Successfully cleared 'latest/macos' directory."
+    if aws s3 rm "s3://$TIGRIS_BUCKET/latest/darwin/" --recursive; then
+        log_success "Successfully cleared 'latest/darwin' directory."
     else
-        log_warning "Could not clear 'latest/macos' directory. Proceeding with upload anyway."
+        log_warning "Could not clear 'latest/darwin' directory. Proceeding with upload anyway."
     fi
 }
 
@@ -374,7 +379,7 @@ main_upload() {
         upload_file "$dmg_file" "versions/$version/macos/$filename" "$version" "$arch" "dmg"
         
         # Upload to latest path (for easy access)
-        upload_file "$dmg_file" "latest/macos/$filename" "$version" "$arch" "dmg"
+        upload_file "$dmg_file" "latest/darwin/$filename" "$version" "$arch" "dmg"
     done
     
     # Upload APP bundles (zipped for transport)
@@ -400,13 +405,13 @@ main_upload() {
         upload_file "$temp_zip" "versions/$version/macos/$zip_name" "$version" "$arch" "app"
         
         # Upload to latest path
-        upload_file "$temp_zip" "latest/macos/$zip_name" "$version" "$arch" "app"
+        upload_file "$temp_zip" "latest/darwin/$zip_name" "$version" "$arch" "app"
         
         rm "$temp_zip"
     done
     
     # Upload .tar.gz files (for Tauri updater)
-    find "$build_dir" -name "*.tar.gz" | while read targz_file; do
+    find "$build_dir" -path "*/updater_*" -name "*.app.tar.gz" | while read targz_file; do
         if [[ "$targz_file" == *"aarch64"* ]] || [[ "$targz_file" == *"arm64"* ]]; then
             arch="arm64"
         elif [[ "$targz_file" == *"x64"* ]] || [[ "$targz_file" == *"intel"* ]] || [[ "$targz_file" == *"x86_64"* ]]; then
@@ -416,12 +421,21 @@ main_upload() {
         fi
         
         local filename=$(basename "$targz_file")
+        # Add architecture to filename to avoid overwrites
+        local arch_filename="${filename%.app.tar.gz}_${arch}.app.tar.gz"
         
         # Upload to versioned path
-        upload_file "$targz_file" "versions/$version/macos/$filename" "$version" "$arch" "targz"
+        upload_file "$targz_file" "versions/$version/macos/$arch_filename" "$version" "$arch" "targz"
         
         # Upload to latest path (required for Tauri updater)
-        upload_file "$targz_file" "latest/$filename" "$version" "$arch" "targz"
+        upload_file "$targz_file" "latest/darwin/$arch_filename" "$version" "$arch" "targz"
+        
+        # Upload signature file if it exists
+        if [ -f "$targz_file.sig" ]; then
+            local sig_filename="${arch_filename}.sig"
+            upload_file "$targz_file.sig" "versions/$version/darwin/$sig_filename" "$version" "$arch" "sig"
+            upload_file "$targz_file.sig" "latest/darwin/$sig_filename" "$version" "$arch" "sig"
+        fi
     done
     
     # Create and upload version manifest
@@ -437,8 +451,8 @@ main_upload() {
     log_info "Manifest content preview:"
     head -10 "$manifest_file"
     
-    upload_file "$manifest_file" "latest/macos/version.json" "$version" "all" "manifest"
-    upload_file "$manifest_file" "versions/$version/macos/version.json" "$version" "all" "manifest"
+    upload_file "$manifest_file" "latest/darwin/version.json" "$version" "all" "manifest"
+    upload_file "$manifest_file" "versions/$version/darwin/version.json" "$version" "all" "manifest"
     rm "$manifest_file"
     
     # Create and upload Tauri updater manifest (secure format with signatures)
@@ -453,16 +467,17 @@ main_upload() {
         cat "$tauri_manifest_file"
         
         # Upload Tauri manifest to match the endpoint in tauri.conf.json
-        upload_file "$tauri_manifest_file" "latest/macos/latest.json" "$version" "all" "tauri_manifest"
-        upload_file "$tauri_manifest_file" "versions/$version/macos/latest.json" "$version" "all" "tauri_manifest"
+        # {{target}} will be replaced by 'darwin' for macOS
+        upload_file "$tauri_manifest_file" "latest/darwin/latest.json" "$version" "all" "tauri_manifest"
+        upload_file "$tauri_manifest_file" "versions/$version/darwin/latest.json" "$version" "all" "tauri_manifest"
         rm "$tauri_manifest_file"
     fi
     
     log_success "🎉 Upload completed successfully!"
     echo ""
     log_info "Files available at:"
-    echo "  📦 Latest builds: $BUCKET_URL/latest/macos/"
-    echo "  📋 Version manifest: $BUCKET_URL/latest/macos/version.json"
+    echo "  📦 Latest builds: $BUCKET_URL/latest/darwin/"
+    echo "  📋 Version manifest: $BUCKET_URL/latest/darwin/version.json"
     echo "  📚 All versions: $BUCKET_URL/versions/"
 }
 

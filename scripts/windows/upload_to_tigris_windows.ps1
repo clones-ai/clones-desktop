@@ -238,10 +238,12 @@ function New-TauriManifest {
     $manifestFile = [System.IO.Path]::GetTempFileName()
     $uploadDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
-    # Look for .tar.gz files and .msi.zip files for Tauri updater
+    # Look for .msi.zip and .nsis.zip files for Tauri updater
     $updaterFiles = @()
     $updaterFiles += Get-ChildItem "$BuildDir\msi_*\*.msi.zip" -ErrorAction SilentlyContinue
+    $updaterFiles += Get-ChildItem "$BuildDir\nsis_*\*.nsis.zip" -ErrorAction SilentlyContinue
     $updaterFiles += Get-ChildItem "$BuildDir\msi_*\*.sig" -ErrorAction SilentlyContinue
+    $updaterFiles += Get-ChildItem "$BuildDir\nsis_*\*.sig" -ErrorAction SilentlyContinue
 
     $manifest = @{
         version = $Version
@@ -250,17 +252,23 @@ function New-TauriManifest {
         platforms = @{}
     }
 
-    # Process Windows x64 updates
-    $windowsFile = $updaterFiles | Where-Object { $_.Name -like "*x64*" -or $_.Name -like "*windows*" } | Select-Object -First 1
+    # Process Windows x64 updates (prefer .nsis.zip over .msi.zip)
+    $windowsFile = $updaterFiles | Where-Object { 
+        ($_.Name -like "*x64*" -or $_.Name -like "*windows*") -and 
+        ($_.Name -like "*.nsis.zip" -or $_.Name -like "*.msi.zip") 
+    } | Sort-Object { if ($_.Name -like "*.nsis.zip") { 0 } else { 1 } } | Select-Object -First 1
     if ($windowsFile) {
         $fileName = $windowsFile.Name
         $url = "$BUCKET_URL/latest/windows/$fileName"
 
-        # Try to find signature file
+        # Try to find signature file (check both msi and nsis directories)
         $sigFile = "$($windowsFile.BaseName).sig"
         $signature = ""
-        $sigPath = "$BuildDir\msi_*\$sigFile"
-        $sigFiles = Get-ChildItem $sigPath -ErrorAction SilentlyContinue
+        $sigPath1 = "$BuildDir\msi_*\$sigFile"
+        $sigPath2 = "$BuildDir\nsis_*\$sigFile"
+        $sigFiles = @()
+        $sigFiles += Get-ChildItem $sigPath1 -ErrorAction SilentlyContinue
+        $sigFiles += Get-ChildItem $sigPath2 -ErrorAction SilentlyContinue
         if ($sigFiles) {
             $signature = Get-Content $sigFiles[0].FullName -Raw
         }
@@ -324,10 +332,12 @@ function Start-Upload {
         }
     }
 
-    # Upload Tauri updater files (.msi.zip, .sig)
+    # Upload Tauri updater files (.msi.zip, .nsis.zip, .sig)
     $updaterFiles = @()
     $updaterFiles += Get-ChildItem "$buildDir\msi_*\*.msi.zip" -ErrorAction SilentlyContinue
+    $updaterFiles += Get-ChildItem "$buildDir\nsis_*\*.nsis.zip" -ErrorAction SilentlyContinue
     $updaterFiles += Get-ChildItem "$buildDir\msi_*\*.sig" -ErrorAction SilentlyContinue
+    $updaterFiles += Get-ChildItem "$buildDir\nsis_*\*.sig" -ErrorAction SilentlyContinue
 
     foreach ($updaterFile in $updaterFiles) {
         $fileName = $updaterFile.Name
@@ -380,6 +390,7 @@ function Start-Upload {
         }
 
         # Upload Tauri manifest
+        # {{target}} will be replaced by 'windows' for Windows
         if (-not (Upload-File $tauriManifestFile "latest/windows/latest.json" $version "all" "tauri_manifest")) {
             Write-Warning "Failed to upload Tauri manifest to latest/windows/"
         }

@@ -50,7 +50,7 @@ main() {
     
     log_success "🎉 Complete deployment finished!"
     log_info "Your app is now available for download at:"
-    echo "  🌐 https://releases-test.clones-ai.com/latest/macos/"
+    echo "  🌐 https://releases-test.clones-ai.com/latest/darwin/"
 }
 
 # Run if executed directly

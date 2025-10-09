@@ -376,7 +376,15 @@ class TauriApiClient {
     final response = await _client.get(Uri.parse('$_baseUrl/updater/check'));
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return data['update_available'] == true ? data : null;
+      // Check if update is available and return proper format
+      if (data['update_available'] == true) {
+        return {
+          'version': data['version'],
+          'date': data['date'] ?? DateTime.now().toIso8601String(),
+          'body': data['body'],
+        };
+      }
+      return null; // No update available
     } else {
       throw Exception('Failed to check for update: ${response.body}');
     }
@@ -385,7 +393,10 @@ class TauriApiClient {
   /// Download and install update using Tauri's secure updater
   Future<void> installUpdate() async {
     final response = await _client.post(Uri.parse('$_baseUrl/updater/install'));
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200) {
+      // Update installation initiated successfully
+      return;
+    } else {
       throw Exception('Failed to install update: ${response.body}');
     }
   }
