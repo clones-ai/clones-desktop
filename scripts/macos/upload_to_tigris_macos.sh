@@ -376,7 +376,7 @@ main_upload() {
         local filename=$(basename "$dmg_file")
         
         # Upload to versioned path
-        upload_file "$dmg_file" "versions/$version/macos/$filename" "$version" "$arch" "dmg"
+        upload_file "$dmg_file" "versions/$version/darwin/$filename" "$version" "$arch" "dmg"
         
         # Upload to latest path (for easy access)
         upload_file "$dmg_file" "latest/darwin/$filename" "$version" "$arch" "dmg"
@@ -402,7 +402,7 @@ main_upload() {
         cd - > /dev/null
         
         # Upload to versioned path
-        upload_file "$temp_zip" "versions/$version/macos/$zip_name" "$version" "$arch" "app"
+        upload_file "$temp_zip" "versions/$version/darwin/$zip_name" "$version" "$arch" "app"
         
         # Upload to latest path
         upload_file "$temp_zip" "latest/darwin/$zip_name" "$version" "$arch" "app"
@@ -425,7 +425,7 @@ main_upload() {
         local arch_filename="${filename%.app.tar.gz}_${arch}.app.tar.gz"
         
         # Upload to versioned path
-        upload_file "$targz_file" "versions/$version/macos/$arch_filename" "$version" "$arch" "targz"
+        upload_file "$targz_file" "versions/$version/darwin/$arch_filename" "$version" "$arch" "targz"
         
         # Upload to latest path (required for Tauri updater)
         upload_file "$targz_file" "latest/darwin/$arch_filename" "$version" "$arch" "targz"
