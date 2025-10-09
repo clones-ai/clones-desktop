@@ -739,6 +739,10 @@ class DemoDetailNotifier extends _$DemoDetailNotifier {
             ..invalidate(listRecordingsProvider)
             ..invalidate(mergedRecordingsProvider);
 
+          // Delete the recording from the local filesystem
+          await ref
+              .read(deleteRecordingProvider(recordingId: recordingId).future);
+
           // Reload recording to get updated submission data
           await loadRecording(recordingId);
         } else if (uploadState.uploadStatus == UploadStatus.error) {
