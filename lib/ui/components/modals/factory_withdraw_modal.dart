@@ -76,27 +76,97 @@ class FactoryWithdrawModal extends ConsumerWidget {
                         ),
                         gradient: ClonesColors.gradientInputFormBackground,
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Column(
                         children: [
-                          Text(
-                            'Available Balance:',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.textTheme.bodyMedium?.color!
-                                  .withValues(alpha: 0.3),
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Available Balance:',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.textTheme.bodyMedium?.color!
+                                      .withValues(alpha: 0.3),
+                                ),
+                              ),
+                              Text(
+                                '${formatNumberWithSeparator(factory.balance)} ${factory.token.symbol}',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.textTheme.bodyMedium?.color!
+                                      .withValues(alpha: 0.3),
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            '${formatNumberWithSeparator(factory.balance)} ${factory.token.symbol}',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.textTheme.bodyMedium?.color!
-                                  .withValues(alpha: 0.3),
+                          if (modalState.maxSafeWithdrawal != null) ...[
+                            const SizedBox(height: 8),
+                            const Divider(height: 1),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle_outline,
+                                      size: 16,
+                                      color:
+                                          Colors.green.withValues(alpha: 0.7),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Max Safe Withdrawal:',
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
+                                        color:
+                                            Colors.green.withValues(alpha: 0.7),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  '${formatNumberWithSeparator(double.tryParse(modalState.maxSafeWithdrawal!) ?? 0)} ${factory.token.symbol}',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: Colors.green.withValues(alpha: 0.7),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
+                          ],
+                          if (modalState.validationLoading) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 12,
+                                  height: 12,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      theme.colorScheme.primary,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Checking pool health...',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.textTheme.bodySmall?.color!
+                                        .withValues(alpha: 0.5),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
+                    // Pool Health Alerts
+                    _buildPoolHealthAlerts(context, ref),
+                    const SizedBox(height: 8),
                   ],
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,6 +438,123 @@ class FactoryWithdrawModal extends ConsumerWidget {
           buttonText: 'Transaction Status',
           onTap: () async => transactionManager.showTransactionStatus(context),
           btnPrimaryType: BtnPrimaryType.outlinePrimary,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPoolHealthAlerts(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final modalState = ref.watch(factoryWithdrawModalNotifierProvider);
+    final poolHealth = modalState.poolHealth;
+
+    if (poolHealth == null || poolHealth.healthy) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.orange.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.warning_amber,
+                    color: Colors.orange,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Pool Health Alerts',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.orange,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ...poolHealth.alerts.map(
+                (alert) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    alert,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.orange.withValues(alpha: 0.9),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1, color: Colors.orange),
+              const SizedBox(height: 8),
+              // Health Metrics
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildMetric(
+                    context,
+                    'Utilization',
+                    '${poolHealth.metrics.utilization.toStringAsFixed(1)}%',
+                    poolHealth.metrics.utilization > 80
+                        ? Colors.red
+                        : Colors.orange,
+                  ),
+                  _buildMetric(
+                    context,
+                    'Coverage',
+                    '${poolHealth.metrics.coverage.toStringAsFixed(2)}x',
+                    poolHealth.metrics.coverage < 1.1
+                        ? Colors.red
+                        : Colors.orange,
+                  ),
+                  _buildMetric(
+                    context,
+                    'Pending Claims',
+                    '${poolHealth.metrics.pendingClaimsCount}',
+                    Colors.orange,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetric(
+    BuildContext context,
+    String label,
+    String value,
+    Color color,
+  ) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.textTheme.bodySmall?.color!.withValues(alpha: 0.5),
+            fontSize: 10,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );

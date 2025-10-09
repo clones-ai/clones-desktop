@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/application/transaction/state.dart';
+import 'package:clones_desktop/domain/models/api/api_error.dart';
 import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/design_widget/dialog/popup_template.dart';
@@ -266,7 +267,9 @@ class TransactionManager extends _$TransactionManager {
   /// Claim rewards transaction workflow
   Future<void> claimRewards({
     required String poolAddress,
+    required String amount,
     required String creator,
+    String? submissionId,
   }) async {
     try {
       state = state.copyWith(isLoading: true);
@@ -282,7 +285,6 @@ class TransactionManager extends _$TransactionManager {
         );
       }
 
-      // Prepare transaction via backend API and get session ID
       final response = await apiClient.post<Map<String, dynamic>>(
         '/transaction/prepare-tx',
         data: {
@@ -290,6 +292,8 @@ class TransactionManager extends _$TransactionManager {
           'sessionToken': connectionToken,
           'creator': creator,
           'poolAddress': poolAddress,
+          'amount': amount,
+          'submissionId': submissionId,
         },
       );
 
@@ -313,9 +317,17 @@ class TransactionManager extends _$TransactionManager {
         currentSessionId: sessionId,
       );
     } catch (e) {
+      String errorMessage;
+
+      if (e is ApiError) {
+        errorMessage = e.message;
+      } else {
+        errorMessage = e.toString();
+      }
+
       state = state.copyWith(
         isLoading: false,
-        error: 'Failed to claim rewards: $e',
+        error: errorMessage,
       );
     }
   }

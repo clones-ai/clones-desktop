@@ -16,6 +16,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+/// Check if the recording has already been claimed on-chain
+/// Ignore CLAIMING_ markers (temporary locks)
+// TODO: Doublon. Extract to a utility function.
+bool _isAlreadyClaimed(ApiRecording recording) {
+  final txHash = recording.submission?.onChainReward?.txHash;
+  if (txHash == null || txHash.isEmpty) {
+    return false;
+  }
+  // Ignore temporary CLAIMING_ markers
+  return !txHash.startsWith('CLAIMING_');
+}
+
 class RecordingCard extends ConsumerWidget {
   const RecordingCard({super.key, required this.recording});
 
@@ -124,13 +136,13 @@ class RecordingCard extends ConsumerWidget {
             ),
           ],
         ),
+        _rewardClaimedBadge(context),
       ],
     );
   }
 
   Widget _buildStatus(BuildContext context, UploadTaskState? uploadItem) {
     final status = recording.submission?.status ?? recording.status;
-
     if (uploadItem?.uploadStatus == UploadStatus.error || status == 'failed') {
       return _statusChip(
         context,
@@ -154,9 +166,13 @@ class RecordingCard extends ConsumerWidget {
     }
 
     if (recording.submission?.clampedScore != null) {
-      return _ratingDisplay(
-        context,
-        recording.submission!.clampedScore!.toDouble(),
+      return Row(
+        children: [
+          _ratingDisplay(
+            context,
+            recording.submission!.clampedScore!.toDouble(),
+          ),
+        ],
       );
     }
     if ((recording.durationSeconds) < 1) {
@@ -168,13 +184,21 @@ class RecordingCard extends ConsumerWidget {
       );
     }
     if (recording.submission?.gradeResult?.score != null) {
-      return _ratingDisplay(
-        context,
-        recording.submission!.gradeResult!.score.toDouble(),
+      return Row(
+        children: [
+          _ratingDisplay(
+            context,
+            recording.submission!.gradeResult!.score.toDouble(),
+          ),
+        ],
       );
     }
     if (recording.submission != null) {
-      return _ratingDisplay(context, 0);
+      return Row(
+        children: [
+          _ratingDisplay(context, 0),
+        ],
+      );
     }
 
     return const SizedBox.shrink();
@@ -267,6 +291,55 @@ class RecordingCard extends ConsumerWidget {
         size: 60,
         strokeWidth: 6,
         label: 'Score',
+      ),
+    );
+  }
+
+  Widget _rewardClaimedBadge(BuildContext context) {
+    if (recording.submission?.clampedScore == null) {
+      return const SizedBox.shrink();
+    }
+    final isClaimed = _isAlreadyClaimed(recording);
+
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: !isClaimed
+              ? ClonesColors.rewardInfoShouldBeClaimed.withValues(alpha: 0.2)
+              : ClonesColors.rewardInfoClaimed.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: !isClaimed
+                ? ClonesColors.rewardInfoShouldBeClaimed.withValues(alpha: 0.5)
+                : ClonesColors.rewardInfoClaimed.withValues(alpha: 0.5),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              !isClaimed ? Icons.hourglass_empty : Icons.check_circle,
+              color: !isClaimed
+                  ? ClonesColors.rewardInfoShouldBeClaimed
+                  : ClonesColors.rewardInfoClaimed,
+              size: 16,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              !isClaimed ? 'Reward can be claimed' : 'Reward claimed',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: !isClaimed
+                    ? ClonesColors.rewardInfoShouldBeClaimed
+                    : ClonesColors.rewardInfoClaimed,
+                fontWeight: FontWeight.w500,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

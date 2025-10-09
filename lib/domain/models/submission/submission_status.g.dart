@@ -31,6 +31,10 @@ _$SubmissionStatusImpl _$$SubmissionStatusImplFromJson(
           ? null
           : ClaimAuthorization.fromJson(
               json['claimAuthorization'] as Map<String, dynamic>),
+      onChainReward: json['onChainReward'] == null
+          ? null
+          : OnChainReward.fromJson(
+              json['onChainReward'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$SubmissionStatusImplToJson(
@@ -51,4 +55,5 @@ Map<String, dynamic> _$$SubmissionStatusImplToJson(
       'maxReward': instance.maxReward,
       'reward': instance.reward,
       'claimAuthorization': instance.claimAuthorization,
+      'onChainReward': instance.onChainReward,
     };

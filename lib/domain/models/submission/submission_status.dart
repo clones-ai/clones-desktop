@@ -3,6 +3,7 @@
 import 'package:clones_desktop/domain/models/submission/claim_authorization.dart';
 import 'package:clones_desktop/domain/models/submission/file_manifest.dart';
 import 'package:clones_desktop/domain/models/submission/grade_result.dart';
+import 'package:clones_desktop/domain/models/submission/on_chain_reward.dart';
 import 'package:clones_desktop/domain/models/submission/submission_meta.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -27,6 +28,7 @@ class SubmissionStatus with _$SubmissionStatus {
     double? maxReward,
     double? reward,
     ClaimAuthorization? claimAuthorization,
+    OnChainReward? onChainReward,
   }) = _SubmissionStatus;
 
   factory SubmissionStatus.fromJson(Map<String, dynamic> json) =>

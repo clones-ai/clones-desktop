@@ -13,6 +13,9 @@ class ClaimAuthorization with _$ClaimAuthorization {
     /// Cumulative amount in wei (string to preserve precision)
     required String cumulativeAmount,
 
+    /// Nonce for replay protection
+    int? nonce,
+
     /// Signature deadline (unix timestamp)
     int? deadline,
 
@@ -27,6 +30,15 @@ class ClaimAuthorization with _$ClaimAuthorization {
 
     /// Token contract address
     required String tokenAddress,
+
+    /// Already claimed amount
+    double? alreadyClaimed,
+
+    /// New claimable amount
+    double? newClaimableAmount,
+
+    /// Platform fee percentage (e.g. 10.0 for 10%)
+    double? feePercentage,
   }) = _ClaimAuthorization;
 
   factory ClaimAuthorization.fromJson(Map<String, dynamic> json) =>

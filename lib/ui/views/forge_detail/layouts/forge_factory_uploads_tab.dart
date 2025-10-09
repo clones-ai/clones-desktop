@@ -192,11 +192,11 @@ String _getTitle(PoolSubmission submission) {
 }
 
 String _getTotalFileSize(PoolSubmission submission) {
-  if (submission.files.isEmpty) {
+  if (submission.files == null || submission.files!.isEmpty) {
     return '-';
   }
   final totalSize =
-      submission.files.fold<int>(0, (prev, file) => prev + file.size);
+      submission.files!.fold<int>(0, (prev, file) => prev + file.size);
 
   return '${(totalSize / (1024 * 1024)).toStringAsFixed(2)} MB';
 }

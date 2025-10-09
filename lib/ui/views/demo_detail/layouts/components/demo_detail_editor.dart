@@ -34,7 +34,8 @@ class _MessageCard extends StatefulWidget {
   State<_MessageCard> createState() => _MessageCardState();
 }
 
-class _MessageCardState extends State<_MessageCard> with AutomaticKeepAliveClientMixin {
+class _MessageCardState extends State<_MessageCard>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
@@ -78,7 +79,7 @@ class _MessageCardState extends State<_MessageCard> with AutomaticKeepAliveClien
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-    
+
     final theme = Theme.of(context);
     final relativeTime = widget.message.timestamp - widget.startTime;
 
@@ -92,7 +93,8 @@ class _MessageCardState extends State<_MessageCard> with AutomaticKeepAliveClien
             child: GestureDetector(
               onTap: () {
                 if (widget.videoController != null && widget.startTime > 0) {
-                  widget.videoController!.seekTo(Duration(milliseconds: relativeTime));
+                  widget.videoController!
+                      .seekTo(Duration(milliseconds: relativeTime));
                 }
               },
               child: Container(
@@ -155,13 +157,19 @@ class _MessageCardState extends State<_MessageCard> with AutomaticKeepAliveClien
                       Row(
                         children: [
                           Icon(
-                            widget.message.content.toLowerCase().contains('click')
+                            widget.message.content
+                                    .toLowerCase()
+                                    .contains('click')
                                 ? Icons.ads_click
                                 : widget.message.content
                                         .toLowerCase()
                                         .contains('scroll')
                                     ? Icons.swap_vert
-                                    : Icons.keyboard,
+                                    : widget.message.content
+                                            .toLowerCase()
+                                            .contains('app_focus')
+                                        ? Icons.apps
+                                        : Icons.keyboard,
                             color: ClonesColors.tertiary,
                             size: 20,
                           ),
@@ -178,11 +186,13 @@ class _MessageCardState extends State<_MessageCard> with AutomaticKeepAliveClien
                       )
                     else
                       () {
-                        final imageData = base64Decode(widget.message.content['data']);
+                        final imageData =
+                            base64Decode(widget.message.content['data']);
                         return MouseRegion(
                           cursor: SystemMouseCursors.click,
                           child: GestureDetector(
-                            onTap: () => _showFullscreenImage(context, imageData),
+                            onTap: () =>
+                                _showFullscreenImage(context, imageData),
                             child: Image.memory(
                               imageData,
                               fit: BoxFit.contain,
@@ -286,7 +296,7 @@ class DemoDetailEditor extends ConsumerWidget {
         final msg = demoDetail.sftMessages[i];
         final relativeTime = msg.timestamp - demoDetail.startTime;
 
-        bool isInDeletedZone = false;
+        var isInDeletedZone = false;
         for (final operation in demoDetail.deletedClipsHistory) {
           for (final clip in operation) {
             if (relativeTime >= clip.start && relativeTime <= clip.end) {
@@ -334,7 +344,8 @@ class DemoDetailEditor extends ConsumerWidget {
                 message: chatItem.item,
                 videoController: videoController,
                 startTime: startTime,
-                isInDeletedZone: messagesInDeletedZones.contains(chatItem.messageIndex),
+                isInDeletedZone:
+                    messagesInDeletedZones.contains(chatItem.messageIndex),
                 messageIndex: chatItem.messageIndex!,
               );
             },
@@ -343,5 +354,4 @@ class DemoDetailEditor extends ConsumerWidget {
       ],
     );
   }
-
 }

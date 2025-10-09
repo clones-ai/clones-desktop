@@ -2687,5 +2687,421 @@ class _GetFactoryBalanceProviderElement
   @override
   String get poolAddress => (origin as GetFactoryBalanceProvider).poolAddress;
 }
+
+String _$validateWithdrawalHash() =>
+    r'3a4e4b75145bfc54b4a620d71f37265017602934';
+
+/// See also [validateWithdrawal].
+@ProviderFor(validateWithdrawal)
+const validateWithdrawalProvider = ValidateWithdrawalFamily();
+
+/// See also [validateWithdrawal].
+class ValidateWithdrawalFamily
+    extends Family<AsyncValue<WithdrawalValidation>> {
+  /// See also [validateWithdrawal].
+  const ValidateWithdrawalFamily();
+
+  /// See also [validateWithdrawal].
+  ValidateWithdrawalProvider call({
+    required String poolAddress,
+    required String amount,
+  }) {
+    return ValidateWithdrawalProvider(
+      poolAddress: poolAddress,
+      amount: amount,
+    );
+  }
+
+  @override
+  ValidateWithdrawalProvider getProviderOverride(
+    covariant ValidateWithdrawalProvider provider,
+  ) {
+    return call(
+      poolAddress: provider.poolAddress,
+      amount: provider.amount,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'validateWithdrawalProvider';
+}
+
+/// See also [validateWithdrawal].
+class ValidateWithdrawalProvider
+    extends AutoDisposeFutureProvider<WithdrawalValidation> {
+  /// See also [validateWithdrawal].
+  ValidateWithdrawalProvider({
+    required String poolAddress,
+    required String amount,
+  }) : this._internal(
+          (ref) => validateWithdrawal(
+            ref as ValidateWithdrawalRef,
+            poolAddress: poolAddress,
+            amount: amount,
+          ),
+          from: validateWithdrawalProvider,
+          name: r'validateWithdrawalProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$validateWithdrawalHash,
+          dependencies: ValidateWithdrawalFamily._dependencies,
+          allTransitiveDependencies:
+              ValidateWithdrawalFamily._allTransitiveDependencies,
+          poolAddress: poolAddress,
+          amount: amount,
+        );
+
+  ValidateWithdrawalProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.poolAddress,
+    required this.amount,
+  }) : super.internal();
+
+  final String poolAddress;
+  final String amount;
+
+  @override
+  Override overrideWith(
+    FutureOr<WithdrawalValidation> Function(ValidateWithdrawalRef provider)
+        create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: ValidateWithdrawalProvider._internal(
+        (ref) => create(ref as ValidateWithdrawalRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        poolAddress: poolAddress,
+        amount: amount,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<WithdrawalValidation> createElement() {
+    return _ValidateWithdrawalProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ValidateWithdrawalProvider &&
+        other.poolAddress == poolAddress &&
+        other.amount == amount;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, poolAddress.hashCode);
+    hash = _SystemHash.combine(hash, amount.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin ValidateWithdrawalRef
+    on AutoDisposeFutureProviderRef<WithdrawalValidation> {
+  /// The parameter `poolAddress` of this provider.
+  String get poolAddress;
+
+  /// The parameter `amount` of this provider.
+  String get amount;
+}
+
+class _ValidateWithdrawalProviderElement
+    extends AutoDisposeFutureProviderElement<WithdrawalValidation>
+    with ValidateWithdrawalRef {
+  _ValidateWithdrawalProviderElement(super.provider);
+
+  @override
+  String get poolAddress => (origin as ValidateWithdrawalProvider).poolAddress;
+  @override
+  String get amount => (origin as ValidateWithdrawalProvider).amount;
+}
+
+String _$getPoolHealthHash() => r'044dc39e950e015cc0796bff43fee6ffaa7543d3';
+
+/// See also [getPoolHealth].
+@ProviderFor(getPoolHealth)
+const getPoolHealthProvider = GetPoolHealthFamily();
+
+/// See also [getPoolHealth].
+class GetPoolHealthFamily extends Family<AsyncValue<PoolHealth>> {
+  /// See also [getPoolHealth].
+  const GetPoolHealthFamily();
+
+  /// See also [getPoolHealth].
+  GetPoolHealthProvider call({
+    required String poolAddress,
+  }) {
+    return GetPoolHealthProvider(
+      poolAddress: poolAddress,
+    );
+  }
+
+  @override
+  GetPoolHealthProvider getProviderOverride(
+    covariant GetPoolHealthProvider provider,
+  ) {
+    return call(
+      poolAddress: provider.poolAddress,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'getPoolHealthProvider';
+}
+
+/// See also [getPoolHealth].
+class GetPoolHealthProvider extends AutoDisposeFutureProvider<PoolHealth> {
+  /// See also [getPoolHealth].
+  GetPoolHealthProvider({
+    required String poolAddress,
+  }) : this._internal(
+          (ref) => getPoolHealth(
+            ref as GetPoolHealthRef,
+            poolAddress: poolAddress,
+          ),
+          from: getPoolHealthProvider,
+          name: r'getPoolHealthProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$getPoolHealthHash,
+          dependencies: GetPoolHealthFamily._dependencies,
+          allTransitiveDependencies:
+              GetPoolHealthFamily._allTransitiveDependencies,
+          poolAddress: poolAddress,
+        );
+
+  GetPoolHealthProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.poolAddress,
+  }) : super.internal();
+
+  final String poolAddress;
+
+  @override
+  Override overrideWith(
+    FutureOr<PoolHealth> Function(GetPoolHealthRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: GetPoolHealthProvider._internal(
+        (ref) => create(ref as GetPoolHealthRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        poolAddress: poolAddress,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<PoolHealth> createElement() {
+    return _GetPoolHealthProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GetPoolHealthProvider && other.poolAddress == poolAddress;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, poolAddress.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GetPoolHealthRef on AutoDisposeFutureProviderRef<PoolHealth> {
+  /// The parameter `poolAddress` of this provider.
+  String get poolAddress;
+}
+
+class _GetPoolHealthProviderElement
+    extends AutoDisposeFutureProviderElement<PoolHealth> with GetPoolHealthRef {
+  _GetPoolHealthProviderElement(super.provider);
+
+  @override
+  String get poolAddress => (origin as GetPoolHealthProvider).poolAddress;
+}
+
+String _$getMaxWithdrawalHash() => r'f0910ca9edc47a2834cbb184f8d6a0064156aa5c';
+
+/// See also [getMaxWithdrawal].
+@ProviderFor(getMaxWithdrawal)
+const getMaxWithdrawalProvider = GetMaxWithdrawalFamily();
+
+/// See also [getMaxWithdrawal].
+class GetMaxWithdrawalFamily extends Family<AsyncValue<MaxWithdrawal>> {
+  /// See also [getMaxWithdrawal].
+  const GetMaxWithdrawalFamily();
+
+  /// See also [getMaxWithdrawal].
+  GetMaxWithdrawalProvider call({
+    required String poolAddress,
+  }) {
+    return GetMaxWithdrawalProvider(
+      poolAddress: poolAddress,
+    );
+  }
+
+  @override
+  GetMaxWithdrawalProvider getProviderOverride(
+    covariant GetMaxWithdrawalProvider provider,
+  ) {
+    return call(
+      poolAddress: provider.poolAddress,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'getMaxWithdrawalProvider';
+}
+
+/// See also [getMaxWithdrawal].
+class GetMaxWithdrawalProvider
+    extends AutoDisposeFutureProvider<MaxWithdrawal> {
+  /// See also [getMaxWithdrawal].
+  GetMaxWithdrawalProvider({
+    required String poolAddress,
+  }) : this._internal(
+          (ref) => getMaxWithdrawal(
+            ref as GetMaxWithdrawalRef,
+            poolAddress: poolAddress,
+          ),
+          from: getMaxWithdrawalProvider,
+          name: r'getMaxWithdrawalProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$getMaxWithdrawalHash,
+          dependencies: GetMaxWithdrawalFamily._dependencies,
+          allTransitiveDependencies:
+              GetMaxWithdrawalFamily._allTransitiveDependencies,
+          poolAddress: poolAddress,
+        );
+
+  GetMaxWithdrawalProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.poolAddress,
+  }) : super.internal();
+
+  final String poolAddress;
+
+  @override
+  Override overrideWith(
+    FutureOr<MaxWithdrawal> Function(GetMaxWithdrawalRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: GetMaxWithdrawalProvider._internal(
+        (ref) => create(ref as GetMaxWithdrawalRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        poolAddress: poolAddress,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<MaxWithdrawal> createElement() {
+    return _GetMaxWithdrawalProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GetMaxWithdrawalProvider &&
+        other.poolAddress == poolAddress;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, poolAddress.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GetMaxWithdrawalRef on AutoDisposeFutureProviderRef<MaxWithdrawal> {
+  /// The parameter `poolAddress` of this provider.
+  String get poolAddress;
+}
+
+class _GetMaxWithdrawalProviderElement
+    extends AutoDisposeFutureProviderElement<MaxWithdrawal>
+    with GetMaxWithdrawalRef {
+  _GetMaxWithdrawalProviderElement(super.provider);
+
+  @override
+  String get poolAddress => (origin as GetMaxWithdrawalProvider).poolAddress;
+}
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

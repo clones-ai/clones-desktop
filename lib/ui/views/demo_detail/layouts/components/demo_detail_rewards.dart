@@ -1,9 +1,11 @@
+import 'package:clones_desktop/application/claim_reward_modal/provider.dart';
 import 'package:clones_desktop/application/factory.dart';
 import 'package:clones_desktop/application/session/provider.dart';
 import 'package:clones_desktop/application/tauri_api.dart';
 import 'package:clones_desktop/assets.dart';
 import 'package:clones_desktop/domain/models/submission/claim_authorization.dart';
 import 'package:clones_desktop/domain/models/submission/grade_result.dart';
+import 'package:clones_desktop/domain/models/submission/submission_status.dart';
 import 'package:clones_desktop/ui/components/card.dart';
 import 'package:clones_desktop/ui/components/design_widget/buttons/btn_primary.dart';
 import 'package:clones_desktop/ui/components/design_widget/message_box/message_box.dart';
@@ -13,6 +15,17 @@ import 'package:clones_desktop/utils/env.dart';
 import 'package:clones_desktop/utils/format_address.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// Check if the submission has already been claimed on-chain
+/// Ignore CLAIMING_ markers (temporary locks)
+bool _isAlreadyClaimed(SubmissionStatus submission) {
+  final txHash = submission.onChainReward?.txHash;
+  if (txHash == null || txHash.isEmpty) {
+    return false;
+  }
+  // Ignore temporary CLAIMING_ markers
+  return !txHash.startsWith('CLAIMING_');
+}
 
 class DemoDetailRewards extends ConsumerWidget {
   const DemoDetailRewards({super.key});
@@ -51,6 +64,12 @@ class DemoDetailRewards extends ConsumerWidget {
         final maxReward = submission.maxReward ?? 0;
         final reward = submission.reward ?? 0;
 
+        final feePercentage = submission.claimAuthorization?.feePercentage;
+        final feeMultiplier =
+            feePercentage != null ? feePercentage / 100.0 : null;
+        final netMultiplier =
+            feeMultiplier != null ? 1.0 - feeMultiplier : null;
+
         return Column(
           children: [
             CardWidget(
@@ -66,18 +85,63 @@ class DemoDetailRewards extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Earned:',
+                        'Total Reward:',
                         style: theme.textTheme.bodyMedium,
                       ),
                       Text(
-                        '$reward \$$tokenSymbol',
+                        '${reward.toStringAsFixed(4)} \$$tokenSymbol',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: ClonesColors.getScoreColor(score),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 5),
+                  if (feePercentage != null &&
+                      feeMultiplier != null &&
+                      netMultiplier != null) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Platform Fee (${feePercentage.toStringAsFixed(1)}%):',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                        Text(
+                          '${(reward * feeMultiplier).toStringAsFixed(4)} \$$tokenSymbol',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'You Receive:',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                        Text(
+                          '${(reward * netMultiplier).toStringAsFixed(4)} \$$tokenSymbol',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: ClonesColors.getScoreColor(score),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: MessageBox(
+                        messageBoxType: MessageBoxType.warning,
+                        content: Text(
+                          'Failed to calculate reward amounts. Platform fee information could not be retrieved from smart contract.',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 5),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -86,7 +150,7 @@ class DemoDetailRewards extends ConsumerWidget {
                         style: theme.textTheme.bodyMedium,
                       ),
                       Text(
-                        '$maxReward \$$tokenSymbol',
+                        '${maxReward.toStringAsFixed(4)} \$$tokenSymbol',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: ClonesColors.getScoreColor(100),
                         ),
@@ -99,11 +163,13 @@ class DemoDetailRewards extends ConsumerWidget {
                   LinearProgressIndicator(
                     value: maxReward > 0 ? reward / maxReward : 0,
                     minHeight: 10,
+                    color: ClonesColors.getScoreColor(score),
                     borderRadius: BorderRadius.circular(5),
                   ),
                   const SizedBox(height: 20),
                   if (submission.gradeResult?.reasoningSystem != null &&
-                      submission.gradeResult!.reasoningSystem.isNotEmpty)
+                      submission.gradeResult!.reasoningSystem.isNotEmpty &&
+                      !_isAlreadyClaimed(submission))
                     SizedBox(
                       width: double.infinity,
                       child: MessageBox(
@@ -114,13 +180,19 @@ class DemoDetailRewards extends ConsumerWidget {
                         ),
                       ),
                     ),
-                  if (submission.claimAuthorization != null)
+                  if (submission.claimAuthorization != null &&
+                      !_isAlreadyClaimed(submission))
                     _buildClaimAuthorizationSection(
                       context,
                       ref,
                       submission.claimAuthorization!,
                       tokenSymbol,
+                      reward,
+                      submission
+                          .id, // Pass submission ID for claim verification
                     ),
+                  if (_isAlreadyClaimed(submission))
+                    _buildClaimedSection(context, ref, submission, tokenSymbol),
                 ],
               ),
             ),
@@ -135,6 +207,8 @@ class DemoDetailRewards extends ConsumerWidget {
     WidgetRef ref,
     ClaimAuthorization claimAuth,
     String tokenSymbol,
+    double rewardAmount,
+    String? submissionId,
   ) {
     final theme = Theme.of(context);
 
@@ -185,8 +259,8 @@ class DemoDetailRewards extends ConsumerWidget {
             widthExpanded: true,
             btnPrimaryType: BtnPrimaryType.outlinePrimary,
             buttonText: 'Claim Reward',
-            onTap: () =>
-                _handleClaimReward(context, ref, claimAuth, tokenSymbol),
+            onTap: () => _handleClaimReward(context, ref, claimAuth,
+                tokenSymbol, rewardAmount, submissionId),
           ),
         ),
       ],
@@ -198,12 +272,145 @@ class DemoDetailRewards extends ConsumerWidget {
     WidgetRef ref,
     ClaimAuthorization claimAuth,
     String tokenSymbol,
+    double rewardAmount,
+    String? submissionId,
   ) {
-    // TODO(dev): Implement claim reward functionality via payWithSig contract call
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Claim functionality not yet implemented'),
-      ),
+    // Open the claim reward modal
+    ref.read(claimRewardModalNotifierProvider.notifier).show(
+          claimAuthorization: claimAuth,
+          rewardAmount: rewardAmount,
+          tokenSymbol: tokenSymbol,
+          submissionId: submissionId,
+        );
+  }
+
+  Widget _buildClaimedSection(
+    BuildContext context,
+    WidgetRef ref,
+    SubmissionStatus submission,
+    String tokenSymbol,
+  ) {
+    final theme = Theme.of(context);
+    final txHash = submission.onChainReward?.txHash;
+    final grossAmount =
+        submission.onChainReward?.grossAmount ?? submission.reward ?? 0;
+
+    final netAmount = submission.onChainReward?.netAmount;
+    final feeAmount = submission.onChainReward?.feeAmount;
+
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+        Stack(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: MessageBox(
+                messageBoxType: MessageBoxType.talkLeft,
+                content: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Reward Claimed',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: ClonesColors.highScore,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (netAmount != null && feeAmount != null) ...[
+                      Text(
+                        'Total Reward: ${grossAmount.toStringAsFixed(2)} \$$tokenSymbol',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      Text(
+                        'Platform Fee: ${feeAmount.toStringAsFixed(2)} \$$tokenSymbol',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      Text(
+                        'You Received: ${netAmount.toStringAsFixed(2)} \$$tokenSymbol',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ] else ...[
+                      Text(
+                        'You claimed ${grossAmount.toStringAsFixed(2)} \$$tokenSymbol',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      Text(
+                        'Reward breakdown unavailable - claimed before fee tracking was implemented',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: ClonesColors.secondaryText,
+                        ),
+                      ),
+                    ],
+                    if (txHash != null && txHash.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      InkWell(
+                        onTap: () async {
+                          try {
+                            await ref
+                                .read(tauriApiClientProvider)
+                                .openExternalUrl(
+                                  '${Env.baseScanBaseUrl}/tx/$txHash',
+                                );
+                          } catch (e) {
+                            debugPrint('Failed to open external URL: $e');
+                          }
+                        },
+                        child: Row(
+                          children: [
+                            Text(
+                              'Transaction: ${txHash.shortAddress()}',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                color: ClonesColors.secondaryText,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.open_in_new,
+                              color: ClonesColors.secondaryText,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: ClonesColors.rewardInfo.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF000000).withAlpha(60),
+                      blurRadius: 6,
+                      offset: const Offset(
+                        0,
+                        3,
+                      ),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  'On-Chain Stamp',
+                  style: theme.textTheme.bodySmall!.copyWith(
+                    color: ClonesColors.rewardInfo,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

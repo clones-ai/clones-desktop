@@ -3,6 +3,7 @@ import 'package:clones_desktop/domain/models/factory/factory_app.dart';
 import 'package:clones_desktop/domain/models/factory/factory_search_criteria.dart';
 import 'package:clones_desktop/domain/models/factory/factory_search_result.dart';
 import 'package:clones_desktop/domain/models/supported_token.dart';
+import 'package:clones_desktop/domain/models/withdrawal/withdrawal_validation.dart';
 import 'package:clones_desktop/infrastructure/factories.repository.dart';
 import 'package:clones_desktop/utils/api_client.dart';
 import 'package:riverpod/riverpod.dart';
@@ -228,4 +229,35 @@ Future<double> getFactoryBalance(
   final repository = ref.read(factoryRepositoryProvider);
   final result = await repository.getPoolBalance(poolAddress: poolAddress);
   return double.parse(result['balance'].toString());
+}
+
+@riverpod
+Future<WithdrawalValidation> validateWithdrawal(
+  Ref ref, {
+  required String poolAddress,
+  required String amount,
+}) {
+  final repository = ref.read(factoryRepositoryProvider);
+  return repository.validateWithdrawal(
+    poolAddress: poolAddress,
+    amount: amount,
+  );
+}
+
+@riverpod
+Future<PoolHealth> getPoolHealth(
+  Ref ref, {
+  required String poolAddress,
+}) {
+  final repository = ref.read(factoryRepositoryProvider);
+  return repository.getPoolHealth(poolAddress: poolAddress);
+}
+
+@riverpod
+Future<MaxWithdrawal> getMaxWithdrawal(
+  Ref ref, {
+  required String poolAddress,
+}) {
+  final repository = ref.read(factoryRepositoryProvider);
+  return repository.getMaxWithdrawal(poolAddress: poolAddress);
 }

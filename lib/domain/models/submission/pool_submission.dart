@@ -14,7 +14,7 @@ class PoolSubmission with _$PoolSubmission {
     required String address,
     required SubmissionMeta meta,
     required String status,
-    required List<SubmissionFile> files,
+    List<SubmissionFile>? files,
     @JsonKey(name: 'grade_result') GradeResult? gradeResult,
     double? reward,
     double? maxReward,

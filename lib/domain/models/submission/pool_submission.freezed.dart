@@ -25,7 +25,7 @@ mixin _$PoolSubmission {
   String get address => throw _privateConstructorUsedError;
   SubmissionMeta get meta => throw _privateConstructorUsedError;
   String get status => throw _privateConstructorUsedError;
-  List<SubmissionFile> get files => throw _privateConstructorUsedError;
+  List<SubmissionFile>? get files => throw _privateConstructorUsedError;
   @JsonKey(name: 'grade_result')
   GradeResult? get gradeResult => throw _privateConstructorUsedError;
   double? get reward => throw _privateConstructorUsedError;
@@ -57,7 +57,7 @@ abstract class $PoolSubmissionCopyWith<$Res> {
       String address,
       SubmissionMeta meta,
       String status,
-      List<SubmissionFile> files,
+      List<SubmissionFile>? files,
       @JsonKey(name: 'grade_result') GradeResult? gradeResult,
       double? reward,
       double? maxReward,
@@ -90,7 +90,7 @@ class _$PoolSubmissionCopyWithImpl<$Res, $Val extends PoolSubmission>
     Object? address = null,
     Object? meta = null,
     Object? status = null,
-    Object? files = null,
+    Object? files = freezed,
     Object? gradeResult = freezed,
     Object? reward = freezed,
     Object? maxReward = freezed,
@@ -116,10 +116,10 @@ class _$PoolSubmissionCopyWithImpl<$Res, $Val extends PoolSubmission>
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      files: null == files
+      files: freezed == files
           ? _value.files
           : files // ignore: cast_nullable_to_non_nullable
-              as List<SubmissionFile>,
+              as List<SubmissionFile>?,
       gradeResult: freezed == gradeResult
           ? _value.gradeResult
           : gradeResult // ignore: cast_nullable_to_non_nullable
@@ -204,7 +204,7 @@ abstract class _$$PoolSubmissionImplCopyWith<$Res>
       String address,
       SubmissionMeta meta,
       String status,
-      List<SubmissionFile> files,
+      List<SubmissionFile>? files,
       @JsonKey(name: 'grade_result') GradeResult? gradeResult,
       double? reward,
       double? maxReward,
@@ -238,7 +238,7 @@ class __$$PoolSubmissionImplCopyWithImpl<$Res>
     Object? address = null,
     Object? meta = null,
     Object? status = null,
-    Object? files = null,
+    Object? files = freezed,
     Object? gradeResult = freezed,
     Object? reward = freezed,
     Object? maxReward = freezed,
@@ -264,10 +264,10 @@ class __$$PoolSubmissionImplCopyWithImpl<$Res>
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      files: null == files
+      files: freezed == files
           ? _value._files
           : files // ignore: cast_nullable_to_non_nullable
-              as List<SubmissionFile>,
+              as List<SubmissionFile>?,
       gradeResult: freezed == gradeResult
           ? _value.gradeResult
           : gradeResult // ignore: cast_nullable_to_non_nullable
@@ -308,7 +308,7 @@ class _$PoolSubmissionImpl implements _PoolSubmission {
       required this.address,
       required this.meta,
       required this.status,
-      required final List<SubmissionFile> files,
+      final List<SubmissionFile>? files,
       @JsonKey(name: 'grade_result') this.gradeResult,
       this.reward,
       this.maxReward,
@@ -330,12 +330,14 @@ class _$PoolSubmissionImpl implements _PoolSubmission {
   final SubmissionMeta meta;
   @override
   final String status;
-  final List<SubmissionFile> _files;
+  final List<SubmissionFile>? _files;
   @override
-  List<SubmissionFile> get files {
+  List<SubmissionFile>? get files {
+    final value = _files;
+    if (value == null) return null;
     if (_files is EqualUnmodifiableListView) return _files;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_files);
+    return EqualUnmodifiableListView(value);
   }
 
   @override
@@ -424,7 +426,7 @@ abstract class _PoolSubmission implements PoolSubmission {
       required final String address,
       required final SubmissionMeta meta,
       required final String status,
-      required final List<SubmissionFile> files,
+      final List<SubmissionFile>? files,
       @JsonKey(name: 'grade_result') final GradeResult? gradeResult,
       final double? reward,
       final double? maxReward,
@@ -446,7 +448,7 @@ abstract class _PoolSubmission implements PoolSubmission {
   @override
   String get status;
   @override
-  List<SubmissionFile> get files;
+  List<SubmissionFile>? get files;
   @override
   @JsonKey(name: 'grade_result')
   GradeResult? get gradeResult;

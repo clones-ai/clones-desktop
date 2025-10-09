@@ -24,6 +24,11 @@ mixin _$FactoryWithdrawModalState {
   String? get estimatedGasCost => throw _privateConstructorUsedError;
   String? get error => throw _privateConstructorUsedError;
   bool get gasExceedsAmount => throw _privateConstructorUsedError;
+  String? get maxSafeWithdrawal => throw _privateConstructorUsedError;
+  bool get validationLoading => throw _privateConstructorUsedError;
+  WithdrawalValidation? get validationResult =>
+      throw _privateConstructorUsedError;
+  PoolHealth? get poolHealth => throw _privateConstructorUsedError;
 
   /// Create a copy of FactoryWithdrawModalState
   /// with the given fields replaced by the non-null parameter values.
@@ -46,9 +51,15 @@ abstract class $FactoryWithdrawModalStateCopyWith<$Res> {
       bool isWithdrawing,
       String? estimatedGasCost,
       String? error,
-      bool gasExceedsAmount});
+      bool gasExceedsAmount,
+      String? maxSafeWithdrawal,
+      bool validationLoading,
+      WithdrawalValidation? validationResult,
+      PoolHealth? poolHealth});
 
   $FactoryCopyWith<$Res>? get factory;
+  $WithdrawalValidationCopyWith<$Res>? get validationResult;
+  $PoolHealthCopyWith<$Res>? get poolHealth;
 }
 
 /// @nodoc
@@ -75,6 +86,10 @@ class _$FactoryWithdrawModalStateCopyWithImpl<$Res,
     Object? estimatedGasCost = freezed,
     Object? error = freezed,
     Object? gasExceedsAmount = null,
+    Object? maxSafeWithdrawal = freezed,
+    Object? validationLoading = null,
+    Object? validationResult = freezed,
+    Object? poolHealth = freezed,
   }) {
     return _then(_value.copyWith(
       factory: freezed == factory
@@ -109,6 +124,22 @@ class _$FactoryWithdrawModalStateCopyWithImpl<$Res,
           ? _value.gasExceedsAmount
           : gasExceedsAmount // ignore: cast_nullable_to_non_nullable
               as bool,
+      maxSafeWithdrawal: freezed == maxSafeWithdrawal
+          ? _value.maxSafeWithdrawal
+          : maxSafeWithdrawal // ignore: cast_nullable_to_non_nullable
+              as String?,
+      validationLoading: null == validationLoading
+          ? _value.validationLoading
+          : validationLoading // ignore: cast_nullable_to_non_nullable
+              as bool,
+      validationResult: freezed == validationResult
+          ? _value.validationResult
+          : validationResult // ignore: cast_nullable_to_non_nullable
+              as WithdrawalValidation?,
+      poolHealth: freezed == poolHealth
+          ? _value.poolHealth
+          : poolHealth // ignore: cast_nullable_to_non_nullable
+              as PoolHealth?,
     ) as $Val);
   }
 
@@ -123,6 +154,35 @@ class _$FactoryWithdrawModalStateCopyWithImpl<$Res,
 
     return $FactoryCopyWith<$Res>(_value.factory!, (value) {
       return _then(_value.copyWith(factory: value) as $Val);
+    });
+  }
+
+  /// Create a copy of FactoryWithdrawModalState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $WithdrawalValidationCopyWith<$Res>? get validationResult {
+    if (_value.validationResult == null) {
+      return null;
+    }
+
+    return $WithdrawalValidationCopyWith<$Res>(_value.validationResult!,
+        (value) {
+      return _then(_value.copyWith(validationResult: value) as $Val);
+    });
+  }
+
+  /// Create a copy of FactoryWithdrawModalState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $PoolHealthCopyWith<$Res>? get poolHealth {
+    if (_value.poolHealth == null) {
+      return null;
+    }
+
+    return $PoolHealthCopyWith<$Res>(_value.poolHealth!, (value) {
+      return _then(_value.copyWith(poolHealth: value) as $Val);
     });
   }
 }
@@ -144,10 +204,18 @@ abstract class _$$FactoryWithdrawModalStateImplCopyWith<$Res>
       bool isWithdrawing,
       String? estimatedGasCost,
       String? error,
-      bool gasExceedsAmount});
+      bool gasExceedsAmount,
+      String? maxSafeWithdrawal,
+      bool validationLoading,
+      WithdrawalValidation? validationResult,
+      PoolHealth? poolHealth});
 
   @override
   $FactoryCopyWith<$Res>? get factory;
+  @override
+  $WithdrawalValidationCopyWith<$Res>? get validationResult;
+  @override
+  $PoolHealthCopyWith<$Res>? get poolHealth;
 }
 
 /// @nodoc
@@ -173,6 +241,10 @@ class __$$FactoryWithdrawModalStateImplCopyWithImpl<$Res>
     Object? estimatedGasCost = freezed,
     Object? error = freezed,
     Object? gasExceedsAmount = null,
+    Object? maxSafeWithdrawal = freezed,
+    Object? validationLoading = null,
+    Object? validationResult = freezed,
+    Object? poolHealth = freezed,
   }) {
     return _then(_$FactoryWithdrawModalStateImpl(
       factory: freezed == factory
@@ -207,6 +279,22 @@ class __$$FactoryWithdrawModalStateImplCopyWithImpl<$Res>
           ? _value.gasExceedsAmount
           : gasExceedsAmount // ignore: cast_nullable_to_non_nullable
               as bool,
+      maxSafeWithdrawal: freezed == maxSafeWithdrawal
+          ? _value.maxSafeWithdrawal
+          : maxSafeWithdrawal // ignore: cast_nullable_to_non_nullable
+              as String?,
+      validationLoading: null == validationLoading
+          ? _value.validationLoading
+          : validationLoading // ignore: cast_nullable_to_non_nullable
+              as bool,
+      validationResult: freezed == validationResult
+          ? _value.validationResult
+          : validationResult // ignore: cast_nullable_to_non_nullable
+              as WithdrawalValidation?,
+      poolHealth: freezed == poolHealth
+          ? _value.poolHealth
+          : poolHealth // ignore: cast_nullable_to_non_nullable
+              as PoolHealth?,
     ));
   }
 }
@@ -222,7 +310,11 @@ class _$FactoryWithdrawModalStateImpl extends _FactoryWithdrawModalState {
       this.isWithdrawing = false,
       this.estimatedGasCost,
       this.error,
-      this.gasExceedsAmount = false})
+      this.gasExceedsAmount = false,
+      this.maxSafeWithdrawal,
+      this.validationLoading = false,
+      this.validationResult,
+      this.poolHealth})
       : super._();
 
   @override
@@ -246,10 +338,19 @@ class _$FactoryWithdrawModalStateImpl extends _FactoryWithdrawModalState {
   @override
   @JsonKey()
   final bool gasExceedsAmount;
+  @override
+  final String? maxSafeWithdrawal;
+  @override
+  @JsonKey()
+  final bool validationLoading;
+  @override
+  final WithdrawalValidation? validationResult;
+  @override
+  final PoolHealth? poolHealth;
 
   @override
   String toString() {
-    return 'FactoryWithdrawModalState(factory: $factory, isShown: $isShown, withdrawAmount: $withdrawAmount, isLoading: $isLoading, isWithdrawing: $isWithdrawing, estimatedGasCost: $estimatedGasCost, error: $error, gasExceedsAmount: $gasExceedsAmount)';
+    return 'FactoryWithdrawModalState(factory: $factory, isShown: $isShown, withdrawAmount: $withdrawAmount, isLoading: $isLoading, isWithdrawing: $isWithdrawing, estimatedGasCost: $estimatedGasCost, error: $error, gasExceedsAmount: $gasExceedsAmount, maxSafeWithdrawal: $maxSafeWithdrawal, validationLoading: $validationLoading, validationResult: $validationResult, poolHealth: $poolHealth)';
   }
 
   @override
@@ -269,12 +370,32 @@ class _$FactoryWithdrawModalStateImpl extends _FactoryWithdrawModalState {
                 other.estimatedGasCost == estimatedGasCost) &&
             (identical(other.error, error) || other.error == error) &&
             (identical(other.gasExceedsAmount, gasExceedsAmount) ||
-                other.gasExceedsAmount == gasExceedsAmount));
+                other.gasExceedsAmount == gasExceedsAmount) &&
+            (identical(other.maxSafeWithdrawal, maxSafeWithdrawal) ||
+                other.maxSafeWithdrawal == maxSafeWithdrawal) &&
+            (identical(other.validationLoading, validationLoading) ||
+                other.validationLoading == validationLoading) &&
+            (identical(other.validationResult, validationResult) ||
+                other.validationResult == validationResult) &&
+            (identical(other.poolHealth, poolHealth) ||
+                other.poolHealth == poolHealth));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, factory, isShown, withdrawAmount,
-      isLoading, isWithdrawing, estimatedGasCost, error, gasExceedsAmount);
+  int get hashCode => Object.hash(
+      runtimeType,
+      factory,
+      isShown,
+      withdrawAmount,
+      isLoading,
+      isWithdrawing,
+      estimatedGasCost,
+      error,
+      gasExceedsAmount,
+      maxSafeWithdrawal,
+      validationLoading,
+      validationResult,
+      poolHealth);
 
   /// Create a copy of FactoryWithdrawModalState
   /// with the given fields replaced by the non-null parameter values.
@@ -295,7 +416,11 @@ abstract class _FactoryWithdrawModalState extends FactoryWithdrawModalState {
       final bool isWithdrawing,
       final String? estimatedGasCost,
       final String? error,
-      final bool gasExceedsAmount}) = _$FactoryWithdrawModalStateImpl;
+      final bool gasExceedsAmount,
+      final String? maxSafeWithdrawal,
+      final bool validationLoading,
+      final WithdrawalValidation? validationResult,
+      final PoolHealth? poolHealth}) = _$FactoryWithdrawModalStateImpl;
   const _FactoryWithdrawModalState._() : super._();
 
   @override
@@ -314,6 +439,14 @@ abstract class _FactoryWithdrawModalState extends FactoryWithdrawModalState {
   String? get error;
   @override
   bool get gasExceedsAmount;
+  @override
+  String? get maxSafeWithdrawal;
+  @override
+  bool get validationLoading;
+  @override
+  WithdrawalValidation? get validationResult;
+  @override
+  PoolHealth? get poolHealth;
 
   /// Create a copy of FactoryWithdrawModalState
   /// with the given fields replaced by the non-null parameter values.

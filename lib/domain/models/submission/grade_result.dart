@@ -32,7 +32,7 @@ class GradeResult with _$GradeResult {
 }
 
 extension GradeResultExtension on GradeResult {
-  static final regexGradeResult = RegExp(r'^\((.*?)\)\s*(.*)$');
+  static final regexGradeResult = RegExp(r'^\((.*)\)\s*(.*)$');
   String get reasoningSystem =>
       regexGradeResult
           .firstMatch(reasoning)

@@ -11,11 +11,15 @@ _$ClaimAuthorizationImpl _$$ClaimAuthorizationImplFromJson(
     _$ClaimAuthorizationImpl(
       account: json['account'] as String,
       cumulativeAmount: json['cumulativeAmount'] as String,
+      nonce: (json['nonce'] as num?)?.toInt(),
       deadline: (json['deadline'] as num?)?.toInt(),
       signature: json['signature'] as String,
       publisherUsed: json['publisherUsed'] as String,
       poolAddress: json['poolAddress'] as String,
       tokenAddress: json['tokenAddress'] as String,
+      alreadyClaimed: (json['alreadyClaimed'] as num?)?.toDouble(),
+      newClaimableAmount: (json['newClaimableAmount'] as num?)?.toDouble(),
+      feePercentage: (json['feePercentage'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$$ClaimAuthorizationImplToJson(
@@ -23,9 +27,13 @@ Map<String, dynamic> _$$ClaimAuthorizationImplToJson(
     <String, dynamic>{
       'account': instance.account,
       'cumulativeAmount': instance.cumulativeAmount,
+      'nonce': instance.nonce,
       'deadline': instance.deadline,
       'signature': instance.signature,
       'publisherUsed': instance.publisherUsed,
       'poolAddress': instance.poolAddress,
       'tokenAddress': instance.tokenAddress,
+      'alreadyClaimed': instance.alreadyClaimed,
+      'newClaimableAmount': instance.newClaimableAmount,
+      'feePercentage': instance.feePercentage,
     };

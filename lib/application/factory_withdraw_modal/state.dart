@@ -1,4 +1,5 @@
 import 'package:clones_desktop/domain/models/factory/factory.dart';
+import 'package:clones_desktop/domain/models/withdrawal/withdrawal_validation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'state.freezed.dart';
@@ -14,6 +15,10 @@ class FactoryWithdrawModalState with _$FactoryWithdrawModalState {
     String? estimatedGasCost,
     String? error,
     @Default(false) bool gasExceedsAmount,
+    String? maxSafeWithdrawal,
+    @Default(false) bool validationLoading,
+    WithdrawalValidation? validationResult,
+    PoolHealth? poolHealth,
   }) = _FactoryWithdrawModalState;
   const FactoryWithdrawModalState._();
 }

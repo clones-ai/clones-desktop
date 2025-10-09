@@ -12,8 +12,8 @@ _$PoolSubmissionImpl _$$PoolSubmissionImplFromJson(Map<String, dynamic> json) =>
       address: json['address'] as String,
       meta: SubmissionMeta.fromJson(json['meta'] as Map<String, dynamic>),
       status: json['status'] as String,
-      files: (json['files'] as List<dynamic>)
-          .map((e) => SubmissionFile.fromJson(e as Map<String, dynamic>))
+      files: (json['files'] as List<dynamic>?)
+          ?.map((e) => SubmissionFile.fromJson(e as Map<String, dynamic>))
           .toList(),
       gradeResult: json['grade_result'] == null
           ? null
